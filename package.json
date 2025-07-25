@@ -1,0 +1,13 @@
+{
+  "name": "subtitle-player",
+  "version": "1.0.0",
+  "description": "Electron app with subtitle panel",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "dev": "electron . --dev"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0"
+  }
+}
