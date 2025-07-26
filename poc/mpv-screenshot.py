@@ -4,6 +4,8 @@ from pathlib import Path
 import signal
 import sys
 
+import traceback
+
 import os
 os.environ["PATH"] = r"C:\Users\roly\mpv-dev-x86_64" + os.pathsep + os.environ["PATH"]
 
@@ -12,8 +14,9 @@ from clipboard import create_dropfile_structure, copy_file_to_clipboard
 
 
 class MPVScreenshotCapture:
-    def __init__(self, hotkey='f10', screenshot_name='screenshot-poc.jpg'):
-        self.screenshot_path = Path.cwd() / screenshot_name
+    def __init__(self, hotkey='k', screenshot_name='screenshot-poc.jpg'):
+        # self.screenshot_path = Path.cwd() / screenshot_name
+        self.screenshot_name = screenshot_name
         self.hotkey = hotkey.lower()
         self.running = True
         
@@ -21,14 +24,24 @@ class MPVScreenshotCapture:
         
         # Simple MPV initialization like your working script
         try:
-            self.player = mpv.MPV()
+            self.player = mpv.MPV(
+                osc=True,  # Enable on-screen controller (progress bar, controls)
+                sub_auto='all',  # Auto-load subtitles
+                input_default_bindings=True,  # Enable default key bindings
+                input_vo_keyboard=True  # Enable keyboard input
+            )
             print("✅ MPV initialized successfully")
+
+            @self.player.on_key_press(self.hotkey)
+            def on_screenshot_hotkey():
+                self.take_screenshot()
         except Exception as e:
             print(f"❌ Failed to initialize MPV: {e}")
             sys.exit(1)
 
         # Bind hotkeys
-        self.player.register_key_binding(self.hotkey, self.take_screenshot)
+        # self.player.register_key_binding(self.hotkey, self.take_screenshot, key_down_function=True)
+       
         self.player.register_key_binding('q', self.quit_player)
         
         print(f"🔥 Hotkey registered: {self.hotkey.upper()}")
@@ -43,20 +56,26 @@ class MPVScreenshotCapture:
                 print(f"📸 Taking screenshot at {timestamp:.2f}s")
             else:
                 print("📸 Taking screenshot...")
+
+            # make a timestamped screenshot name. (the player's timestamp)
+            file_name = self.screenshot_name + " - " + str(timestamp) + ".jpg"
+            print("EXPECTING: ", file_name)
+            screenshot_with_timestamp = Path.cwd() / file_name
             
             # Take screenshot using MPV command
-            self.player.command('screenshot-to-file', str(self.screenshot_path))
+            self.player.command('screenshot-to-file', str(screenshot_with_timestamp))
             
             # Wait for file to be saved
             time.sleep(0.5)
             
-            if self.screenshot_path.exists():
-                print(f"✓ Screenshot saved: {self.screenshot_path}")
-                copy_file_to_clipboard(self.screenshot_path)
+            if screenshot_with_timestamp.exists():
+                print(f"✓ Screenshot saved: {screenshot_with_timestamp}")
+                copy_file_to_clipboard(screenshot_with_timestamp)
             else:
                 print("✗ Screenshot file was not created")
                 
         except Exception as e:
+            traceback.print_exc()
             print(f"✗ Screenshot failed: {e}")
 
     def quit_player(self, *args):
@@ -121,9 +140,9 @@ class MPVScreenshotCapture:
 
 def main():
     # Configuration
-    HOTKEY = 'f10'  # Change this to your preferred hotkey
+    HOTKEY = 'k'  # Change this to your preferred hotkey
 
-    SCREENSHOT_NAME = f'screenshot-poc.jpg'
+    SCREENSHOT_NAME = f'screenshot-poc'
     
     # Check if video file provided as argument
     video_file = None

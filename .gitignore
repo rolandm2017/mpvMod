@@ -1,9 +1,14 @@
 .custom
 node_modules
 
+__pycache__
+
 .vscode
 
-*.mp4
-
-
 .env
+
+
+# Media
+
+*.mp4
+*.jpg
