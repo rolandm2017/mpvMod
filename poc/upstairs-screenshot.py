@@ -23,7 +23,7 @@ import os
 
 from python_mpv_jsonipc import MPV
 
-from .clipboard import create_dropfile_structure, copy_file_to_clipboard
+from clipboard import create_dropfile_structure, copy_file_to_clipboard
 
 
 class MPVScreenshotCapture:
