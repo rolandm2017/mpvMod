@@ -9,7 +9,7 @@ import numpy as np
 
 ### Get the screenshot's alleged time from the file name
 
-
+"""According to this benchmarking script, the screenshot was precisely what was asked for."""
 screenshot = "screenshot-poc - 1601.8666666666666.jpg"
 time = 1601.8666666666666
 
@@ -23,15 +23,23 @@ time = 1601.8666666666666
 
 # ffmpeg -i input.mp4 -ss 75.5 -vframes 1 output.png
 
-result = subprocess.run(["ffmpeg", "-i", "the_video.mp4", "-ss", time, "-vframes", "1", "correspondingframe.jpg"])
+path_to_video = r"C:\Users\roly\Videos\How to Learn Japanese with Netflix + Anki [CfvDKgNUSi8].mp4"
 
+print("line 28")
+result = subprocess.run(["ffmpeg", "-y", "-i", path_to_video, "-ss", str(time), "-vframes", "1", "correspondingframe.jpg"], capture_output=True)
+
+print("line 31")
 # Calculate similarity (MSE, SSIM, etc.)
-diff = cv2.absdiff(screenshot, result)
+screenshot_img = cv2.imread(screenshot)
+frame_img = cv2.imread("correspondingframe.jpg")
+
+diff = cv2.absdiff(screenshot_img, frame_img)
 score = np.sum(diff)
 
 ### Compare
 
 def find_matching_frame(video_path, screenshot_path, start_time, search_range=10):
+    print("in find_matching_frame")
     best_match = None
     best_score = float('inf')
     
@@ -61,10 +69,19 @@ def find_matching_frame(video_path, screenshot_path, start_time, search_range=10
     
     return best_match
 
-path_to_video = r"C:\Users\roly\Videos\How to Learn Japanese with Netflix + Anki [CfvDKgNUSi8].mp4"
+"""
+Script output:
 
-best = find_matching_frame(path_to_video, screenshot, time - 10)
-print(best)
+in find_matching_frame
+BEST MATCH:  1601.8666666666666
+
+HENCE the screenshot was exactly what was asked for.
+
+(Unless this is a false positive)
+"""
+
+best = find_matching_frame(path_to_video, screenshot, time - 10, 10)
+print("BEST MATCH: ",  best)
 
 ### If not the same, get the difference in frame count, convert to ms
 
