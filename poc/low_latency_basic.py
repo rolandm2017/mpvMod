@@ -1,9 +1,3 @@
-import os
-os.environ["PATH"] = r"C:\Users\roly\mpv-dev-x86_64" + os.pathsep + os.environ["PATH"]
-
-import sys
-import time
-from mpv import MPV
 
 # https://www.perplexity.ai/search/mpv-player-has-a-libmpv-that-i-WlU3QT5ATfyjkavj0Ej5WA
 # 
@@ -14,8 +8,14 @@ from mpv import MPV
 Steps to use:
 
 1.  Run the script like:
-        - python mpv_libmpv_timestamp.py <video_file_path>
+        - python low_latency_basic.py <video_file_path>
 """
+import os
+os.environ["PATH"] = r"C:\Users\roly\mpv-dev-x86_64" + os.pathsep + os.environ["PATH"]
+
+import sys
+import time
+from mpv import MPV
 
 def main(video_path):
     # Create an MPV player instance (this uses libmpv under the hood)
