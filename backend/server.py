@@ -136,7 +136,8 @@ class MPVWebSocketServer:
         }
         
         if extra_data:
-            message.update(extra_data)
+            # message.update(extra_data)
+            message["extra_data"] = extra_data
         
         # Print to console as well
         print(content)
@@ -178,6 +179,7 @@ class MPVWebSocketServer:
                     continue
                 
                 time_pos = self.get_time_pos()
+
                 
                 if time_pos is not None:
                     duration = self.get_duration()
@@ -191,7 +193,7 @@ class MPVWebSocketServer:
                         # Send structured data for WebSocket clients
                         extra_data = {
                             "time_pos": time_pos,
-                            "duration": duration,
+                            # "duration": duration,
                             "progress": progress,
                             "formatted_time": formatted_time,
                             "formatted_duration": formatted_duration
