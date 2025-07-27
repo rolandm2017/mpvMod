@@ -12,6 +12,14 @@ os.environ["PATH"] = r"C:\Users\roly\mpv-dev-x86_64" + os.pathsep + os.environ["
 import mpv
 from clipboard import create_dropfile_structure, copy_file_to_clipboard
 
+"""
+Steps to use:
+
+- run the script
+- press the k hotkey to take screenshot
+- find it in /screenshots
+
+"""
 
 class MPVScreenshotCapture:
     def __init__(self, hotkey='k', screenshot_name='screenshot-poc.jpg'):

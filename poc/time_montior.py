@@ -8,6 +8,16 @@ import signal
 import threading
 from pathlib import Path
 
+"""
+Steps to use: 
+
+- run mpv --input-ipc-server=\\.\pipe\mpvsocket "path/to/video/file.mp4"
+- run this script
+- you will see time floating by in console logs
+- you can pause, resume. you can seek
+
+"""
+
 class MPVTimeMonitor:
     def __init__(self, poll_interval=0.208):
         self.poll_interval = poll_interval

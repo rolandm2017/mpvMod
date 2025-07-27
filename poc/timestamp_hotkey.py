@@ -12,6 +12,11 @@ MPV_PATH = r"C:\mpv-x86_64\mpv.exe"  # <= replace with your actual mpv.exe path
 # MPV_PATH = r"C:\Users\rlm\Downloads\mpv-x86_64-20250720-git-440f35a\mpv.exe"  # <= replace with your actual mpv.exe path
 VIDEO_PATH = r"C:\Users\roly\Videos\How to Learn Japanese with Netflix + Anki [CfvDKgNUSi8].mp4"  # <= replace with your video
 
+"""
+Steps to use:
+
+Run the script! Press the hotkey to harvest time
+"""
 
 player = mpv.MPV()
 

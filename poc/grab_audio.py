@@ -17,6 +17,13 @@ from ffmpeg_util import make_audio_mp3, seconds_to_time_str
 
 test_video = r"C:\Users\roly\Videos\How to Learn Japanese with Netflix + Anki [CfvDKgNUSi8].mp4"
 
+"""
+Steps to use:
+
+- Run the script
+- press C, then N a little later, to clip an audio clip
+- find it in /audio
+"""
 
 class MPVAudioCapture:
     def __init__(self, start_hotkey, end_hotkey, mp3_name='mp3-poc.jpg'):
