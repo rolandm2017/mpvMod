@@ -94,9 +94,9 @@
 
 		<h3>MP3 Snippet</h3>
 		<div class="time-controls">
-			<div class="time-row">
-				<div class="time-group">
-					<label>Start Time</label>
+			<div class="time-row flex-row push-items-top sml-space-below">
+				<div class="time-group half-container-fill">
+					<h4 class="push-items-top">Start Time</h4>
 					<div class="time-display">
 						<button class="nudge-btn" onclick={() => nudgeStart(-1)}>←</button>
 						<span class="time-value">{startTime}</span>
@@ -104,8 +104,8 @@
 					</div>
 				</div>
 
-				<div class="time-group">
-					<label>End Time</label>
+				<div class="time-group half-container-fill">
+					<h4 class="push-items-top">End Time</h4>
 					<div class="time-display">
 						<button class="nudge-btn" onclick={() => nudgeEnd(-1)}>←</button>
 						<span class="time-value">{endTime}</span>
@@ -114,18 +114,7 @@
 				</div>
 			</div>
 
-			<button class="play-btn" onclick={playAudio}>▶ Play Audio</button>
-		</div>
-
-		<div class="input-row">
-			<div class="input-group">
-				<label for="start-time">Start Time</label>
-				<input id="start-time" type="text" bind:value={startTime} placeholder="00:00:00" />
-			</div>
-			<div class="input-group">
-				<label for="end-time">End Time</label>
-				<input id="end-time" type="text" placeholder="00:05:00" />
-			</div>
+			<button class="play-btn sml-space-below" onclick={playAudio}>▶ Play Audio</button>
 		</div>
 
 		<div class="input-group">
@@ -173,6 +162,47 @@
 
 <style>
 	/* Your styles here */
+
+	h4 {
+		font-weight: 400;
+	}
+
+	button {
+		padding: 10px 20px;
+		border: none;
+		border-radius: 6px;
+		font-size: 14px;
+		font-weight: 500;
+		cursor: pointer;
+		transition: all 0.15s ease-in-out;
+		min-width: 120px;
+	}
+
+	.flex-row {
+		display: flex;
+	}
+
+	.half-container-fill {
+		width: 50%;
+	}
+
+	.push-items-top {
+		margin-top: 0;
+	}
+
+	.sml-space-below {
+		margin-bottom: 10px;
+	}
+
+	.time-display .nudge-btn {
+		width: 50px;
+		min-width: 50px;
+		background-color: #dddddd;
+		box-shadow:
+			0 4px 6px -1px rgba(0, 0, 0, 0.1),
+			0 2px 4px -1px rgba(0, 0, 0, 0.06);
+	}
+
 	.control-panel {
 		flex: 1;
 		background: #f5f5f5;
@@ -250,17 +280,6 @@
 		display: flex;
 		gap: 10px;
 		flex-wrap: wrap;
-	}
-
-	button {
-		padding: 10px 20px;
-		border: none;
-		border-radius: 6px;
-		font-size: 14px;
-		font-weight: 500;
-		cursor: pointer;
-		transition: all 0.15s ease-in-out;
-		min-width: 120px;
 	}
 
 	.primary-btn {
