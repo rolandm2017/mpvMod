@@ -8,7 +8,7 @@ contextBridge.exposeInMainWorld('electronAPI', {
     onMPVState: (callback) => {
         console.log('onMPVState called');
         ipcRenderer.on('mpv-state', (event, data) => {
-            console.log("in mpv state receiver", data)
+            // console.log("in mpv state receiver", data)
             callback(data);
         });
     },

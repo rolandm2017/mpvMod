@@ -139,8 +139,8 @@ class MPVWebSocketServer:
         }
         
         if extra_data:
-            # message.update(extra_data)
-            message["extra_data"] = extra_data
+            message.update(extra_data)
+            # message["extra_data"] = extra_data
         
         # Print to console as well
         print(content)
