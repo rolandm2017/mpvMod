@@ -4,6 +4,14 @@
 <script lang="ts">
 	import SubtitleSegment from '$lib/SubtitleSegment.svelte';
 	export let data;
+
+	function getSubtitleScrollPosition() {
+		//
+	}
+
+	function scrollToPosition() {
+		//
+	}
 </script>
 
 <div class="container">
@@ -22,14 +30,6 @@
 </div>
 
 <style lang="ts">
-	body {
-		font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-		background: #1a1a1a;
-		color: white;
-		margin: 0;
-		padding: 0;
-	}
-
 	.container {
 		display: flex;
 		height: 100vh;

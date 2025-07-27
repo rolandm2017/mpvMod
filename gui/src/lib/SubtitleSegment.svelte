@@ -1,9 +1,17 @@
-<script>
+<script lang="ts">
+	import { onMount } from 'svelte';
 	export let timecode;
 	export let text;
+
+	let el: HTMLDivElement;
+
+	onMount(() => {
+		const y = el.getBoundingClientRect().top;
+		console.log(`Segment ${timecode} top Y:`, y);
+	});
 </script>
 
-<div class="subtitle-segment">
+<div class="subtitle-segment" bind:this={el}>
 	<div class="subtitle-time">{timecode}</div>
 	<div class="subtitle-text">{text}</div>
 </div>
