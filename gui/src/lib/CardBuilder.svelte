@@ -91,8 +91,10 @@
 				placeholder="Translated version"
 			/>
 		</div>
+	</div>
 
-		<h3>MP3 Snippet</h3>
+	<div class="control-section">
+		<h3>Sentence Audio</h3>
 		<div class="time-controls">
 			<div class="time-row flex-row push-items-top sml-space-below">
 				<div class="time-group half-container-fill">
@@ -116,46 +118,27 @@
 
 			<button class="play-btn sml-space-below" onclick={playAudio}>▶ Play Audio</button>
 		</div>
-
-		<div class="input-group">
-			<label for="language">Language</label>
-			<select id="language" bind:value={selectedLanguage}>
-				<option value="en">English</option>
-				<option value="fr">French</option>
-				<option value="es">Spanish</option>
-				<option value="de">German</option>
-				<option value="it">Italian</option>
-				<option value="pt">Portuguese</option>
-			</select>
+	</div>
+	<div class="control-section">
+		<h3>Image</h3>
+		<div class="image-target-container">
+			<!-- container div with a border -->
+			<div class="image-target">
+				<!-- container div with an image that is dynamically set -->
+				<!-- the image is about the size of the Anki thumbnail -->
+				<!-- TODO: the image should be shrunk behind the scenes to save space in Anki -->
+			</div>
 		</div>
-
-		<button class="primary-btn" onclick={handleProcessVideo}> Process Video </button>
 	</div>
 
 	<div class="control-section">
-		<h3>Search & Navigate</h3>
-		<div class="input-group">
-			<label for="search">Search Subtitles</label>
-			<input id="search" type="text" placeholder="Search text..." />
-		</div>
-		<button class="secondary-btn" onclick={handleSearchSubtitles}> Search </button>
-	</div>
-
-	<div class="control-section">
-		<h3>Export Options</h3>
-		<div class="input-group">
-			<label for="format">Export Format</label>
-			<select id="format" bind:value={exportFormat}>
-				<option value="srt">SRT</option>
-				<option value="vtt">WebVTT</option>
-				<option value="ass">ASS/SSA</option>
-				<option value="txt">Plain Text</option>
-			</select>
-		</div>
+		<h3>Finalize</h3>
 
 		<div class="button-group">
-			<button class="success-btn" onclick={handleExportSubtitles}> Export Subtitles </button>
+			<button class="success-btn" onclick={handleExportSubtitles}> Export Card </button>
 			<button class="danger-btn" onclick={handleClearSubtitles}> Clear All </button>
+			TODO: Show confirmation dialogue for "Clear all?" since it's destructive
+			<button class="secondary-btn" onclick={handleSearchSubtitles}> Shutdown </button>
 		</div>
 	</div>
 </div>
@@ -201,6 +184,20 @@
 		box-shadow:
 			0 4px 6px -1px rgba(0, 0, 0, 0.1),
 			0 2px 4px -1px rgba(0, 0, 0, 0.06);
+	}
+
+	.image-target-container {
+		height: 200px;
+		width: 400px;
+		border: 2px solid grey;
+		border-radius: 8px;
+	}
+
+	.image-target {
+		height: 100%;
+		width: 100%;
+		background-color: #eeeeee;
+		border-radius: 8px;
 	}
 
 	.control-panel {
