@@ -1,0 +1,221 @@
+import os
+os.environ["PATH"] = r"C:\Users\roly\mpv-dev-x86_64" + os.pathsep + os.environ["PATH"]
+
+import mpv
+
+from mpv import MPV
+import time
+import sys
+import signal
+import threading
+from pathlib import Path
+
+class MPVTimeMonitor:
+    def __init__(self, poll_interval=0.208, connect_to_existing=False):
+        self.poll_interval = poll_interval
+        self.running = False
+        self.monitor_thread = None
+        
+        if connect_to_existing:
+            # Connect to existing MPV instance via IPC
+            self.player = mpv.MPV(start_mpv=False)
+            # Connect to the IPC socket
+            socket_path = r'\\.\pipe\mpvsocket' if sys.platform == 'win32' else '/tmp/mpvsocket'
+            self.player._connect_to_socket(socket_path)
+        else:
+            # Create new MPV instance
+            self.player = mpv.MPV(
+                input_ipc_server=r'\\.\pipe\mpvsocket' if sys.platform == 'win32' else '/tmp/mpvsocket',
+                idle=True,
+            )
+        # Set up event handlers
+        self.setup_event_handlers()
+        
+        # Set up graceful shutdown
+        signal.signal(signal.SIGINT, self.signal_handler)
+        
+    def setup_event_handlers(self):
+        """Set up MPV event handlers"""
+        
+        @self.player.event_callback('start-file')
+        def on_start_file(event):
+            print(f"🟢 Started playing: {self.get_filename()}")
+            
+        @self.player.event_callback('end-file')
+        def on_end_file(event):
+            reason = event.get('reason', 'unknown')
+            print(f"🔴 Playback ended: {reason}")
+            
+        @self.player.event_callback('seek')
+        def on_seek(event):
+            pos = self.get_time_pos()
+            if pos:
+                print(f"⏩ Seeked to {self.format_time(pos)}")
+    
+    def get_time_pos(self):
+        """Get current time position"""
+        try:
+            return self.player.time_pos
+        except:
+            return None
+    
+    def get_duration(self):
+        """Get media duration"""
+        try:
+            return self.player.duration
+        except:
+            return None
+    
+    def get_filename(self):
+        """Get current filename"""
+        try:
+            filename = self.player.filename
+            if filename and isinstance(filename, str):
+                return Path(filename).name
+            return "Unknown"
+        except:
+            return "Unknown"
+    
+    def format_time(self, seconds):
+        """Format seconds as MM:SS.S"""
+        if seconds is None:
+            return "00:00.0"
+        
+        minutes = int(seconds // 60)
+        secs = seconds % 60
+        return f"{minutes}:{secs:04.1f}"
+    
+    def monitor_time(self):
+        """Monitor time position in a separate thread"""
+        print(f"🕐 Starting time monitoring (every {int(self.poll_interval * 1000)}ms)...")
+        
+        while self.running:
+            time_pos = self.get_time_pos()
+            
+            if time_pos is not None:
+                duration = self.get_duration()
+                formatted_time = self.format_time(time_pos)
+                
+                if duration and isinstance(duration, (int, float)) and isinstance(time_pos, (int, float)):
+                    progress = (time_pos / duration) * 100
+                    formatted_duration = self.format_time(duration)
+                    print(f"⏱️  {formatted_time} / {formatted_duration} ({progress:.1f}%)")
+                else:
+                    print(f"⏱️  {formatted_time}")
+            else:
+                # Check if player is idle or has media loaded
+                try:
+                    idle = self.player.idle_active
+                    if idle:
+                        print("💤 Player idle (no media loaded)")
+                    else:
+                        print("⚠️  No time position available")
+                except:
+                    print("⚠️  Player not ready")
+            
+            time.sleep(self.poll_interval)
+    
+    def load_file(self, filepath):
+        """Load and play a file"""
+        try:
+            print(f"📁 Loading: {Path(filepath).name}")
+            self.player.play(filepath)
+            return True
+        except Exception as e:
+            print(f"❌ Failed to load file: {e}")
+            return False
+    
+    def start_monitoring(self):
+        """Start the time monitoring thread"""
+        if not self.running:
+            self.running = True
+            self.monitor_thread = threading.Thread(target=self.monitor_time, daemon=True)
+            self.monitor_thread.start()
+    
+    def stop_monitoring(self):
+        """Stop the time monitoring thread"""
+        self.running = False
+        if self.monitor_thread and self.monitor_thread.is_alive():
+            self.monitor_thread.join(timeout=1)
+    
+    def signal_handler(self, sig, frame):
+        """Handle Ctrl+C gracefully"""
+        print("\n🛑 Shutting down...")
+        self.cleanup()
+        sys.exit(0)
+    
+    def cleanup(self):
+        """Clean up resources"""
+        self.stop_monitoring()
+        try:
+            self.player.terminate()
+        except:
+            pass
+    
+    # Playback controls
+    def play(self):
+        """Resume playback"""
+        self.player.pause = False
+    
+    def pause(self):
+        """Pause playback"""
+        self.player.pause = True
+    
+    def toggle_pause(self):
+        """Toggle pause state"""
+        self.player.pause = not self.player.pause
+    
+    def seek(self, seconds):
+        """Seek to position (absolute)"""
+        try:
+            self.player.seek(seconds, reference='absolute')
+        except Exception as e:
+            print(f"❌ Seek failed: {e}")
+    
+    def set_volume(self, volume):
+        """Set volume (0-100)"""
+        try:
+            self.player.volume = max(0, min(100, volume))
+            print(f"🔊 Volume: {self.player.volume}%")
+        except Exception as e:
+            print(f"❌ Volume change failed: {e}")
+
+
+def main():
+    # Connect to existing MPV if no file argument provided
+    connect_existing = len(sys.argv) == 1
+    monitor = MPVTimeMonitor(poll_interval=0.208, connect_to_existing=connect_existing)
+    
+    # Start monitoring
+    monitor.start_monitoring()
+    
+    # Load a file if provided as command line argument
+    if len(sys.argv) > 1:
+        filepath = sys.argv[1]
+        if monitor.load_file(filepath):
+            print("✅ File loaded successfully")
+        else:
+            print("❌ Failed to load file")
+    else:
+        print("💡 No file provided. You can:")
+        print("   - Load a file: python mpv_monitor.py 'path/to/video.mp4'")
+        print("   - Or load files manually in the MPV window")
+        print("   - Or connect external applications to the IPC socket")
+    
+    print("\n🎮 Controls:")
+    print("   Ctrl+C: Quit")
+    print("   Use MPV window for playback controls")
+    print(f"   IPC socket available at: {r'\\.\pipe\mpvsocket' if sys.platform == 'win32' else '/tmp/mpvsocket'}")
+    
+    try:
+        # Keep main thread alive
+        while True:
+            time.sleep(1)
+    except KeyboardInterrupt:
+        pass
+    finally:
+        monitor.cleanup()
+
+
+if __name__ == "__main__":
+    main()
