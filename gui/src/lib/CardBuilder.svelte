@@ -1,7 +1,7 @@
 <!-- CardBuilder.svelte -->
-<script>
+<script lang="ts">
 	// Props - data passed in from parent
-	let { startTime = $bindable('') } = $props();
+	let { foofoo = $bindable('') } = $props();
 
 	// Local state
 	let selectedLanguage = $state('en');
@@ -32,6 +32,38 @@
 	let wordField = '';
 	let exampleSentenceField = '';
 	let nativeLangTranslation = '';
+
+	let startTime = '8:06';
+	let endTime = '8:13';
+
+	function nudgeStart(direction: number) {
+		let [minutes, seconds] = startTime.split(':').map(Number);
+		let totalSeconds = minutes * 60 + seconds;
+		totalSeconds += direction;
+
+		if (totalSeconds < 0) totalSeconds = 0;
+
+		let newMinutes = Math.floor(totalSeconds / 60);
+		let newSeconds = totalSeconds % 60;
+		startTime = `${newMinutes}:${newSeconds.toString().padStart(2, '0')}`;
+	}
+
+	function nudgeEnd(direction: number) {
+		let [minutes, seconds] = endTime.split(':').map(Number);
+		let totalSeconds = minutes * 60 + seconds;
+		totalSeconds += direction;
+
+		if (totalSeconds < 0) totalSeconds = 0;
+
+		let newMinutes = Math.floor(totalSeconds / 60);
+		let newSeconds = totalSeconds % 60;
+		endTime = `${newMinutes}:${newSeconds.toString().padStart(2, '0')}`;
+	}
+
+	function playAudio() {
+		console.log(`Playing audio from ${startTime} to ${endTime}`);
+		// Add your audio playback logic here
+	}
 </script>
 
 <div class="control-panel">
@@ -60,6 +92,31 @@
 			/>
 		</div>
 
+		<h3>MP3 Snippet</h3>
+		<div class="time-controls">
+			<div class="time-row">
+				<div class="time-group">
+					<label>Start Time</label>
+					<div class="time-display">
+						<button class="nudge-btn" onclick={() => nudgeStart(-1)}>←</button>
+						<span class="time-value">{startTime}</span>
+						<button class="nudge-btn" onclick={() => nudgeStart(-1)}>→</button>
+					</div>
+				</div>
+
+				<div class="time-group">
+					<label>End Time</label>
+					<div class="time-display">
+						<button class="nudge-btn" onclick={() => nudgeEnd(-1)}>←</button>
+						<span class="time-value">{endTime}</span>
+						<button class="nudge-btn" onclick={() => nudgeEnd(1)}>→</button>
+					</div>
+				</div>
+			</div>
+
+			<button class="play-btn" onclick={playAudio}>▶ Play Audio</button>
+		</div>
+
 		<div class="input-row">
 			<div class="input-group">
 				<label for="start-time">Start Time</label>
@@ -83,7 +140,7 @@
 			</select>
 		</div>
 
-		<button class="primary-btn" on:click={handleProcessVideo}> Process Video </button>
+		<button class="primary-btn" onclick={handleProcessVideo}> Process Video </button>
 	</div>
 
 	<div class="control-section">
@@ -92,7 +149,7 @@
 			<label for="search">Search Subtitles</label>
 			<input id="search" type="text" placeholder="Search text..." />
 		</div>
-		<button class="secondary-btn" on:click={handleSearchSubtitles}> Search </button>
+		<button class="secondary-btn" onclick={handleSearchSubtitles}> Search </button>
 	</div>
 
 	<div class="control-section">
@@ -108,8 +165,8 @@
 		</div>
 
 		<div class="button-group">
-			<button class="success-btn" on:click={handleExportSubtitles}> Export Subtitles </button>
-			<button class="danger-btn" on:click={handleClearSubtitles}> Clear All </button>
+			<button class="success-btn" onclick={handleExportSubtitles}> Export Subtitles </button>
+			<button class="danger-btn" onclick={handleClearSubtitles}> Clear All </button>
 		</div>
 	</div>
 </div>
