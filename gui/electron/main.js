@@ -12,11 +12,13 @@ const __dirname = dirname(__filename);
 import path from 'path'
 const isDev = process.argv.includes('--dev') || !app.isPackaged
 
+
+
 let mpvWS
 let mainWindow; 
 
 function createWindow() {
-    const mainWindow = new BrowserWindow({
+    mainWindow = new BrowserWindow({
         width: 1200,
         height: 800,
         webPreferences: {
@@ -35,6 +37,7 @@ function createWindow() {
     }
 
     if (isDev) {
+        
         mainWindow.webContents.openDevTools()
     }
 
@@ -54,16 +57,14 @@ function connectMPV() {
         console.log("connectMPV onMessage")
         try {
             const parsed = JSON.parse(data);
-            console.log(parsed, "57ru")
+            console.log(parsed.content)
+            console.log(mainWindow && !mainWindow.isDestroyed(), "57ru")
             // Send to renderer
             if (mainWindow && !mainWindow.isDestroyed()) {
                 console.log("sending something to webContents")
-                mainWindow.webContents.send('mpv-state', {
-                    pos: parsed.position || 0,
-                    dur: parsed.duration || 0,
-                    play: parsed.playing || false,
-                    ts: Date.now()
-                });
+                mainWindow.webContents.send('mpv-state', 
+                    parsed
+                );
             }
         } catch (e) {
             console.error('Failed to parse MPV data:', e);

@@ -32,7 +32,10 @@ class MPVWebSocketServer:
             osc=True,
             sub_auto='all',
             input_default_bindings=True,
-            input_vo_keyboard=True
+            input_vo_keyboard=True,
+            autofit='50%',
+            geometry='+0+0'  # Right edge (+-0) and top edge (+0)
+
         )
         
         self.setup_event_handlers()
@@ -192,9 +195,9 @@ class MPVWebSocketServer:
                         
                         # Send structured data for WebSocket clients
                         extra_data = {
-                            "time_pos": time_pos,
+                            "time_pos": round(time_pos, 3),  
                             # "duration": duration,
-                            "progress": progress,
+                            "progress": round(progress, 3),
                             "formatted_time": formatted_time,
                             "formatted_duration": formatted_duration
                         }
