@@ -30,18 +30,11 @@
             align-items: center;
             justify-content: center;
             border-right: 1px solid #333;
-            position: relative;
         }
 
         .video-placeholder {
             color: #666;
             font-size: 18px;
-        }
-
-        .mpv-container {
-            width: 100%;
-            height: 100%;
-            background: #000;
         }
 
         .subtitle-panel {
@@ -117,10 +110,7 @@
 <body>
     <div class="container">
         <div class="video-panel">
-            <div class="video-placeholder" id="videoPlaceholder">Initializing MPV...</div>
-            <!-- <div class="mpv-container" id="mpvContainer" style="display: none;"></div> -->
-            <div id="mpv-container" style="width: 900px; height: 800px;"></div>
-
+            <div class="video-placeholder">Video Player Area (MPV will go here)</div>
         </div>
         
         <div class="subtitle-panel">
@@ -134,22 +124,9 @@
     <script>
         const fs = require('fs');
         const path = require('path');
-        const { ipcRenderer } = require('electron');
 
         // Hardcoded path to SRT file - change this to your file path
         const SRT_FILE_PATH = './sample.srt';
-
-        // MPV event listeners
-        ipcRenderer.on('mpv-ready', (event, windowId) => {
-            document.getElementById('videoPlaceholder').style.display = 'none';
-            document.getElementById('mpvContainer').style.display = 'block';
-            console.log('MPV ready with window ID:', windowId);
-        });
-
-        ipcRenderer.on('mpv-error', (event, error) => {
-            document.getElementById('videoPlaceholder').textContent = `MPV Error: ${error}`;
-            console.error('MPV Error:', error);
-        });
 
         function parseSRT(srtContent) {
             const segments = [];
