@@ -54,6 +54,13 @@ class MPVTimeMonitor:
             if pos:
                 print(f"⏩ Seeked to {self.format_time(pos)}")
         
+        @self.player.property_observer('pause')
+        def on_pause_observer(_name, value):
+            if value:
+                print("⏸️  Paused")
+            else:
+                print("▶️  Resuming")
+        
         @self.player.event_callback('shutdown')
         def on_shutdown(event):
             print("🚪 MPV player window closed")
@@ -90,6 +97,17 @@ class MPVTimeMonitor:
         except:
             return "Unknown"
     
+    def is_paused(self):
+        """Check if player is currently paused"""
+        try:
+            if not self.player_active:
+                return True
+            return self.player.pause
+        except:
+            return True
+    
+
+    
     def format_time(self, seconds):
         """Format seconds as MM:SS.S"""
         if seconds is None:
@@ -105,6 +123,11 @@ class MPVTimeMonitor:
         
         while self.running and self.player_active:
             try:
+                # Skip logging if paused
+                if self.is_paused():
+                    time.sleep(self.poll_interval)
+                    continue
+                
                 time_pos = self.get_time_pos()
                 
                 if time_pos is not None:
