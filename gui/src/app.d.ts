@@ -9,17 +9,22 @@ declare global {
 		// interface Platform {}
 	}
 
-	  interface Window {
-    electronAPI: {
-      onMPVState: (callback: (data: {
-        pos: number;
-        dur: number;
-        play: boolean;
-        ts: number;
-      }) => void) => void;
-      removeMPVListener: () => void;
-    }
-  }
+	interface Window {
+		electronAPI: {
+			onMPVState: (
+				callback: (data: {
+					content: string;
+					formatted_duration: string;
+					formatted_time: string;
+					progress: number;
+					time_pos: number;
+					timestamp: number;
+					type: string;
+				}) => void
+			) => void;
+			removeMPVListener: () => void;
+		};
+	}
 }
 
 export {};

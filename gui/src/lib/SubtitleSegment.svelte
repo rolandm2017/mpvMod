@@ -1,13 +1,25 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
-	export let timecode;
-	export let text;
+
+	let { timecode, text, emitTopOfContainer } = $props();
 
 	let el: HTMLDivElement;
 
 	onMount(() => {
-		const y = el.getBoundingClientRect().top;
-		// console.log(`Segment ${timecode} top Y:`, y);
+		// const y = el.getBoundingClientRect().top;
+		// // console.log(`Segment ${timecode} top Y:`, y);
+		// emitTopOfContainer(y);
+		// Use a small delay to ensure element is fully rendered
+		setTimeout(() => {
+			const rect = el.getBoundingClientRect();
+			const containerRect = el.closest('.subtitle-content')?.getBoundingClientRect();
+
+			if (containerRect) {
+				// Get position relative to the scroll container
+				const relativeY = rect.top - containerRect.top;
+				emitTopOfContainer(timecode, relativeY);
+			}
+		}, 10);
 	});
 </script>
 
