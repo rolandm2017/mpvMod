@@ -65,7 +65,7 @@ class MPVAudioCapture:
             else:
                 print("🔴 Timestamp MIA!")
 
-            self.start_of_recording =  f"{timestamp:.2f}"
+            self.start_of_recording =  timestamp
                 
         except Exception as e:
             traceback.print_exc()
@@ -80,7 +80,7 @@ class MPVAudioCapture:
             else:
                 print("🔴 Timestamp MIA!")
 
-            end_timestamp = f"{end_timestamp:.2f}"
+            # end_timestamp = f"{end_timestamp:.2f}"
 
             # make a timestamped mp3 name. (the player's timestamp)
             file_name = self.mp3_name + " - " + str(self.start_of_recording) + " - " + str(end_timestamp) + ".mp3"

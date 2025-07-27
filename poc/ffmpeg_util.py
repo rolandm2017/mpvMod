@@ -37,9 +37,10 @@ subprocess.run([
 
 
 def make_audio_mp3(video_path: str, t1, t2, dest_file_path: Path):
+   duration = t2 - t1  # Calculate the duration
    cmd = [
-        "ffmpeg", "-ss", str(t1), "-i", video_path, "-to", str(t2), 
-        "-vn", "-acodec", "mp3", str(dest_file_path), "-y"
+      "ffmpeg", "-ss", str(t1), "-i", video_path, "-t", str(duration), 
+      "-vn", "-acodec", "mp3", str(dest_file_path), "-y"
    ]
    print("Running ffmpeg: ")
    print(" ".join(cmd))
