@@ -2,12 +2,21 @@
 <p>Visit <a href="https://svelte.dev/docs/kit">svelte.dev/docs/kit</a> to read the documentation</p> -->
 
 <script lang="ts">
+	import CardBuilder from '$lib/CardBuilder.svelte';
 	import SubtitleSegment from '$lib/SubtitleSegment.svelte';
 	import { onMount } from 'svelte';
 
 	export let data;
 
 	let scrollContainer: HTMLDivElement;
+
+	// Form state
+	let videoUrl = '';
+	let startTime = '';
+	let endTime = '';
+	let selectedLanguage = 'en';
+	let exportFormat = 'srt';
+	let searchQuery = '';
 
 	onMount(() => {
 		scrollContainer.scrollTo({
@@ -42,12 +51,14 @@
 			{/if}
 		</div>
 	</div>
+	<CardBuilder />
 </div>
 
-<style lang="ts">
+<style>
 	.container {
 		display: flex;
 		height: 100vh;
+		font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 	}
 
 	.subtitle-panel {
@@ -55,6 +66,7 @@
 		background: #2a2a2a;
 		display: flex;
 		flex-direction: column;
+		color: white;
 	}
 
 	.subtitle-header {
