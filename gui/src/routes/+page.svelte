@@ -16,6 +16,10 @@
 		});
 	});
 
+	// TODO: I can, like, predict when the subtitle will change again, because
+	// if the previous timestamp update said time 304, and the subtitle changes at time 307, three sec later,
+	// the subtitle must change
+
 	function getSubtitleScrollPosition() {
 		//
 	}
