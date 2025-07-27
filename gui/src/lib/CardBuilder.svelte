@@ -1,7 +1,7 @@
 <!-- CardBuilder.svelte -->
 <script>
 	// Props - data passed in from parent
-	let { videoUrl = $bindable(''), startTime = $bindable('') } = $props();
+	let { startTime = $bindable('') } = $props();
 
 	// Local state
 	let selectedLanguage = $state('en');
@@ -11,10 +11,6 @@
 	function handleProcessVideo() {
 		//
 	}
-
-	// function handleExportSubtitles() {
-	// 	onExportSubtitles?.({ format: exportFormat });
-	// }
 
 	function handleExportSubtitles() {
 		console.log('Exporting subtitles as:', exportFormat);
@@ -32,20 +28,35 @@
 			// Add your clear logic here
 		}
 	}
+
+	let wordField = '';
+	let exampleSentenceField = '';
+	let nativeLangTranslation = '';
 </script>
 
 <div class="control-panel">
 	<div class="panel-header">Card Builder</div>
 
 	<div class="control-section">
-		<h3>Video Processing</h3>
+		<h3>Text fields</h3>
 		<div class="input-group">
-			<label for="video-url">Video URL or File Path</label>
+			<label for="video-url">Word</label>
+			<input id="word-field" type="text" bind:value={wordField} placeholder="Target word" />
+
+			<label for="video-url">Example sentence</label>
 			<input
-				id="video-url"
+				id="example-sentence"
 				type="text"
-				bind:value={videoUrl}
-				placeholder="https://example.com/video.mp4"
+				bind:value={exampleSentenceField}
+				placeholder="Subtitle snippet"
+			/>
+
+			<label for="video-url">Native translation</label>
+			<input
+				id="NL-translation"
+				type="text"
+				bind:value={nativeLangTranslation}
+				placeholder="Translated version"
 			/>
 		</div>
 
