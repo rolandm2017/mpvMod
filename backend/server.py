@@ -12,6 +12,8 @@ from pathlib import Path
 from typing import Optional
 import mpv
 
+# FIXME: the MPV, and harvesting time, should be a layer behind the WS Server
+
 class MPVWebSocketServer:
     def __init__(self, poll_interval=0.208):
         self.poll_interval = poll_interval

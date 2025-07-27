@@ -4,7 +4,7 @@
 <script lang="ts">
 	import CardBuilder from '$lib/CardBuilder.svelte';
 	import SubtitleSegment from '$lib/SubtitleSegment.svelte';
-	import { onMount } from 'svelte';
+	import { onMount, onDestroy } from 'svelte';
 
 	export let data;
 
@@ -36,6 +36,27 @@
 	function scrollToPosition() {
 		//
 	}
+
+	let position = 0;
+	let duration = 0;
+	let playing = false;
+
+	onMount(() => {
+		// Direct variable updates - fastest possible
+		console.log('Window object:', window);
+		console.log('electronAPI available:', !!window.electronAPI);
+
+		if (window.electronAPI) {
+			console.log('Running onMPVstate');
+			window.electronAPI.onMPVState((data) => {
+				position = data.pos;
+				duration = data.dur;
+				playing = data.play;
+			});
+		} else {
+			console.error('electronAPI not available');
+		}
+	});
 </script>
 
 <div class="container">

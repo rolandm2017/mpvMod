@@ -7,7 +7,7 @@
 
 	onMount(() => {
 		const y = el.getBoundingClientRect().top;
-		console.log(`Segment ${timecode} top Y:`, y);
+		// console.log(`Segment ${timecode} top Y:`, y);
 	});
 </script>
 

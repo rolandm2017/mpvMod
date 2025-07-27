@@ -8,6 +8,18 @@ declare global {
 		// interface PageState {}
 		// interface Platform {}
 	}
+
+	  interface Window {
+    electronAPI: {
+      onMPVState: (callback: (data: {
+        pos: number;
+        dur: number;
+        play: boolean;
+        ts: number;
+      }) => void) => void;
+      removeMPVListener: () => void;
+    }
+  }
 }
 
 export {};
