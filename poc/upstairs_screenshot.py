@@ -108,7 +108,6 @@ class MPVScreenshotCapture:
             print("\n👋 Shutting down...")
             exit()
         finally:
-            self.cleanup()
             # if self.mpv:
             #     try:
             #         self.mpv.close()

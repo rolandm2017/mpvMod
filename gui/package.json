@@ -7,11 +7,12 @@
     "start": "electron .",
     "dev": "electron . --dev"
   },
-  "devDependencies": {
-    "electron": "^33.0.0"
-  },
   "dependencies": {
     "dotenv": "^17.2.1",
+    "electron": "^37.2.4",
     "node-mpv": "^1.5.0"
+  },
+  "devDependencies": {
+    "@ljharb/tsconfig": "^0.3.2"
   }
 }
