@@ -2,8 +2,6 @@ import os
 os.environ["PATH"] = r"C:\Users\roly\mpv-dev-x86_64" + os.pathsep + os.environ["PATH"]
 
 import mpv
-
-from mpv import MPV
 import time
 import sys
 import signal
@@ -11,23 +9,25 @@ import threading
 from pathlib import Path
 
 class MPVTimeMonitor:
-    def __init__(self, poll_interval=0.208, connect_to_existing=False):
+    def __init__(self, poll_interval=0.208):
         self.poll_interval = poll_interval
         self.running = False
         self.monitor_thread = None
         
-        if connect_to_existing:
-            # Connect to existing MPV instance via IPC
-            self.player = mpv.MPV(start_mpv=False)
-            # Connect to the IPC socket
-            socket_path = r'\\.\pipe\mpvsocket' if sys.platform == 'win32' else '/tmp/mpvsocket'
-            self.player._connect_to_socket(socket_path)
-        else:
-            # Create new MPV instance
-            self.player = mpv.MPV(
-                input_ipc_server=r'\\.\pipe\mpvsocket' if sys.platform == 'win32' else '/tmp/mpvsocket',
-                idle=True,
-            )
+        # Create MPV instance
+        self.player = mpv.MPV(
+            # Enable IPC for external connections if needed
+            input_ipc_server=r'\\.\pipe\mpvsocket' if sys.platform == 'win32' else '/tmp/mpvsocket',
+            # Keep player open when no media
+            idle=True,
+            # Optional: start in audio-only mode
+            # no_video=True,
+            osc=True,  # Enable on-screen controller (progress bar, controls)
+            sub_auto='all',  # Auto-load subtitles
+            input_default_bindings=True,  # Enable default key bindings
+            input_vo_keyboard=True  # Enable keyboard input
+        )
+        
         # Set up event handlers
         self.setup_event_handlers()
         
@@ -45,6 +45,7 @@ class MPVTimeMonitor:
         def on_end_file(event):
             reason = event.get('reason', 'unknown')
             print(f"🔴 Playback ended: {reason}")
+        
             
         @self.player.event_callback('seek')
         def on_seek(event):
@@ -146,10 +147,13 @@ class MPVTimeMonitor:
     
     def cleanup(self):
         """Clean up resources"""
-        self.stop_monitoring()
+        if self.running:
+            self.stop_monitoring()
         try:
-            self.player.terminate()
-        except:
+            if hasattr(self.player, 'terminate'):
+                self.player.terminate()
+        except Exception as e:
+            # Player might already be closed
             pass
     
     # Playback controls
@@ -182,9 +186,8 @@ class MPVTimeMonitor:
 
 
 def main():
-    # Connect to existing MPV if no file argument provided
-    connect_existing = len(sys.argv) == 1
-    monitor = MPVTimeMonitor(poll_interval=0.208, connect_to_existing=connect_existing)
+    # Example usage
+    monitor = MPVTimeMonitor(poll_interval=0.208)  # 208ms intervals
     
     # Start monitoring
     monitor.start_monitoring()
