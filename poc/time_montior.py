@@ -13,6 +13,7 @@ class MPVTimeMonitor:
         self.poll_interval = poll_interval
         self.running = False
         self.monitor_thread = None
+        self.player_active = True
         
         # Create MPV instance
         self.player = mpv.MPV(
@@ -43,19 +44,27 @@ class MPVTimeMonitor:
             
         @self.player.event_callback('end-file')
         def on_end_file(event):
-            reason = event.get('reason', 'unknown')
+            # MpvEvent objects have attributes, not dictionary-style access
+            reason = getattr(event, 'reason', 'unknown')
             print(f"🔴 Playback ended: {reason}")
-        
             
         @self.player.event_callback('seek')
         def on_seek(event):
             pos = self.get_time_pos()
             if pos:
                 print(f"⏩ Seeked to {self.format_time(pos)}")
+        
+        @self.player.event_callback('shutdown')
+        def on_shutdown(event):
+            print("🚪 MPV player window closed")
+            self.player_active = False
+            self.stop_monitoring()
     
     def get_time_pos(self):
         """Get current time position"""
         try:
+            if not self.player_active:
+                return None
             return self.player.time_pos
         except:
             return None
@@ -63,6 +72,8 @@ class MPVTimeMonitor:
     def get_duration(self):
         """Get media duration"""
         try:
+            if not self.player_active:
+                return None
             return self.player.duration
         except:
             return None
@@ -70,6 +81,8 @@ class MPVTimeMonitor:
     def get_filename(self):
         """Get current filename"""
         try:
+            if not self.player_active:
+                return "Player closed"
             filename = self.player.filename
             if filename and isinstance(filename, str):
                 return Path(filename).name
@@ -90,35 +103,51 @@ class MPVTimeMonitor:
         """Monitor time position in a separate thread"""
         print(f"🕐 Starting time monitoring (every {int(self.poll_interval * 1000)}ms)...")
         
-        while self.running:
-            time_pos = self.get_time_pos()
-            
-            if time_pos is not None:
-                duration = self.get_duration()
-                formatted_time = self.format_time(time_pos)
+        while self.running and self.player_active:
+            try:
+                time_pos = self.get_time_pos()
                 
-                if duration and isinstance(duration, (int, float)) and isinstance(time_pos, (int, float)):
-                    progress = (time_pos / duration) * 100
-                    formatted_duration = self.format_time(duration)
-                    print(f"⏱️  {formatted_time} / {formatted_duration} ({progress:.1f}%)")
-                else:
-                    print(f"⏱️  {formatted_time}")
-            else:
-                # Check if player is idle or has media loaded
-                try:
-                    idle = self.player.idle_active
-                    if idle:
-                        print("💤 Player idle (no media loaded)")
+                if time_pos is not None:
+                    duration = self.get_duration()
+                    formatted_time = self.format_time(time_pos)
+                    
+                    if duration and isinstance(duration, (int, float)) and isinstance(time_pos, (int, float)):
+                        progress = (time_pos / duration) * 100
+                        formatted_duration = self.format_time(duration)
+                        print(f"⏱️  {formatted_time} / {formatted_duration} ({progress:.1f}%)")
                     else:
-                        print("⚠️  No time position available")
-                except:
-                    print("⚠️  Player not ready")
-            
-            time.sleep(self.poll_interval)
+                        print(f"⏱️  {formatted_time}")
+                else:
+                    # Check if player is idle or has media loaded
+                    try:
+                        if not self.player_active:
+                            break
+                        idle = self.player.idle_active
+                        if idle:
+                            print("💤 Player idle (no media loaded)")
+                        else:
+                            print("⚠️  No time position available")
+                    except:
+                        if self.player_active:
+                            print("⚠️  Player not ready")
+                        else:
+                            break
+                
+                time.sleep(self.poll_interval)
+                
+            except Exception as e:
+                if self.player_active:
+                    print(f"⚠️  Monitor error: {e}")
+                break
+        
+        print("🔄 Time monitoring stopped")
     
     def load_file(self, filepath):
         """Load and play a file"""
         try:
+            if not self.player_active:
+                print("❌ Player is not active")
+                return False
             print(f"📁 Loading: {Path(filepath).name}")
             self.player.play(filepath)
             return True
@@ -135,9 +164,11 @@ class MPVTimeMonitor:
     
     def stop_monitoring(self):
         """Stop the time monitoring thread"""
-        self.running = False
-        if self.monitor_thread and self.monitor_thread.is_alive():
-            self.monitor_thread.join(timeout=1)
+        if self.running:
+            print("⏹️  Stopping monitoring...")
+            self.running = False
+            if self.monitor_thread and self.monitor_thread.is_alive():
+                self.monitor_thread.join(timeout=2)
     
     def signal_handler(self, sig, frame):
         """Handle Ctrl+C gracefully"""
@@ -147,40 +178,53 @@ class MPVTimeMonitor:
     
     def cleanup(self):
         """Clean up resources"""
-        if self.running:
-            self.stop_monitoring()
+        self.player_active = False
+        self.stop_monitoring()
+        
         try:
-            if hasattr(self.player, 'terminate'):
+            # Try to terminate the player gracefully
+            if hasattr(self.player, 'quit'):
+                self.player.quit()
+            elif hasattr(self.player, 'terminate'):
                 self.player.terminate()
         except Exception as e:
-            # Player might already be closed
+            # Player might already be closed, ignore errors
             pass
+    
+    def is_player_active(self):
+        """Check if player is still active"""
+        return self.player_active
     
     # Playback controls
     def play(self):
         """Resume playback"""
-        self.player.pause = False
+        if self.player_active:
+            self.player.pause = False
     
     def pause(self):
         """Pause playback"""
-        self.player.pause = True
+        if self.player_active:
+            self.player.pause = True
     
     def toggle_pause(self):
         """Toggle pause state"""
-        self.player.pause = not self.player.pause
+        if self.player_active:
+            self.player.pause = not self.player.pause
     
     def seek(self, seconds):
         """Seek to position (absolute)"""
         try:
-            self.player.seek(seconds, reference='absolute')
+            if self.player_active:
+                self.player.seek(seconds, reference='absolute')
         except Exception as e:
             print(f"❌ Seek failed: {e}")
     
     def set_volume(self, volume):
         """Set volume (0-100)"""
         try:
-            self.player.volume = max(0, min(100, volume))
-            print(f"🔊 Volume: {self.player.volume}%")
+            if self.player_active:
+                self.player.volume = max(0, min(100, volume))
+                print(f"🔊 Volume: {self.player.volume}%")
         except Exception as e:
             print(f"❌ Volume change failed: {e}")
 
@@ -207,13 +251,17 @@ def main():
     
     print("\n🎮 Controls:")
     print("   Ctrl+C: Quit")
+    print("   Close MPV window: Automatically stops monitoring")
     print("   Use MPV window for playback controls")
     print(f"   IPC socket available at: {r'\\.\pipe\mpvsocket' if sys.platform == 'win32' else '/tmp/mpvsocket'}")
     
     try:
-        # Keep main thread alive
-        while True:
+        # Keep main thread alive, but check if player is still active
+        while monitor.is_player_active():
             time.sleep(1)
+        
+        print("\n✅ MPV player closed - exiting gracefully")
+        
     except KeyboardInterrupt:
         pass
     finally:
