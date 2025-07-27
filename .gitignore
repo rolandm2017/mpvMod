@@ -1,5 +1,5 @@
 .custom
-node_modules
+gui/node_modules
 
 __pycache__
 
