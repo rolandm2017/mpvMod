@@ -3,7 +3,18 @@
 
 <script lang="ts">
 	import SubtitleSegment from '$lib/SubtitleSegment.svelte';
+	import { onMount } from 'svelte';
+
 	export let data;
+
+	let scrollContainer: HTMLDivElement;
+
+	onMount(() => {
+		scrollContainer.scrollTo({
+			top: 29563.78125,
+			behavior: 'auto' // "auto", or "smooth"
+		});
+	});
 
 	function getSubtitleScrollPosition() {
 		//
@@ -17,7 +28,7 @@
 <div class="container">
 	<div class="subtitle-panel">
 		<div class="subtitle-header">Subtitles</div>
-		<div class="subtitle-content">
+		<div class="subtitle-content" bind:this={scrollContainer}>
 			{#if data.segments.length > 0}
 				{#each data.segments as segment}
 					<SubtitleSegment timecode={segment.timecode} text={segment.text} />
