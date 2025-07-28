@@ -18,7 +18,7 @@
 			if (containerRect) {
 				// Get position relative to the scroll container
 				const relativeY = rect.top - containerRect.top;
-				emitTopOfContainer(timecode, relativeY);
+				emitTopOfContainer(timecode, relativeY, el);
 			}
 		}, 10);
 	});
@@ -53,5 +53,11 @@
 	.subtitle-text {
 		line-height: 1.4;
 		color: #e0e0e0;
+	}
+
+	.subtitle-segment.highlighted {
+		background-color: #ffeb3b;
+		border-left: 4px solid #ff9800;
+		/* or whatever highlight style you want */
 	}
 </style>

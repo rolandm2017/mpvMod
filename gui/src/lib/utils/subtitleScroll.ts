@@ -1,21 +1,22 @@
 export function scrollToClosestSubtitle(
-	timestamp: number,
+	timePosition: number,
 	timesArr: number[],
 	subtitleHeights: Map<number, number>,
 	scrollContainer: HTMLDivElement
 ) {
 	/*
-	 * @param timestamp - the timestamp of the frame
+	 * @param timePosition - the timePosition of the frame
 	 * @param timesArr - an arr of all subtitle's start times
 	 */
-	console.log('Scrolling for ', timestamp);
-	const corresponding: number = findCorrespondingSubtitleTime(timestamp, timesArr);
+	console.log('Scrolling for ', timePosition);
+	const corresponding: number = findCorrespondingSubtitleTime(timePosition, timesArr);
 	console.log('corresponding: ', corresponding);
 	const heightForSub = subtitleHeights.get(corresponding) ?? 0;
 
 	// WANT: viewport at position of related subtitle
 	console.log(heightForSub, 'found height');
 	scrollToLocation(heightForSub, scrollContainer);
+	return heightForSub; // TODO: Try "corresponding", try storing parseTimecodeToSeconds(timecode)
 }
 
 export function scrollToLocation(location: number, scrollContainer: HTMLDivElement) {
