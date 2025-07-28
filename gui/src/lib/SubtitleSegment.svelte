@@ -9,6 +9,7 @@
 		// const y = el.getBoundingClientRect().top;
 		// // console.log(`Segment ${timecode} top Y:`, y);
 		// emitTopOfContainer(y);
+
 		// Use a small delay to ensure element is fully rendered
 		setTimeout(() => {
 			const rect = el.getBoundingClientRect();

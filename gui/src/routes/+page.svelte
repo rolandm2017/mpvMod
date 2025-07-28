@@ -1,49 +1,73 @@
 <script lang="ts">
+	import { onMount, onDestroy } from 'svelte';
+
 	import CardBuilder from '$lib/CardBuilder.svelte';
 	import SubtitleSegment from '$lib/SubtitleSegment.svelte';
-	import { onMount, onDestroy } from 'svelte';
+
+	import {
+		findCorrespondingSubtitleTime,
+		scrollToClosestSubtitle
+	} from '$lib/utils/subtitleScroll.js';
 
 	export let data;
 
 	let scrollContainer: HTMLDivElement;
 
-	// Form state
-	let videoUrl = '';
-	let startTime = '';
-	let endTime = '';
-	let selectedLanguage = 'en';
-	let exportFormat = 'srt';
-	let searchQuery = '';
+	// onMount(() => {
+	// 	scrollContainer.scrollTo({
+	// 		top: 29563.78125,
+	// 		behavior: 'auto' // "auto", or "smooth"
+	// 	});
+	// });
 
-	onMount(() => {
-		scrollContainer.scrollTo({
-			top: 29563.78125,
-			behavior: 'auto' // "auto", or "smooth"
-		});
-	});
+	// Position tracking
+	// HAVE: time position from stream.
+	// HAVE: list of subtitle start times.
+	const subtitleStartTimes: number[] = []; // sorted
+	// HAVE: corresponding heights for subtitle start
+	const subtitleHeights = new Map<number, number>();
 
-	// TODO: I can, like, predict when the subtitle will change again, because
-	// if the previous timestamp update said time 304, and the subtitle changes at time 307, three sec later,
-	// the subtitle must change
+	// const current: number = findCurrentSubtitleTime(timePos, subtitleStartTimes);
+	// const heightForSub = subtitleHeights.get(current) ?? 0;
 
-	function storeTopOfContainer(y: number) {
-		//
+	// // WANT: viewport at position of related subtitle
+
+	// scrollToLocation(heightForSub);
+	let mountedSegments = new Set<number>(); // track which segments have reported their position
+	let allSegmentsMounted = false;
+
+	function storeSegmentPosition(timecode: number, y: number) {
+		/* Used to transmit a component's Y height into the holder arr.
+		
+		 */
+		mountedSegments.add(timecode);
+		subtitleHeights.set(timecode, y);
+
+		// Check if all segments have mounted
+		if (mountedSegments.size === data.segments.length) {
+			allSegmentsMounted = true;
+			console.log('All segments mounted, positions ready');
+		}
 	}
 
-	function getSubtitleScrollPosition() {
-		//
-	}
+	/**
+	 *
+	 * My section
+	 */
 
-	function scrollToPosition() {
-		//
+	export function devtoolsScroller(timestamp: number) {
+		scrollToClosestSubtitle(timestamp, subtitleStartTimes, subtitleHeights, scrollContainer);
 	}
 
 	let content = '';
 	let timePos = 0;
 	let formattedTime = '';
 
+	let lastScrollTime = 0;
+
 	onMount(() => {
-		// Direct variable updates - fastest possible
+		(window as any).devtoolsScroller = devtoolsScroller;
+
 		console.log('Window object:', window);
 		console.log('electronAPI available:', !!window.electronAPI);
 
@@ -60,118 +84,40 @@
 				content = data.content;
 				timePos = data.time_pos;
 				formattedTime = data.formatted_time;
+
+				// Auto-scroll to current position (throttled)
+				const now = Date.now();
+				if (now - lastScrollTime > 500) {
+					// Throttle to every 500ms
+
+					scrollToClosestSubtitle(timePos, subtitleStartTimes, subtitleHeights, scrollContainer);
+
+					lastScrollTime = now;
+				}
 			});
 		} else {
 			console.error('electronAPI not available');
 		}
-	});
 
-	// Position tracking
-	let segmentPositions = new Map<string, number>(); // timecode -> y position
-	let mountedSegments = new Set<string>(); // track which segments have reported their position
-	let allSegmentsMounted = false;
-
-	function storeSegmentPosition(timecode: string, y: number) {
-		segmentPositions.set(timecode, y);
-		mountedSegments.add(timecode);
-
-		// Check if all segments have mounted
-		if (mountedSegments.size === data.segments.length) {
-			allSegmentsMounted = true;
-			console.log('All segments mounted, positions ready');
-		}
-	}
-
-	function scrollToTimecode(targetTimecode: string) {
-		const position = segmentPositions.get(targetTimecode);
-		if (position !== undefined) {
-			// Adjust for container's scroll offset
-			const containerRect = scrollContainer.getBoundingClientRect();
-			const scrollTop = position - containerRect.top + scrollContainer.scrollTop;
-
-			scrollContainer.scrollTo({
-				top: scrollTop,
-				behavior: 'smooth'
-			});
-		} else {
-			console.warn(`Position not found for timecode: ${targetTimecode}`);
-		}
-	}
-
-	// Function to find closest timecode if exact match not found
-	function scrollToClosestTimecode(
-		targetTime: number,
-		mode: 'closest' | 'previous' | 'next' = 'closest'
-	) {
-		if (!allSegmentsMounted) {
-			console.warn('Not all segments mounted yet');
-			return;
-		}
-
-		let bestTimecode = '';
-		let bestDiff = Infinity;
-
-		for (const segment of data.segments) {
-			const segmentTime = parseTimecodeToSeconds(segment.timecode);
-
-			if (mode === 'previous') {
-				// Find the latest subtitle that starts before or at targetTime
-				if (segmentTime <= targetTime) {
-					const diff = targetTime - segmentTime;
-					if (diff < bestDiff) {
-						bestDiff = diff;
-						bestTimecode = segment.timecode;
-					}
-				}
-			} else if (mode === 'next') {
-				// Find the earliest subtitle that starts after targetTime
-				if (segmentTime > targetTime) {
-					const diff = segmentTime - targetTime;
-					if (diff < bestDiff) {
-						bestDiff = diff;
-						bestTimecode = segment.timecode;
-					}
-				}
-			} else {
-				// Closest (default behavior)
-				const diff = Math.abs(segmentTime - targetTime);
-				if (diff < bestDiff) {
-					bestDiff = diff;
-					bestTimecode = segment.timecode;
-				}
+		// Initial scroll after mount
+		setTimeout(() => {
+			if (allSegmentsMounted) {
+				scrollToClosestSubtitle(timePos, subtitleStartTimes, subtitleHeights, scrollContainer);
 			}
-		}
-
-		if (bestTimecode) {
-			scrollToTimecode(bestTimecode);
-		}
-	}
-
-	function parseTimecodeToSeconds(timecode: string): number {
-		// Parse timecode format - adjust this based on your actual format
-		// Example: "00:05:23.450" -> seconds
-		const parts = timecode.split(':');
-		if (parts.length >= 3) {
-			const hours = parseInt(parts[0]) || 0;
-			const minutes = parseInt(parts[1]) || 0;
-			const seconds = parseFloat(parts[2]) || 0;
-			return hours * 3600 + minutes * 60 + seconds;
-		}
-		return 0;
-	}
+		}, 100);
+	});
 </script>
 
 <div class="container">
 	<div class="subtitle-panel">
 		<div class="subtitle-header">Subtitles</div>
 		<div class="subtitle-content" bind:this={scrollContainer}>
-			<!-- make a float value, time in seconds,use with time_pos -->
 			{#if data.segments.length > 0}
 				{#each data.segments as segment}
 					<SubtitleSegment
 						timecode={segment.timecode}
 						text={segment.text}
-						emitTopOfContainer={storeTopOfContainer}
+						emitTopOfContainer={storeSegmentPosition}
 					/>
 				{/each}
 			{:else}

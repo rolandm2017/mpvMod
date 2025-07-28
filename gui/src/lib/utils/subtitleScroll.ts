@@ -1,0 +1,60 @@
+export function scrollToClosestSubtitle(
+	timestamp: number,
+	timesArr: number[],
+	subtitleHeights: Map<number, number>,
+	scrollContainer: HTMLDivElement
+) {
+	/*
+	 * @param timestamp - the timestamp of the frame
+	 * @param timesArr - an arr of all subtitle's start times
+	 */
+	console.log('Scrolling for ', timestamp);
+	const corresponding: number = findCorrespondingSubtitleTime(timestamp, timesArr);
+	console.log('corresponding: ', corresponding);
+	const heightForSub = subtitleHeights.get(corresponding) ?? 0;
+
+	// WANT: viewport at position of related subtitle
+	console.log(heightForSub, 'found height');
+	scrollToLocation(heightForSub, scrollContainer);
+}
+
+export function scrollToLocation(location: number, scrollContainer: HTMLDivElement) {
+	scrollContainer.scrollTo({
+		top: location,
+		behavior: 'auto' // "auto", or "smooth"
+	});
+}
+
+export function findCorrespondingSubtitleTime(timestamp: number, times: number[]) {
+	let left = 0,
+		right = times.length - 1;
+	let result = -1;
+
+	while (left <= right) {
+		const mid = Math.floor((left + right) / 2);
+
+		if (times[mid] <= timestamp) {
+			result = mid; // This could be our answer
+			left = mid + 1; // Look for something larger
+		} else {
+			right = mid - 1; // Look for something smaller
+		}
+	}
+
+	console.log('RESULT: ', result);
+
+	return result === -1 ? 0 : times[result];
+}
+
+export function parseTimecodeToSeconds(timecode: string): number {
+	// Parse timecode format - adjust this based on your actual format
+	// Example: "00:05:23.450" -> seconds
+	const parts = timecode.split(':');
+	if (parts.length >= 3) {
+		const hours = parseInt(parts[0]) || 0;
+		const minutes = parseInt(parts[1]) || 0;
+		const seconds = parseFloat(parts[2]) || 0;
+		return hours * 3600 + minutes * 60 + seconds;
+	}
+	return 0;
+}

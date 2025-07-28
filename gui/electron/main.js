@@ -17,8 +17,8 @@ let mainWindow;
 
 function createWindow() {
 	mainWindow = new BrowserWindow({
-		width: 1200,
-		height: 800,
+		width: 1400, // was 1200
+		height: 1000, // was 800
 		webPreferences: {
 			nodeIntegration: false,
 			contextIsolation: true,
@@ -39,7 +39,7 @@ function createWindow() {
 	}
 
 	mainWindow.once('ready-to-show', () => {
-		connectMPV(); // Move here instead
+		// connectMPV(); // Move here instead
 	});
 }
 

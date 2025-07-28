@@ -4,7 +4,7 @@
 	"version": "0.0.1",
 	"type": "module",
 	"scripts": {
-		"dev": "concurrently \"npm run dev-vite\" \"npm run electron-dev\"",
+		"dev": "vite",
 		"dev-vite": "vite dev",
 		"build": "vite build",
 		"preview": "vite preview",
