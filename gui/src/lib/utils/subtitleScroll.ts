@@ -53,6 +53,27 @@ export function findCorrespondingSubtitleTime(timestamp: number, times: number[]
 	return result === -1 ? 0 : times[result];
 }
 
+export function findTimestampIndex(target: number, timestamps: number[]): number {
+	let left = 0,
+		right = timestamps.length - 1;
+	let result = -1;
+
+	while (left <= right) {
+		const mid = Math.floor((left + right) / 2);
+		if (timestamps[mid] <= target) {
+			result = mid;
+			left = mid + 1;
+		} else {
+			right = mid - 1;
+		}
+	}
+	return result === -1 ? 0 : result;
+}
+
+// Usage
+// const index = findTimestampIndex(n, data.timestamps);
+// const timecode = data.timecodes[index];
+
 export function parseTimecodeToSeconds(timecode: string): number {
 	// Parse timecode format - adjust this based on your actual format
 	// Example: "00:05:23.450" -> seconds

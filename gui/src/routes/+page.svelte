@@ -23,12 +23,18 @@
 
 	let database;
 
+	let content = '';
+	let playerPosition = 0;
+	let formattedTime = '';
+
+	let lastScrollTime = 0;
+
+	// TODO: Color the subtitle in question
+
 	onMount(() => {
 		(window as any).devtoolsScroller = devtoolsScroller;
 
 		let subtitles: Subtitle[] = [];
-
-		timePositionsToTimecodes = data.timePositionsToTimecodes;
 
 		// Use the pre-built arrays from server
 		data.segments.forEach((s) => {
@@ -36,7 +42,12 @@
 			subtitles.push(newSub);
 		});
 
-		database = new SubtitleDatabase(subtitles);
+		database = new SubtitleDatabase(
+			subtitles,
+			data.timePositionsToTimecodes,
+			data.positionInSec,
+			data.timecodes
+		);
 
 		console.log('Window object:', window);
 		console.log('electronAPI available:', !!window.electronAPI);
@@ -52,21 +63,29 @@
 				// timestamp :  1753652691.9598007
 				// type :  "time_update"
 				content = data.content;
-				timePos = data.time_pos;
+				playerPosition = data.time_pos;
 				formattedTime = data.formatted_time;
 
 				// Auto-scroll to current position (throttled)
 				const now = Date.now();
 				if (now - lastScrollTime > 500) {
 					// Throttle to every 500ms
-					const corresponding: number = findCorrespondingSubtitleTime(timePos, subtitleStartTimes);
+					const corresponding: number = findCorrespondingSubtitleTime(
+						playerPosition,
+						subtitleStartTimes
+					);
 					const timecode = timePositionsToTimecodes.get(corresponding);
 					if (timecode) {
 						highlightSegment(timecode);
 					} else {
 						console.log(timecode, 'not found');
 					}
-					scrollToClosestSubtitle(timePos, subtitleStartTimes, subtitleHeights, scrollContainer);
+					scrollToClosestSubtitle(
+						playerPosition,
+						subtitleStartTimes,
+						subtitleHeights,
+						scrollContainer
+					);
 
 					lastScrollTime = now;
 				}
@@ -87,14 +106,22 @@
 			console.log('First 3:', entries.slice(0, 3));
 			console.log('Last 3:', entries.slice(-3));
 			if (allSegmentsMounted) {
-				const corresponding: number = findCorrespondingSubtitleTime(timePos, subtitleStartTimes);
+				const corresponding: number = findCorrespondingSubtitleTime(
+					playerPosition,
+					subtitleStartTimes
+				);
 				const timecode = timePositionsToTimecodes.get(corresponding);
 				if (timecode) {
 					highlightSegment(timecode);
 				} else {
 					console.log(timecode, 'not found');
 				}
-				scrollToClosestSubtitle(timePos, subtitleStartTimes, subtitleHeights, scrollContainer);
+				scrollToClosestSubtitle(
+					playerPosition,
+					subtitleStartTimes,
+					subtitleHeights,
+					scrollContainer
+				);
 			}
 		}, 150);
 	});
@@ -174,11 +201,6 @@
 		}
 	}
 
-	/**
-	 *
-	 * My section
-	 */
-
 	// export function devtoolsScroller(timestamp: number) {
 	export function devtoolsScroller(timePos: number) {
 		const timecode = timePositionsToTimecodes.get(timePos);
@@ -189,14 +211,6 @@
 		}
 		scrollToClosestSubtitle(timePos, subtitleStartTimes, subtitleHeights, scrollContainer);
 	}
-
-	let content = '';
-	let timePos = 0;
-	let formattedTime = '';
-
-	let lastScrollTime = 0;
-
-	// TODO: Color the subtitle in question
 </script>
 
 <div class="container">

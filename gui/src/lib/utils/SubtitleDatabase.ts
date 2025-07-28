@@ -1,3 +1,5 @@
+import { findTimestampIndex } from './subtitleScroll';
+
 export class SubtitleDatabase {
 	/*
 	 *   Problem statent: It's a gong show trying to wrangle data from one representation
@@ -11,13 +13,31 @@ export class SubtitleDatabase {
 
 	timePositionsToTimecodes = new Map<number, string>();
 
-	constructor(segments: Subtitle[]) {
+	timestamps: number[] = [];
+	timecodes: string[] = [];
+
+	constructor(
+		segments: Subtitle[],
+		timeMap: Map<number, string>,
+		timestamps: number[],
+		timecodes: string[]
+	) {
 		this.subtitles = segments;
+
+		this.timePositionsToTimecodes = timeMap;
+
+		this.timestamps;
+		this.timecodes;
 	}
 
 	// TODO: Get subtitle timecode ->  Height
 	// TODO: Get player timestamp -> Height
-	// TODO: Get player timestamp -> subtitle timecode
+	// TODO: Get player timestamp -> timecode
+
+	getTimecodeForTimestamp(timestamp: number) {
+		const index = findTimestampIndex(timestamp, this.timestamps);
+		return this.timecodes[index];
+	}
 }
 
 export class Subtitle {

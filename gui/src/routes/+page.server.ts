@@ -16,6 +16,14 @@ export const load: PageServerLoad = async () => {
 
 	const timePositionsToTimecodes = new Map<number, string>();
 
+	// "positionInSec" -> Don't call this a timestamp!
+	// Need to keep both: " i want is to be able to search for the startTimeSeconds
+	// that is closest to n but not exceeding n, and get the timecode from it"
+	// https://claude.ai/chat/82b6c551-ecff-4e57-8de1-5d01a294c5ed
+
+	const positionInSec: number[] = segments.map((s) => s.startTimeSeconds);
+	const timecodes: string[] = segments.map((s) => s.timecode);
+
 	if (fs.existsSync(SRT_FILE_PATH)) {
 		const content = fs.readFileSync(SRT_FILE_PATH, 'utf-8');
 		const blocks = content.trim().split(/\n\s*\n/);
@@ -48,6 +56,9 @@ export const load: PageServerLoad = async () => {
 		segments,
 		// Pre-build lookup arrays for the client
 		subtitleTimestamps: segments.map((s) => s.startTimeSeconds),
-		timePositionsToTimecodes
+		timePositionsToTimecodes,
+		// Don't call this a timestamp!
+		positionInSec, // is in order already
+		timecodes // is in order already
 	};
 };
