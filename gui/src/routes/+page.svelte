@@ -19,7 +19,7 @@
 	let currentHighlightedTimecode = '';
 	let segmentElements = new Map<string, HTMLDivElement>(); // timecode -> element reference
 
-	let timePositionsToTimecodes = new Map<number, string>();
+	// let timePositionsToTimecodes = new Map<number, string>();
 
 	let db: SubtitleDatabase;
 
@@ -111,9 +111,9 @@
 
 			console.log('SIZE: ', mountedSegments.size, '115ru');
 			console.log(db.subtitleCuePointsInSec.slice(-3), 'final 3 values 115ru');
-			console.log(timePositionsToTimecodes.size, mountedSegments.size, '++ 172ru');
+			console.log(db.timePositionsToTimecodes.size, mountedSegments.size, '++ 172ru');
 
-			const entries = Array.from(timePositionsToTimecodes.entries());
+			const entries = Array.from(db.timePositionsToTimecodes.entries());
 			console.log('First 3:', entries.slice(0, 3));
 			console.log('Last 3:', entries.slice(-3));
 			if (allSegmentsMounted) {
@@ -141,7 +141,7 @@
 			playerPosition,
 			db.subtitleCuePointsInSec
 		);
-		const timecode = timePositionsToTimecodes.get(corresponding);
+		const timecode = db.timePositionsToTimecodes.get(corresponding);
 		if (timecode) {
 			highlightSegment(timecode);
 		} else {
@@ -153,12 +153,9 @@
 		/*
 		 * Note that timecodes are a subtitle thing, timestamps are a player position thing.
 		 */
-		console.log('HIGHLIGHTING: ', timecode);
-		// TODO: Turn timecode into timestamp
-
-		const timecodeAsSeconds = parseTimecodeToSeconds(timecode);
 
 		// why did i need that? i know i need it, but why?
+		const timecodeAsSeconds = parseTimecodeToSeconds(timecode);
 
 		// Remove highlight from previous element
 		if (currentHighlightedElement) {
@@ -179,7 +176,6 @@
 		 */
 
 		const timecodeAsSeconds = parseTimecodeToSeconds(timecode);
-		timePositionsToTimecodes.set(timecodeAsSeconds, timecode);
 
 		mountedSegments.add(timecodeAsSeconds);
 		db.subtitleHeights.set(timecodeAsSeconds, y);

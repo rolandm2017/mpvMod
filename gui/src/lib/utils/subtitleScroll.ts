@@ -1,7 +1,7 @@
 export function scrollToClosestSubtitle(
 	timePosition: number,
 	timesArr: number[],
-	subtitleHeights: Map<number, number>,
+	subtitleHeights: SubtitleHeights,
 	scrollContainer: HTMLDivElement
 ) {
 	/*
@@ -11,7 +11,7 @@ export function scrollToClosestSubtitle(
 	console.log('Scrolling for ', timePosition);
 	const corresponding: number = findCorrespondingSubtitleTime(timePosition, timesArr);
 	console.log('corresponding: ', corresponding);
-	const heightForSub = subtitleHeights.get(corresponding) ?? 0;
+	const heightForSub = subtitleHeights.getHeight(corresponding) ?? 0;
 
 	// WANT: viewport at position of related subtitle
 	console.log(heightForSub, 'found height');

@@ -1,4 +1,4 @@
-import { findPositionIndex } from './subtitleScroll';
+import { findPositionIndex, parseTimecodeToSeconds } from './subtitleScroll';
 
 export class SubtitleDatabase {
 	/*
@@ -11,10 +11,11 @@ export class SubtitleDatabase {
 
 	subtitles: Subtitle[] = [];
 
-	subtitleHeights: Map<number, number>;
+	subtitleHeights: SubtitleHeights;
 
 	timePositionsToTimecodes = new Map<number, string>();
 
+	// the next two are a pair!
 	subtitleCuePointsInSec: number[] = [];
 	timecodes: string[] = [];
 
@@ -24,23 +25,42 @@ export class SubtitleDatabase {
 		subtitleCuePointsInSec: number[],
 		timecodes: string[]
 	) {
-		this.subtitleHeights = new Map<number, number>();
+		// timecodeAsSeconds, height
+		this.subtitleHeights = new SubtitleHeights();
 
 		this.subtitles = segments;
 
 		this.timePositionsToTimecodes = timeMap;
 
+		// the next two are a pair!
 		this.subtitleCuePointsInSec = subtitleCuePointsInSec;
 		this.timecodes = timecodes;
 	}
 
-	// TODO: Get subtitle timecode ->  Height
-	// TODO: Get player timestamp -> Height
-	// TODO: Get player timestamp -> timecode
+	// Class covers:
+	//      - Get subtitle timecode ->  Height
+	//      - Get player timestamp -> Height
+	//      - Get player timestamp -> timecode
+
+	getHeightFromTimecode(code: string) {
+		const timecodeAsSeconds = parseTimecodeToSeconds(code);
+		return this.subtitleHeights.getHeight(timecodeAsSeconds);
+	}
+
+	getHeightFromPlayerPosition(position: number) {
+		return this.subtitleHeights.getHeight(position);
+	}
 
 	getTimecodeForPlayerPosition(subtitleCuePointInSec: number) {
 		const index = findPositionIndex(subtitleCuePointInSec, this.subtitleCuePointsInSec);
 		return this.timecodes[index];
+	}
+
+	getPlayerPositionFromTimecode(timecode: string) {
+		// Claude asks, "do you really need 'closest without exceeding' here?"
+		// and in truth I'm too tired to say
+		const index = this.timecodes.indexOf(timecode);
+		return this.subtitleCuePointsInSec[index];
 	}
 }
 

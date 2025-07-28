@@ -55,7 +55,7 @@ describe('scrollToClosestSubtitle', () => {
 			scrollTo: vi.fn()
 		} as unknown as HTMLDivElement;
 
-		const subtitleHeights = new Map<number, number>();
+		const subtitleHeights = new SubtitleHeights();
 		subtitleHeights.set(5.5, 250);
 
 		const times = [1.0, 5.5, 10.0, 15.5];
@@ -78,7 +78,8 @@ describe('scrollToClosestSubtitle', () => {
 			scrollTo: vi.fn()
 		} as unknown as HTMLDivElement;
 
-		const subtitleHeights = new Map<number, number>();
+		const subtitleHeights = new SubtitleHeights();
+
 		const times = [1.0, 5.5, 10.0, 15.5];
 
 		const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
