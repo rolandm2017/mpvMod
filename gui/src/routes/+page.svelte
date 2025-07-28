@@ -9,6 +9,7 @@
 		parseTimecodeToSeconds,
 		scrollToClosestSubtitle
 	} from '$lib/utils/subtitleScroll.js';
+	import { Subtitle, SubtitleDatabase } from '$lib/utils/SubtitleDatabase.js';
 
 	export let data;
 
@@ -18,7 +19,85 @@
 	let currentHighlightedTimecode = '';
 	let segmentElements = new Map<string, HTMLDivElement>(); // timecode -> element reference
 
-	const timePositionsToTimecodes = new Map<number, string>();
+	let timePositionsToTimecodes = new Map<number, string>();
+
+	let database;
+
+	onMount(() => {
+		(window as any).devtoolsScroller = devtoolsScroller;
+
+		let subtitles: Subtitle[] = [];
+
+		timePositionsToTimecodes = data.timePositionsToTimecodes;
+
+		// Use the pre-built arrays from server
+		data.segments.forEach((s) => {
+			let newSub = new Subtitle(s.text, s.timecode, s.startTimeSeconds);
+			subtitles.push(newSub);
+		});
+
+		database = new SubtitleDatabase(subtitles);
+
+		console.log('Window object:', window);
+		console.log('electronAPI available:', !!window.electronAPI);
+
+		if (window.electronAPI) {
+			console.log('Running onMPVstate');
+			window.electronAPI.onMPVState((data) => {
+				// content :  "⏱️  0:13.6 / 22:35.7 (1.0%)"
+				// formatted_duration :  "22:35.7"
+				// formatted_time :  "0:13.6"
+				// progress :  1
+				// time_pos :  13.555
+				// timestamp :  1753652691.9598007
+				// type :  "time_update"
+				content = data.content;
+				timePos = data.time_pos;
+				formattedTime = data.formatted_time;
+
+				// Auto-scroll to current position (throttled)
+				const now = Date.now();
+				if (now - lastScrollTime > 500) {
+					// Throttle to every 500ms
+					const corresponding: number = findCorrespondingSubtitleTime(timePos, subtitleStartTimes);
+					const timecode = timePositionsToTimecodes.get(corresponding);
+					if (timecode) {
+						highlightSegment(timecode);
+					} else {
+						console.log(timecode, 'not found');
+					}
+					scrollToClosestSubtitle(timePos, subtitleStartTimes, subtitleHeights, scrollContainer);
+
+					lastScrollTime = now;
+				}
+			});
+		} else {
+			console.error('electronAPI not available');
+		}
+
+		// Initial scroll after mount
+		setTimeout(() => {
+			console.log(allSegmentsMounted, '104ru');
+
+			console.log('SIZE: ', mountedSegments.size, '115ru');
+			console.log(subtitleStartTimes.slice(-3), 'final 3 values 115ru');
+			console.log(timePositionsToTimecodes.size, mountedSegments.size, '++ 172ru');
+
+			const entries = Array.from(timePositionsToTimecodes.entries());
+			console.log('First 3:', entries.slice(0, 3));
+			console.log('Last 3:', entries.slice(-3));
+			if (allSegmentsMounted) {
+				const corresponding: number = findCorrespondingSubtitleTime(timePos, subtitleStartTimes);
+				const timecode = timePositionsToTimecodes.get(corresponding);
+				if (timecode) {
+					highlightSegment(timecode);
+				} else {
+					console.log(timecode, 'not found');
+				}
+				scrollToClosestSubtitle(timePos, subtitleStartTimes, subtitleHeights, scrollContainer);
+			}
+		}, 150);
+	});
 
 	/*
 	 * I have to go from, so, the timestamp, i'm using that to decide which subtitle to highlight.
@@ -118,82 +197,6 @@
 	let lastScrollTime = 0;
 
 	// TODO: Color the subtitle in question
-
-	const database = new SubtitleDatabase();
-
-	onMount(() => {
-		// Use the pre-built arrays from server
-		data.subtitleTimestamps.forEach((timestamp, index) => {
-			subtitleStartTimes.push(timestamp);
-			timePositionsToTimecodes.set(timestamp, data.timecodeMap[timestamp]);
-		});
-
-		// Rest of your onMount logic...
-	});
-
-	onMount(() => {
-		(window as any).devtoolsScroller = devtoolsScroller;
-
-		console.log('Window object:', window);
-		console.log('electronAPI available:', !!window.electronAPI);
-
-		if (window.electronAPI) {
-			console.log('Running onMPVstate');
-			window.electronAPI.onMPVState((data) => {
-				// content :  "⏱️  0:13.6 / 22:35.7 (1.0%)"
-				// formatted_duration :  "22:35.7"
-				// formatted_time :  "0:13.6"
-				// progress :  1
-				// time_pos :  13.555
-				// timestamp :  1753652691.9598007
-				// type :  "time_update"
-				content = data.content;
-				timePos = data.time_pos;
-				formattedTime = data.formatted_time;
-
-				// Auto-scroll to current position (throttled)
-				const now = Date.now();
-				if (now - lastScrollTime > 500) {
-					// Throttle to every 500ms
-					const corresponding: number = findCorrespondingSubtitleTime(timePos, subtitleStartTimes);
-					const timecode = timePositionsToTimecodes.get(corresponding);
-					if (timecode) {
-						highlightSegment(timecode);
-					} else {
-						console.log(timecode, 'not found');
-					}
-					scrollToClosestSubtitle(timePos, subtitleStartTimes, subtitleHeights, scrollContainer);
-
-					lastScrollTime = now;
-				}
-			});
-		} else {
-			console.error('electronAPI not available');
-		}
-
-		// Initial scroll after mount
-		setTimeout(() => {
-			console.log(allSegmentsMounted, '104ru');
-
-			console.log('SIZE: ', mountedSegments.size, '115ru');
-			console.log(subtitleStartTimes.slice(-3), 'final 3 values 115ru');
-			console.log(timePositionsToTimecodes.size, mountedSegments.size, '++ 172ru');
-
-			const entries = Array.from(timePositionsToTimecodes.entries());
-			console.log('First 3:', entries.slice(0, 3));
-			console.log('Last 3:', entries.slice(-3));
-			if (allSegmentsMounted) {
-				const corresponding: number = findCorrespondingSubtitleTime(timePos, subtitleStartTimes);
-				const timecode = timePositionsToTimecodes.get(corresponding);
-				if (timecode) {
-					highlightSegment(timecode);
-				} else {
-					console.log(timecode, 'not found');
-				}
-				scrollToClosestSubtitle(timePos, subtitleStartTimes, subtitleHeights, scrollContainer);
-			}
-		}, 150);
-	});
 </script>
 
 <div class="container">

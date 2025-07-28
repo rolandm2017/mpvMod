@@ -1,6 +1,4 @@
-import type { SubtitleSegmentObj } from '../../routes/+page.server';
-
-class SubtitleDatabase {
+export class SubtitleDatabase {
 	/*
 	 *   Problem statent: It's a gong show trying to wrangle data from one representation
 	 * into another.
@@ -9,21 +7,29 @@ class SubtitleDatabase {
 	 *
 	 */
 
-	subtitles: SubtitleSegmentObj[] = [];
+	subtitles: Subtitle[] = [];
 
-	constructor(rawSubtitleSegments: SubtitleSegmentObj[]) {
-		this.subtitles = rawSubtitleSegments;
+	timePositionsToTimecodes = new Map<number, string>();
+
+	constructor(segments: Subtitle[]) {
+		this.subtitles = segments;
 	}
+
+	// TODO: Get subtitle timecode ->  Height
+	// TODO: Get player timestamp -> Height
+	// TODO: Get player timestamp -> subtitle timecode
 }
 
-class Subtitle {
+export class Subtitle {
 	text: string;
 	timecode: string;
+	timecodeInSeconds: number;
 	height: number = 0;
 
-	constructor(text: string, timecode: string) {
+	constructor(text: string, timecode: string, timecodeInSeconds: number) {
 		this.text = text;
 		this.timecode = timecode;
+		this.timecodeInSeconds = timecodeInSeconds;
 	}
 
 	setHeight(height: number) {

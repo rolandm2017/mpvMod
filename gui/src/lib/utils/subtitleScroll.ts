@@ -27,6 +27,12 @@ export function scrollToLocation(location: number, scrollContainer: HTMLDivEleme
 }
 
 export function findCorrespondingSubtitleTime(timestamp: number, times: number[]) {
+	/*
+	 * Match the biggest number still smaller than the timestamp.
+	 * Said another way, the subtitle plays until it is over!
+	 * The subtitle's start time is smaller than the timestamp, hence it still plays,
+	 * until there is another subtitle with a start time smaller than the timestamp.
+	 */
 	let left = 0,
 		right = times.length - 1;
 	let result = -1;

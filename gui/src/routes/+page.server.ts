@@ -14,6 +14,8 @@ export const load: PageServerLoad = async () => {
 	const SRT_FILE_PATH = path.resolve('sample.srt');
 	let segments: SubtitleSegmentObj[] = [];
 
+	const timePositionsToTimecodes = new Map<number, string>();
+
 	if (fs.existsSync(SRT_FILE_PATH)) {
 		const content = fs.readFileSync(SRT_FILE_PATH, 'utf-8');
 		const blocks = content.trim().split(/\n\s*\n/);
@@ -36,12 +38,16 @@ export const load: PageServerLoad = async () => {
 			})
 			.filter((seg): seg is SubtitleSegmentObj => Boolean(seg))
 			.sort((a, b) => a.startTimeSeconds - b.startTimeSeconds); // Ensure sorted
+
+		segments.forEach((s) => {
+			timePositionsToTimecodes.set(s.startTimeSeconds, s.timecode);
+		});
 	}
 
 	return {
 		segments,
 		// Pre-build lookup arrays for the client
 		subtitleTimestamps: segments.map((s) => s.startTimeSeconds),
-		timecodeMap: Object.fromEntries(segments.map((s) => [s.startTimeSeconds, s.timecode]))
+		timePositionsToTimecodes
 	};
 };
