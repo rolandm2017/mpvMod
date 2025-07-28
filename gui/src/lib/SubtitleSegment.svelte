@@ -25,7 +25,6 @@
 </script>
 
 <div class="subtitle-segment" bind:this={el}>
-	<div class="subtitle-time">{timecode}</div>
 	<div class="subtitle-text">{text}</div>
 </div>
 

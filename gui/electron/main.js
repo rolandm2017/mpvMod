@@ -1,6 +1,6 @@
 // electron/main.js
 
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, screen } from 'electron';
 import WebSocket from 'ws';
 
 import { fileURLToPath } from 'url';
@@ -12,17 +12,29 @@ const __dirname = dirname(__filename);
 import path from 'path';
 const isDev = process.argv.includes('--dev') || !app.isPackaged;
 
+if (isDev) {
+	process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true';
+}
+
 let mpvWS;
 let mainWindow;
 
 function createWindow() {
+	const primaryDisplay = screen.getPrimaryDisplay();
+	const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize;
+
+	const windowWidth = 1400; // Your desired window width
+	const windowHeight = 1000; // Your desired window height
+
 	mainWindow = new BrowserWindow({
-		width: 1400, // was 1200
-		height: 1000, // was 800
+		width: windowWidth,
+		height: windowHeight,
+		x: screenWidth - windowWidth, // Position at rightmost edge
+		y: 0, // Top of screen (you can adjust this)
 		webPreferences: {
 			nodeIntegration: false,
 			contextIsolation: true,
-			preload: path.join(__dirname, 'preload.js') // Make sure this path is correct
+			preload: path.join(__dirname, 'preload.js')
 		}
 	});
 
@@ -39,7 +51,7 @@ function createWindow() {
 	}
 
 	mainWindow.once('ready-to-show', () => {
-		// connectMPV(); // Move here instead
+		connectMPV();
 	});
 }
 
@@ -54,11 +66,8 @@ function connectMPV() {
 		console.log('connectMPV onMessage');
 		try {
 			const parsed = JSON.parse(data);
-			console.log(parsed.content);
-			console.log(mainWindow && !mainWindow.isDestroyed(), '57ru');
 			// Send to renderer
 			if (mainWindow && !mainWindow.isDestroyed()) {
-				console.log('sending something to webContents');
 				mainWindow.webContents.send('mpv-state', parsed);
 			}
 		} catch (e) {
