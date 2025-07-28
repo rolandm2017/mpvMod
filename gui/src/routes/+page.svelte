@@ -6,6 +6,7 @@
 
 	import {
 		findCorrespondingSubtitleTime,
+		parseTimecodeToSeconds,
 		scrollToClosestSubtitle
 	} from '$lib/utils/subtitleScroll.js';
 
@@ -36,12 +37,15 @@
 	let mountedSegments = new Set<number>(); // track which segments have reported their position
 	let allSegmentsMounted = false;
 
-	function storeSegmentPosition(timecode: number, y: number) {
+	function storeSegmentPosition(timecode: string, y: number) {
 		/* Used to transmit a component's Y height into the holder arr.
-		
 		 */
-		mountedSegments.add(timecode);
-		subtitleHeights.set(timecode, y);
+
+		const timecodeAsSeconds = parseTimecodeToSeconds(timecode);
+
+		mountedSegments.add(timecodeAsSeconds);
+		subtitleHeights.set(timecodeAsSeconds, y);
+		subtitleStartTimes.push(timecodeAsSeconds);
 
 		// Check if all segments have mounted
 		if (mountedSegments.size === data.segments.length) {
@@ -101,6 +105,16 @@
 
 		// Initial scroll after mount
 		setTimeout(() => {
+			console.log(allSegmentsMounted, '104ru');
+			console.log(
+				subtitleStartTimes,
+				subtitleHeights,
+
+				'105ru'
+			);
+
+			console.log('SIZE: ', mountedSegments.size, '115ru');
+			console.log(subtitleStartTimes.slice(-3), 'final 3 values 115ru');
 			if (allSegmentsMounted) {
 				scrollToClosestSubtitle(timePos, subtitleStartTimes, subtitleHeights, scrollContainer);
 			}
