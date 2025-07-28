@@ -53,7 +53,7 @@ export function findCorrespondingSubtitleTime(timestamp: number, times: number[]
 	return result === -1 ? 0 : times[result];
 }
 
-export function findTimestampIndex(target: number, timestamps: number[]): number {
+export function findPositionIndex(target: number, timestamps: number[]): number {
 	let left = 0,
 		right = timestamps.length - 1;
 	let result = -1;

@@ -21,13 +21,33 @@
 
 	let timePositionsToTimecodes = new Map<number, string>();
 
-	let database;
+	let db: SubtitleDatabase;
 
 	let content = '';
 	let playerPosition = 0;
 	let formattedTime = '';
 
 	let lastScrollTime = 0;
+
+	// scrollToLocation(heightForSub);
+	let mountedSegments = new Set<number>(); // track which segments have reported their position
+	let allSegmentsMounted = false;
+
+	/*
+	 * The question of scrolling to a position:
+	 // I have: time position from stream.
+	 // I have: list of subtitle start times.
+	 // I have: corresponding heights for subtitle start
+	 *
+	 // I want: viewport at position of related subtitle
+	 *
+	 */
+
+	/**
+	 * The question of highlighting a subtitle:
+	 * The subtitle file has only these timecode things.
+	 *
+	 */
 
 	// TODO: Color the subtitle in question
 
@@ -42,10 +62,10 @@
 			subtitles.push(newSub);
 		});
 
-		database = new SubtitleDatabase(
+		db = new SubtitleDatabase(
 			subtitles,
 			data.timePositionsToTimecodes,
-			data.positionInSec,
+			data.subtitleCuePointsInSec,
 			data.timecodes
 		);
 
@@ -70,20 +90,11 @@
 				const now = Date.now();
 				if (now - lastScrollTime > 500) {
 					// Throttle to every 500ms
-					const corresponding: number = findCorrespondingSubtitleTime(
-						playerPosition,
-						subtitleStartTimes
-					);
-					const timecode = timePositionsToTimecodes.get(corresponding);
-					if (timecode) {
-						highlightSegment(timecode);
-					} else {
-						console.log(timecode, 'not found');
-					}
+					highlightPlayerPositionSegment(playerPosition);
 					scrollToClosestSubtitle(
 						playerPosition,
-						subtitleStartTimes,
-						subtitleHeights,
+						db.subtitleCuePointsInSec,
+						db.subtitleHeights,
 						scrollContainer
 					);
 
@@ -99,27 +110,18 @@
 			console.log(allSegmentsMounted, '104ru');
 
 			console.log('SIZE: ', mountedSegments.size, '115ru');
-			console.log(subtitleStartTimes.slice(-3), 'final 3 values 115ru');
+			console.log(db.subtitleCuePointsInSec.slice(-3), 'final 3 values 115ru');
 			console.log(timePositionsToTimecodes.size, mountedSegments.size, '++ 172ru');
 
 			const entries = Array.from(timePositionsToTimecodes.entries());
 			console.log('First 3:', entries.slice(0, 3));
 			console.log('Last 3:', entries.slice(-3));
 			if (allSegmentsMounted) {
-				const corresponding: number = findCorrespondingSubtitleTime(
-					playerPosition,
-					subtitleStartTimes
-				);
-				const timecode = timePositionsToTimecodes.get(corresponding);
-				if (timecode) {
-					highlightSegment(timecode);
-				} else {
-					console.log(timecode, 'not found');
-				}
+				highlightPlayerPositionSegment(playerPosition);
 				scrollToClosestSubtitle(
 					playerPosition,
-					subtitleStartTimes,
-					subtitleHeights,
+					db.subtitleCuePointsInSec,
+					db.subtitleHeights,
 					scrollContainer
 				);
 			}
@@ -133,6 +135,19 @@
 	 * So anywhere scrollToClosestSubtitle is called, I want to also highlightSegment.
 	 * So scrollToClosestSubtitle uses timePos.
 	 */
+
+	function highlightPlayerPositionSegment(playerPosition: number) {
+		const corresponding: number = findCorrespondingSubtitleTime(
+			playerPosition,
+			db.subtitleCuePointsInSec
+		);
+		const timecode = timePositionsToTimecodes.get(corresponding);
+		if (timecode) {
+			highlightSegment(timecode);
+		} else {
+			console.log(timecode, 'not found');
+		}
+	}
 
 	export function highlightSegment(timecode: string) {
 		/*
@@ -159,28 +174,6 @@
 		}
 	}
 
-	/*
-	 * The question of scrolling to a position:
-	 // I have: time position from stream.
-	 // I have: list of subtitle start times.
-	 // I have: corresponding heights for subtitle start
-	 *
-	 // I want: viewport at position of related subtitle
-	 *
-	 */
-	const subtitleStartTimes: number[] = []; // sorted
-	const subtitleHeights = new Map<number, number>();
-
-	/**
-	 * The question of highlighting a subtitle:
-	 * The subtitle file has only these timecode things.
-	 *
-	 */
-
-	// scrollToLocation(heightForSub);
-	let mountedSegments = new Set<number>(); // track which segments have reported their position
-	let allSegmentsMounted = false;
-
 	function storeSegmentPosition(timecode: string, y: number, element: HTMLDivElement) {
 		/* Used to transmit a component's Y height into the holder arr.
 		 */
@@ -189,8 +182,9 @@
 		timePositionsToTimecodes.set(timecodeAsSeconds, timecode);
 
 		mountedSegments.add(timecodeAsSeconds);
-		subtitleHeights.set(timecodeAsSeconds, y);
-		subtitleStartTimes.push(timecodeAsSeconds);
+		db.subtitleHeights.set(timecodeAsSeconds, y);
+		// is now "db.subtitleCuePointsInSec"
+		// subtitleStartTimes.push(timecodeAsSeconds);
 
 		segmentElements.set(timecode, element);
 
@@ -202,14 +196,14 @@
 	}
 
 	// export function devtoolsScroller(timestamp: number) {
-	export function devtoolsScroller(timePos: number) {
-		const timecode = timePositionsToTimecodes.get(timePos);
-		if (timecode) {
-			highlightSegment(timecode);
-		} else {
-			console.log(timecode, 'not found');
-		}
-		scrollToClosestSubtitle(timePos, subtitleStartTimes, subtitleHeights, scrollContainer);
+	export function devtoolsScroller(playerPosition: number) {
+		highlightPlayerPositionSegment(playerPosition);
+		scrollToClosestSubtitle(
+			playerPosition,
+			db.subtitleCuePointsInSec,
+			db.subtitleHeights,
+			scrollContainer
+		);
 	}
 </script>
 

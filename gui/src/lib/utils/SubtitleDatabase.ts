@@ -1,4 +1,4 @@
-import { findTimestampIndex } from './subtitleScroll';
+import { findPositionIndex } from './subtitleScroll';
 
 export class SubtitleDatabase {
 	/*
@@ -11,31 +11,35 @@ export class SubtitleDatabase {
 
 	subtitles: Subtitle[] = [];
 
+	subtitleHeights: Map<number, number>;
+
 	timePositionsToTimecodes = new Map<number, string>();
 
-	timestamps: number[] = [];
+	subtitleCuePointsInSec: number[] = [];
 	timecodes: string[] = [];
 
 	constructor(
 		segments: Subtitle[],
 		timeMap: Map<number, string>,
-		timestamps: number[],
+		subtitleCuePointsInSec: number[],
 		timecodes: string[]
 	) {
+		this.subtitleHeights = new Map<number, number>();
+
 		this.subtitles = segments;
 
 		this.timePositionsToTimecodes = timeMap;
 
-		this.timestamps;
-		this.timecodes;
+		this.subtitleCuePointsInSec = subtitleCuePointsInSec;
+		this.timecodes = timecodes;
 	}
 
 	// TODO: Get subtitle timecode ->  Height
 	// TODO: Get player timestamp -> Height
 	// TODO: Get player timestamp -> timecode
 
-	getTimecodeForTimestamp(timestamp: number) {
-		const index = findTimestampIndex(timestamp, this.timestamps);
+	getTimecodeForPlayerPosition(subtitleCuePointInSec: number) {
+		const index = findPositionIndex(subtitleCuePointInSec, this.subtitleCuePointsInSec);
 		return this.timecodes[index];
 	}
 }
