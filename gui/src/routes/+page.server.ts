@@ -2,19 +2,20 @@ import fs from 'fs';
 import path from 'path';
 import type { PageServerLoad } from './$types';
 import { parseTimecodeToSeconds } from '$lib/utils/subtitleScroll';
+import type { SubtitleTiming, TimecodeString } from '$lib/types';
 
 export type SubtitleSegmentObj = {
 	index: number;
-	timecode: string;
+	timecode: TimecodeString;
 	text: string;
-	startTimeSeconds: number; // Add pre-parsed timestamp
+	startTimeSeconds: SubtitleTiming; // Add pre-parsed timestamp
 };
 
 export const load: PageServerLoad = async () => {
 	const SRT_FILE_PATH = path.resolve('sample.srt');
 	let segments: SubtitleSegmentObj[] = [];
 
-	const timePositionsToTimecodes = new Map<number, string>();
+	const timePositionsToTimecodes = new Map<SubtitleTiming, TimecodeString>();
 
 	// "subtitleStartInSec" -> Don't call this a timestamp!
 	// Need to keep both: " i want is to be able to search for the startTimeSeconds

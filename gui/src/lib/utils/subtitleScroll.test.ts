@@ -2,23 +2,27 @@ import { describe, it, expect, vi } from 'vitest';
 import {
 	scrollToClosestSubtitle,
 	scrollToLocation,
-	findCorrespondingSubtitleTime,
+	Finder,
 	parseTimecodeToSeconds
 } from './subtitleScroll';
+import { SubtitleHeights } from './SubtitleHeights';
 
-describe('findCorrespondingSubtitleTime', () => {
-	it('should find the largest time that does not exceed timestamp', () => {
-		const times = [1.0, 5.5, 10.0, 15.5];
+describe('Finder', () => {
+	describe('findCorrespondingSubtitleTime', () => {
+		it('should find the largest time that does not exceed timestamp', () => {
+			const times = [1.0, 5.5, 10.0, 15.5];
 
-		expect(findCorrespondingSubtitleTime(7.0, times)).toBe(5.5);
-		expect(findCorrespondingSubtitleTime(5.5, times)).toBe(5.5);
-		expect(findCorrespondingSubtitleTime(0.5, times)).toBe(0);
-		expect(findCorrespondingSubtitleTime(20.0, times)).toBe(15.5);
+			expect(Finder.findSubtitleIndexAtPlayerTime(7.0, times)).toBe(5.5);
+			expect(Finder.findSubtitleIndexAtPlayerTime(5.5, times)).toBe(5.5);
+			expect(Finder.findSubtitleIndexAtPlayerTime(0.5, times)).toBe(0);
+			expect(Finder.findSubtitleIndexAtPlayerTime(20.0, times)).toBe(15.5);
+		});
+
+		it('should handle empty array', () => {
+			expect(Finder.findSubtitleIndexAtPlayerTime(5.0, [])).toBe(0);
+		});
 	});
-
-	it('should handle empty array', () => {
-		expect(findCorrespondingSubtitleTime(5.0, [])).toBe(0);
-	});
+	describe('');
 });
 
 describe('parseTimecodeToSeconds', () => {

@@ -5,7 +5,7 @@
 	import SubtitleSegment from '$lib/SubtitleSegment.svelte';
 
 	import {
-		findCorrespondingSubtitleTime,
+		Finder,
 		parseTimecodeToSeconds,
 		scrollToClosestSubtitle
 	} from '$lib/utils/subtitleScroll.js';
@@ -137,7 +137,7 @@
 	 */
 
 	function highlightPlayerPositionSegment(playerPosition: number) {
-		const corresponding: number = findCorrespondingSubtitleTime(
+		const corresponding: number = Finder.findPlayerTimeForSubtitleIndex(
 			playerPosition,
 			db.subtitleCuePointsInSec
 		);

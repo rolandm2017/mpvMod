@@ -1,4 +1,6 @@
-import { findPositionIndex, parseTimecodeToSeconds } from './subtitleScroll';
+import type { PlayerPosition, SubtitleTiming, TimecodeString } from '$lib/types';
+import { SubtitleHeights } from './SubtitleHeights';
+import { Finder, parseTimecodeToSeconds } from './subtitleScroll';
 
 export class SubtitleDatabase {
 	/*
@@ -13,17 +15,17 @@ export class SubtitleDatabase {
 
 	subtitleHeights: SubtitleHeights;
 
-	timePositionsToTimecodes = new Map<number, string>();
+	timePositionsToTimecodes = new Map<SubtitleTiming, TimecodeString>();
 
 	// the next two are a pair!
-	subtitleCuePointsInSec: number[] = [];
+	subtitleCuePointsInSec: SubtitleTiming[] = [];
 	timecodes: string[] = [];
 
 	constructor(
 		segments: Subtitle[],
-		timeMap: Map<number, string>,
-		subtitleCuePointsInSec: number[],
-		timecodes: string[]
+		timeMap: Map<SubtitleTiming, TimecodeString>,
+		subtitleCuePointsInSec: SubtitleTiming[],
+		timecodes: TimecodeString[]
 	) {
 		// timecodeAsSeconds, height
 		this.subtitleHeights = new SubtitleHeights();
@@ -41,22 +43,27 @@ export class SubtitleDatabase {
 	//      - Get subtitle timecode ->  Height
 	//      - Get player timestamp -> Height
 	//      - Get player timestamp -> timecode
+	//		- Player position -> Subtitle
+	// 		- Subtitle -> Player position
 
-	getHeightFromTimecode(code: string) {
-		const timecodeAsSeconds = parseTimecodeToSeconds(code);
+	getHeightFromTimecode(timecode: TimecodeString) {
+		const timecodeAsSeconds = parseTimecodeToSeconds(timecode);
 		return this.subtitleHeights.getHeight(timecodeAsSeconds);
 	}
 
-	getHeightFromPlayerPosition(position: number) {
+	getHeightFromPlayerPosition(position: PlayerPosition) {
 		return this.subtitleHeights.getHeight(position);
 	}
 
-	getTimecodeForPlayerPosition(subtitleCuePointInSec: number) {
-		const index = findPositionIndex(subtitleCuePointInSec, this.subtitleCuePointsInSec);
+	getTimecodeForPlayerPosition(playerPosition: PlayerPosition) {
+		/*
+		 *
+		 */
+		const index = Finder.findSubtitleIndexAtPlayerTime(playerPosition, this.subtitleCuePointsInSec);
 		return this.timecodes[index];
 	}
 
-	getPlayerPositionFromTimecode(timecode: string) {
+	getPlayerPositionFromTimecode(timecode: TimecodeString) {
 		// Claude asks, "do you really need 'closest without exceeding' here?"
 		// and in truth I'm too tired to say
 		const index = this.timecodes.indexOf(timecode);
@@ -66,11 +73,11 @@ export class SubtitleDatabase {
 
 export class Subtitle {
 	text: string;
-	timecode: string;
-	timecodeInSeconds: number;
+	timecode: TimecodeString;
+	timecodeInSeconds: SubtitleTiming;
 	height: number = 0;
 
-	constructor(text: string, timecode: string, timecodeInSeconds: number) {
+	constructor(text: string, timecode: TimecodeString, timecodeInSeconds: SubtitleTiming) {
 		this.text = text;
 		this.timecode = timecode;
 		this.timecodeInSeconds = timecodeInSeconds;

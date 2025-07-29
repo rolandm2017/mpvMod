@@ -1,7 +1,17 @@
-class SubtitleHeights {
-	private entries: [number, number][] = []; // [time, height]
+import type { SubtitleTiming } from '$lib/types';
 
-	set(time: number, height: number) {
+export class SubtitleHeights {
+	private entries: [SubtitleTiming, number][] = []; // [time, height]
+
+	/*
+	 * Works with interpolation. Exact value MIA? Return the average of the closest two values.
+	 *
+	 * Note that the array should be sorted, and always matched 1 to 1, as subtitles are linear in order.
+	 */
+
+	// Time = Timecode as seconds
+
+	set(time: SubtitleTiming, height: number) {
 		// Insert in sorted order or update existing
 		const index = this.entries.findIndex(([t]) => t >= time);
 		if (index === -1) {
@@ -13,7 +23,9 @@ class SubtitleHeights {
 		}
 	}
 
-	getHeight(time: number): number {
+	// Time = Timecode as seconds
+
+	getHeight(time: SubtitleTiming): number {
 		if (this.entries.length === 0) return 0;
 
 		// Binary search for insertion point
