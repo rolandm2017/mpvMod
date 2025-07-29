@@ -29,7 +29,7 @@
     let lastScrollTime = 0;
 
     // scrollToLocation(heightForSub);
-    let mountedSegments = new Set<number>(); // track which segments have reported their position
+    let mountedSegments = new Set<string>(); // track which segments have reported their position
     let allSegmentsMounted = false;
 
     // TODO: Color the subtitle in question
@@ -134,6 +134,8 @@
         }
     }
 
+    const ADDED: string[] = [];
+
     function storeSegmentPosition(
         timecode: string,
         y: number,
@@ -143,12 +145,23 @@
 
         const timecodeAsSeconds = parseTimecodeToSeconds(timecode);
 
-        mountedSegments.add(timecodeAsSeconds);
+        mountedSegments.add(timecode);
+        ADDED.push(timecode);
         console.log(
-            'MOUNT COUNT: ',
+            'COUNT: ',
             mountedSegments.size,
-            data.segments.length - mountedSegments.size
+            data.segments.length - mountedSegments.size,
+            'TOTAL: ',
+            data.segments.length
         );
+        const duplicates = [
+            ...new Set(
+                ADDED.filter((item, index) => ADDED.indexOf(item) !== index)
+            ),
+        ];
+        console.log('ADDED: ', ADDED.length);
+        console.log('dupes', duplicates);
+
         db.subtitleHeights.set(timecodeAsSeconds, y);
 
         segmentElements.set(timecode, element);
