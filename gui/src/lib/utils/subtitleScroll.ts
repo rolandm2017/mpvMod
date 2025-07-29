@@ -6,7 +6,7 @@ export class Finder {
 		playerPosition: PlayerPosition,
 		subtitleCuePointsArr: SubtitleTiming[]
 	) {
-		/*
+		/**
 		 * For finding a subtitle that goes with a playerPosition.
 		 *
 		 * Match the biggest timestamp subtitle still smaller than the playerPosition.
@@ -14,6 +14,7 @@ export class Finder {
 		 * The subtitle's start time is smaller than the playerPosition, hence it still plays,
 		 * until there is another subtitle with a start time smaller than the playerPosition.
 		 *
+		 * @returns {SubtitleTiming} the subtitle associated with that playerPosition
 		 */
 		let left = 0,
 			right = subtitleCuePointsArr.length - 1;
@@ -36,11 +37,13 @@ export class Finder {
 	}
 
 	static findSubtitleIndexAtPlayerTime(
-		cuePointInSec: SubtitleTiming,
+		playerPosition: PlayerPosition,
 		cuePointsInSecArr: SubtitleTiming[]
 	): number {
-		/*
+		/**
 		 * Used to take the position of a subtitle cue point in sec and find the most relevant subtitle.
+		 *
+		 * @returns {number} the index of the subtitle associated with that player position
 		 */
 		let left = 0,
 			right = cuePointsInSecArr.length - 1;
@@ -48,7 +51,7 @@ export class Finder {
 
 		while (left <= right) {
 			const mid = Math.floor((left + right) / 2);
-			if (cuePointsInSecArr[mid] <= cuePointInSec) {
+			if (cuePointsInSecArr[mid] <= playerPosition) {
 				result = mid;
 				left = mid + 1;
 			} else {

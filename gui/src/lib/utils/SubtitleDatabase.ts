@@ -63,7 +63,10 @@ export class SubtitleDatabase {
 		return this.timecodes[index];
 	}
 
-	getPlayerPositionFromTimecode(timecode: TimecodeString) {
+	getSubtitleTimingFromTimecode(timecode: TimecodeString): SubtitleTiming {
+		/**
+		 * @returns {SubtitleTiming} the subtitle timing associated with this timecodeString
+		 */
 		// Claude asks, "do you really need 'closest without exceeding' here?"
 		// and in truth I'm too tired to say
 		const index = this.timecodes.indexOf(timecode);

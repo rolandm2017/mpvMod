@@ -8,21 +8,34 @@ import {
 import { SubtitleHeights } from './SubtitleHeights';
 
 describe('Finder', () => {
-	describe('findCorrespondingSubtitleTime', () => {
+	describe('findPlayerTimeForSubtitleIndex', () => {
 		it('should find the largest time that does not exceed timestamp', () => {
 			const times = [1.0, 5.5, 10.0, 15.5];
 
-			expect(Finder.findSubtitleIndexAtPlayerTime(7.0, times)).toBe(5.5);
-			expect(Finder.findSubtitleIndexAtPlayerTime(5.5, times)).toBe(5.5);
+			expect(Finder.findPlayerTimeForSubtitleIndex(7.0, times)).toBe(5.5);
+			expect(Finder.findPlayerTimeForSubtitleIndex(5.5, times)).toBe(5.5);
+			expect(Finder.findPlayerTimeForSubtitleIndex(0.5, times)).toBe(0);
+			expect(Finder.findPlayerTimeForSubtitleIndex(20.0, times)).toBe(15.5);
+		});
+
+		it('should handle empty array', () => {
+			expect(Finder.findPlayerTimeForSubtitleIndex(5.0, [])).toBe(0);
+		});
+	});
+	describe('findSubtitleIndexAtPlayerTime', () => {
+		it('should find the largest time that does not exceed timestamp', () => {
+			const times = [1.0, 5.5, 10.0, 15.5];
+
+			expect(Finder.findSubtitleIndexAtPlayerTime(7.0, times)).toBe(1); // 7 closest to 5.5, hence 1
+			expect(Finder.findSubtitleIndexAtPlayerTime(5.5, times)).toBe(1); // 5.5 closest to 5.5, hence 1
 			expect(Finder.findSubtitleIndexAtPlayerTime(0.5, times)).toBe(0);
-			expect(Finder.findSubtitleIndexAtPlayerTime(20.0, times)).toBe(15.5);
+			expect(Finder.findSubtitleIndexAtPlayerTime(20.0, times)).toBe(3); // 20 closest to 15.5, hence 3
 		});
 
 		it('should handle empty array', () => {
 			expect(Finder.findSubtitleIndexAtPlayerTime(5.0, [])).toBe(0);
 		});
 	});
-	describe('');
 });
 
 describe('parseTimecodeToSeconds', () => {
