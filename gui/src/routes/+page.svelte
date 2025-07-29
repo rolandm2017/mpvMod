@@ -24,6 +24,38 @@
 
 	let db: SubtitleDatabase;
 
+	let testDataResolver: (value: any) => void;
+	let testDataPromise = new Promise((resolve) => {
+		testDataResolver = resolve;
+	});
+
+	// Expose the promise to window immediately
+	if (typeof window !== 'undefined') {
+		window.testDataPromise = testDataPromise;
+	}
+
+	// Expose the promise to window immediately
+	// Update your existing reactive statement:
+	$: if (typeof window !== 'undefined' && db && allSegmentsMounted) {
+		const testData = { db, allSegmentsMounted };
+		window.testData = testData;
+
+		// Resolve the promise when everything is ready
+		if (testDataResolver) {
+			testDataResolver(testData);
+		}
+	}
+
+	// Also update when allSegmentsMounted changes:
+	$: if (allSegmentsMounted && db && typeof window !== 'undefined') {
+		const testData = { db, allSegmentsMounted };
+		window.testData = testData;
+
+		if (testDataResolver) {
+			testDataResolver(testData);
+		}
+	}
+
 	let content = '';
 	let playerPosition = 0;
 	let formattedTime = '';
