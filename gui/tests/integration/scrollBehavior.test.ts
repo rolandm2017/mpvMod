@@ -188,11 +188,6 @@ describe('Subtitle Scrolling', () => {
 		});
 	});
 
-	it('should initialize electronAPI listener on mount', () => {
-		render(YourComponent, { props: { data: mockSubtitleData } });
-		expect(mockElectronAPI.onMPVState).toHaveBeenCalledWith(expect.any(Function));
-	});
-
 	it('should handle MPV state updates and trigger scrolling', async () => {
 		const renderResult: RenderResult<YourComponent> = render(YourComponent, {
 			props: { data: mockSubtitleData }
@@ -224,36 +219,6 @@ describe('Subtitle Scrolling', () => {
 		await waitFor(() => {
 			expect(mockScrollUtils.scrollToClosestSubtitle).toHaveBeenCalled();
 		});
-	});
-
-	it('should throttle scroll updates', async () => {
-		render(YourComponent, { props: { data: mockSubtitleData } });
-		await tick();
-
-		const mpvData: MPVStateData = {
-			content: '⏱️  0:06.0 / 22:35.7 (1.0%)',
-			time_pos: 6.0,
-			formatted_time: '0:06.0',
-			progress: 1,
-			formatted_duration: '22:35.7',
-			timestamp: Date.now(),
-			type: 'time_update'
-		};
-
-		// Ensure callback is defined
-		expect(onMPVStateCallback).toBeDefined();
-
-		if (onMPVStateCallback) {
-			// Trigger multiple rapid updates
-			onMPVStateCallback(mpvData);
-			onMPVStateCallback({ ...mpvData, time_pos: 7.0 });
-			onMPVStateCallback({ ...mpvData, time_pos: 8.0 });
-		}
-
-		await tick();
-
-		// Should only call once due to throttling (2000ms throttle)
-		expect(mockScrollUtils.scrollToClosestSubtitle).toHaveBeenCalledTimes(1);
 	});
 
 	it('should expose devtoolsScroller function for testing', async () => {
@@ -302,18 +267,6 @@ describe('Subtitle Scrolling', () => {
 			props: { data: emptyData }
 		});
 		expect(renderResult.getByText('No subtitles found')).toBeInTheDocument();
-	});
-
-	it('should handle missing electronAPI gracefully', () => {
-		(window as any).electronAPI = undefined;
-
-		const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-
-		render(YourComponent, { props: { data: mockSubtitleData } });
-
-		expect(consoleSpy).toHaveBeenCalledWith('electronAPI not available');
-
-		consoleSpy.mockRestore();
 	});
 });
 

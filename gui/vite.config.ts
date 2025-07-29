@@ -24,11 +24,23 @@ export default defineConfig({
 				test: {
 					environment: 'jsdom',
 					globals: true,
-
 					include: ['tests/integration/**/*.{test,spec}.{js,ts}'],
 					setupFiles: ['./tests/setup.js']
 				},
-				plugins: [svelte()]
+				plugins: [
+					svelte({
+						hot: false
+					})
+				],
+				resolve: {
+					alias: {
+						$lib: path.resolve('./src/lib')
+					}
+				},
+				define: {
+					'import.meta.env.SSR': false,
+					global: 'globalThis'
+				}
 			}
 		],
 		coverage: {
