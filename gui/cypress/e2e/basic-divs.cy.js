@@ -1,4 +1,6 @@
 // cypress/e2e/basic-divs.cy.js
+import { SUBTITLE_CONSTANTS } from '../../src/lib/constants'
+
 describe('Page Structure', () => {
     beforeEach(() => {
         // Launch your Electron app or visit the page
@@ -46,36 +48,56 @@ describe('Page Structure', () => {
         })
     })
 
-    // TODO: Verify that the componnents all mounted, reported their height
-
     it('reports the heights for every component when mounting is done', async () => {
-        console.log('Start difficult test')
         cy.window().then(async (win) => {
             // Option 1: Wait for the promise (if using Solution 1)
-            console.log('start to Await')
             const testData = await win.pageReadyPromise
             console.log('Test data from promise:', testData)
-            expect(testData).to.exist()
-            expect(testData.db).to.exist()
-            expect(testData.db.subtitleHeights).to.exist()
             expect(testData.allSegmentsMounted).to.be.true
+            expect(testData.db.subtitleHeights.size).to.equal(
+                SUBTITLE_CONSTANTS.TOTAL_COUNT
+            )
         })
     })
 
-    // it('scrolls down to the right place when prompted', () => {
-    // 	// step 1: show that it's at the top of the page
-    // 	cy.window().its('scrollY').should('equal', 0);
-    // 	// step 2: implement scroll to position
-    // 	cy.window().its('devtoolsScroller').should('exist');
+    it('has each subtitle timing accessible, and each one has a height', async () => {
+        cy.window().then(async (win) => {
+            // Option 1: Wait for the promise (if using Solution 1)
+            const testData = await win.pageReadyPromise
+            console.log('Test data from promise:', testData)
+            expect(testData.allSegmentsMounted).to.be.true
+            // subtitle timings are all available
+            expect(testData.subtitleCuePointsInSec.length).to.equal(
+                SUBTITLE_CONSTANTS.TOTAL_COUNT
+            )
+            expect(testData.subtitleCuePointsInSec.every((el) => el > 0)).to.be
+                .true
+            // each one has an associated height
+            for (const subtitleTiming of testData.subtitleCuePointsInSec) {
+                expect(testData.subtitleHeights.get(subtitleTiming)).to.exist()
+                expect(
+                    testData.subtitleHeights.get(subtitleTiming)
+                ).to.be.greaterThan(0)
+            }
+        })
+    })
 
-    // 	cy.window().then((win) => {
-    // 		console.log('Before scroll:', win.scrollY);
-    // 		win.devtoolsScroller(1000);
-    // 		console.log('After scroll call:', win.scrollY);
-    // 		cy.wait(100);
-    // 		console.log('After wait:', win.scrollY);
-    // 		// step 3: show it's scrolled down to that div. The  subtitle's text is now on screen!
-    // 		cy.window().its('scrollY').should('be.greaterThan', 0);
-    // 	});
-    // });
+    it('scrolls down to the right place when prompted', async () => {
+        // step 1: show that it's at the top of the page
+        cy.window().its('scrollY').should('equal', 0)
+        // step 2: implement scroll to position
+        cy.window().its('devtoolsScroller').should('exist')
+
+        cy.window().then(async (win) => {
+            // Option 1: Wait for the promise (if using Solution 1)
+            await win.pageReadyPromise
+            console.log('Before scroll:', win.scrollY)
+            win.devtoolsScroller(1000)
+            console.log('After scroll call:', win.scrollY)
+            cy.wait(100)
+            console.log('After wait:', win.scrollY)
+            // step 3: show it's scrolled down to that div. The  subtitle's text is now on screen!
+            cy.window().its('scrollY').should('be.greaterThan', 0)
+        })
+    })
 })
