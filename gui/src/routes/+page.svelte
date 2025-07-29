@@ -34,22 +34,6 @@
 	let mountedSegments = new Set<number>(); // track which segments have reported their position
 	let allSegmentsMounted = false;
 
-	/*
-	 * The question of scrolling to a position:
-	 // I have: time position from stream.
-	 // I have: list of subtitle start times.
-	 // I have: corresponding heights for subtitle start
-	 *
-	 // I want: viewport at position of related subtitle
-	 *
-	 */
-
-	/**
-	 * The question of highlighting a subtitle:
-	 * The subtitle file has only these timecode things.
-	 *
-	 */
-
 	// TODO: Color the subtitle in question
 
 	onMount(() => {
@@ -187,6 +171,7 @@
 
 	// export function devtoolsScroller(timestamp: number) {
 	export function devtoolsScroller(playerPosition: number) {
+		console.log('SCROLLING!', playerPosition);
 		// highlightPlayerPositionSegment(playerPosition);
 		scrollToClosestSubtitle(playerPosition, db, scrollContainer);
 	}
