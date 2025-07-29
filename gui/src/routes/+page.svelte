@@ -20,8 +20,6 @@
     let currentHighlightedTimecode = '';
     let segmentElements = new Map<string, HTMLDivElement>(); // timecode -> element reference
 
-    // let timePositionsToTimecodes = new Map<number, string>();
-
     let db: SubtitleDatabase;
 
     let content = '';
@@ -38,6 +36,12 @@
 
     onMount(() => {
         (window as any).devtoolsScroller = devtoolsScroller;
+
+        // Expose for testing
+        if (typeof window !== 'undefined') {
+            window.allSegmentsMounted = false;
+            window.testInteger = 99;
+        }
 
         let subtitles: Subtitle[] = [];
 
@@ -98,14 +102,6 @@
         }, 150);
     });
 
-    /*
-     * I have to go from, so, the timestamp, i'm using that to decide which subtitle to highlight.
-     * The timecode shows in the little box in small text.
-     * The highlight thing, it's the one that is zoomed to. So whatever gets zoomed to, should also be highlighted.
-     * So anywhere scrollToClosestSubtitle is called, I want to also highlightSegment.
-     * So scrollToClosestSubtitle uses timePos.
-     */
-
     function highlightPlayerPositionSegment(playerPosition: number) {
         const corresponding: number = Finder.findPlayerTimeForSubtitleTiming(
             playerPosition,
@@ -123,18 +119,13 @@
 
     export function highlightSegment(timecode: TimecodeString) {
         /*
-         * Note that timecodes are a subtitle thing, timestamps are a player position thing.
+         * Timecodes are a subtitle thing, timestamps are a player position thing.
          */
 
-        // why did i need that? i know i need it, but why?
-        const timecodeAsSeconds = parseTimecodeToSeconds(timecode);
-
-        // Remove highlight from previous element
         if (currentHighlightedElement) {
             currentHighlightedElement.classList.remove('highlighted');
         }
 
-        // Add highlight to new element
         const element = segmentElements.get(timecode);
         if (element) {
             element.classList.add('highlighted');
@@ -148,15 +139,17 @@
         y: number,
         element: HTMLDivElement
     ) {
-        /* Used to transmit a component's Y height into the holder arr.
-         */
+        /* Used to transmit a component's Y height into the holder arr. */
 
         const timecodeAsSeconds = parseTimecodeToSeconds(timecode);
 
         mountedSegments.add(timecodeAsSeconds);
+        console.log(
+            'MOUNT COUNT: ',
+            mountedSegments.size,
+            data.segments.length - mountedSegments.size
+        );
         db.subtitleHeights.set(timecodeAsSeconds, y);
-        // is now "db.subtitleCuePointsInSec"
-        // subtitleStartTimes.push(timecodeAsSeconds);
 
         segmentElements.set(timecode, element);
 
@@ -164,6 +157,10 @@
         if (mountedSegments.size === data.segments.length) {
             allSegmentsMounted = true;
             console.log('All segments mounted, positions ready');
+            // Expose to window for testing
+            if (typeof window !== 'undefined') {
+                window.allSegmentsMounted = true;
+            }
         }
     }
 

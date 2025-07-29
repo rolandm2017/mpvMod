@@ -15,10 +15,9 @@ declare global {
 
     interface Window {
         electronAPI: ElectronAPI;
-        testData: {
-            db: SubtitleDatabase;
-            allSegmentsMounted: boolean;
-        };
+        db: SubtitleDatabase;
+        allSegmentsMounted: boolean;
+        testInteger: number;
     }
 }
 
