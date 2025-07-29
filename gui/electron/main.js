@@ -56,6 +56,7 @@ function createWindow() {
 }
 
 function connectMPV() {
+	console.log('In connectMPV');
 	mpvWS = new WebSocket('ws://localhost:8765');
 
 	mpvWS.on('open', () => {
@@ -63,7 +64,6 @@ function connectMPV() {
 	});
 
 	mpvWS.on('message', (data) => {
-		console.log('connectMPV onMessage');
 		try {
 			const parsed = JSON.parse(data);
 			// Send to renderer

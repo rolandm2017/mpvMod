@@ -10,6 +10,7 @@
 		scrollToClosestSubtitle
 	} from '$lib/utils/subtitleScroll.js';
 	import { Subtitle, SubtitleDatabase } from '$lib/utils/SubtitleDatabase.js';
+	import type { TimecodeString } from '$lib/types.js';
 
 	export let data;
 
@@ -88,15 +89,10 @@
 
 				// Auto-scroll to current position (throttled)
 				const now = Date.now();
-				if (now - lastScrollTime > 500) {
+				if (now - lastScrollTime > 2000) {
 					// Throttle to every 500ms
-					highlightPlayerPositionSegment(playerPosition);
-					scrollToClosestSubtitle(
-						playerPosition,
-						db.subtitleCuePointsInSec,
-						db.subtitleHeights,
-						scrollContainer
-					);
+					// highlightPlayerPositionSegment(playerPosition);
+					scrollToClosestSubtitle(playerPosition, db, scrollContainer);
 
 					lastScrollTime = now;
 				}
@@ -107,23 +103,18 @@
 
 		// Initial scroll after mount
 		setTimeout(() => {
-			console.log(allSegmentsMounted, '104ru');
+			// console.log(allSegmentsMounted, '104ru');
 
-			console.log('SIZE: ', mountedSegments.size, '115ru');
-			console.log(db.subtitleCuePointsInSec.slice(-3), 'final 3 values 115ru');
-			console.log(db.timePositionsToTimecodes.size, mountedSegments.size, '++ 172ru');
+			// console.log('SIZE: ', mountedSegments.size, '115ru');
+			// console.log(db.subtitleCuePointsInSec.slice(-3), 'final 3 values 115ru');
+			// console.log(db.timePositionsToTimecodes.size, mountedSegments.size, '++ 172ru');
 
-			const entries = Array.from(db.timePositionsToTimecodes.entries());
-			console.log('First 3:', entries.slice(0, 3));
-			console.log('Last 3:', entries.slice(-3));
+			// const entries = Array.from(db.timePositionsToTimecodes.entries());
+			// console.log('First 3:', entries.slice(0, 3));
+			// console.log('Last 3:', entries.slice(-3));
 			if (allSegmentsMounted) {
-				highlightPlayerPositionSegment(playerPosition);
-				scrollToClosestSubtitle(
-					playerPosition,
-					db.subtitleCuePointsInSec,
-					db.subtitleHeights,
-					scrollContainer
-				);
+				// highlightPlayerPositionSegment(playerPosition);
+				scrollToClosestSubtitle(playerPosition, db, scrollContainer);
 			}
 		}, 150);
 	});
@@ -141,6 +132,8 @@
 			playerPosition,
 			db.subtitleCuePointsInSec
 		);
+		// FIXME: timecode's are not found. the timePositions are never loaded
+		// FIXME: the problem is i'm doing "get" for a precise value, when I want fuzzy matching
 		const timecode = db.timePositionsToTimecodes.get(corresponding);
 		if (timecode) {
 			highlightSegment(timecode);
@@ -149,7 +142,7 @@
 		}
 	}
 
-	export function highlightSegment(timecode: string) {
+	export function highlightSegment(timecode: TimecodeString) {
 		/*
 		 * Note that timecodes are a subtitle thing, timestamps are a player position thing.
 		 */
@@ -193,13 +186,8 @@
 
 	// export function devtoolsScroller(timestamp: number) {
 	export function devtoolsScroller(playerPosition: number) {
-		highlightPlayerPositionSegment(playerPosition);
-		scrollToClosestSubtitle(
-			playerPosition,
-			db.subtitleCuePointsInSec,
-			db.subtitleHeights,
-			scrollContainer
-		);
+		// highlightPlayerPositionSegment(playerPosition);
+		scrollToClosestSubtitle(playerPosition, db, scrollContainer);
 	}
 </script>
 

@@ -1,4 +1,5 @@
 import type { PlayerPosition, SubtitleTiming, TimecodeString } from '$lib/types';
+import type { SubtitleDatabase } from './SubtitleDatabase';
 import type { SubtitleHeights } from './SubtitleHeights';
 
 export class Finder {
@@ -68,8 +69,9 @@ export class Finder {
 
 export function scrollToClosestSubtitle(
 	playerPosition: PlayerPosition,
-	subtitleCuePointsArr: SubtitleTiming[],
-	subtitleHeights: SubtitleHeights,
+	// subtitleCuePointsArr: SubtitleTiming[],
+	// subtitleHeights: SubtitleHeights,
+	db: SubtitleDatabase,
 	scrollContainer: HTMLDivElement
 ) {
 	/*
@@ -77,12 +79,12 @@ export function scrollToClosestSubtitle(
 	 * @param subtitleCuePointsArr - an arr of all subtitle's start times
 	 */
 	console.log('Scrolling for ', playerPosition);
-	const corresponding: number = Finder.findSubtitleIndexAtPlayerTime(
+	const corresponding: number = Finder.findPlayerTimeForSubtitleIndex(
 		playerPosition,
-		subtitleCuePointsArr
+		db.subtitleCuePointsInSec
 	);
 	console.log('corresponding: ', corresponding);
-	const heightForSub = subtitleHeights.getHeight(corresponding) ?? 0;
+	const heightForSub = db.subtitleHeights.getHeight(corresponding) ?? 0;
 
 	// WANT: viewport at position of related subtitle
 	console.log(heightForSub, 'found height');
