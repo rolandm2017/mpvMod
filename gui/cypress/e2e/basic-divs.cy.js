@@ -38,10 +38,32 @@ describe('Page Structure', () => {
         cy.window().should('have.property', 'testInteger', 99);
     });
 
+    // TEST that the DIVS all load.
+
+    it('loads all 434 divs from the SRT file', () => {
+        cy.get('.subtitle-content')
+            .children('div') // This gets only direct children that are divs
+            .should('have.length', 434)
+            .then(($segments) => {
+                const renderedCount = $segments.length;
+
+                // Compare with your data source
+                cy.window().then((win) => {
+                    // Adjust this path to match how you access your data
+                    const dataCount = SUBTITLE_CONSTANTS.TOTAL_COUNT;
+                    expect(renderedCount).to.equal(dataCount);
+                    cy.log(
+                        `Data has ${dataCount} segments, rendered ${renderedCount} divs`
+                    );
+                });
+            });
+    });
+
     it('has numerous basic qualities required for testing', () => {
         // Wait for all segments to be mounted FIRST (outside any .then() block)
         cy.window().should('have.property', 'allSegmentsMounted', true);
 
+        // TODO:
         // Now you can safely interact with your database/components
         cy.get('[data-testid="subtitle-segment"]').should(
             'have.length.greaterThan',
