@@ -24,40 +24,6 @@
 
     let db: SubtitleDatabase;
 
-    let pageReadyResolver: (value: any) => void;
-    let pageReadyPromise = new Promise((resolve) => {
-        pageReadyResolver = resolve;
-    });
-
-    // Expose the promise to window immediately
-    if (typeof window !== 'undefined') {
-        window.testInteger = 99;
-
-        window.pageReadyPromise = pageReadyPromise;
-    }
-
-    // Expose the promise to window immediately
-    // Update your existing reactive statement:
-    $: if (typeof window !== 'undefined' && db && allSegmentsMounted) {
-        const testData = { db, allSegmentsMounted };
-        window.testData = testData;
-
-        // Resolve the promise when everything is ready
-        if (pageReadyResolver) {
-            pageReadyResolver(testData);
-        }
-    }
-
-    // Also update when allSegmentsMounted changes:
-    $: if (allSegmentsMounted && db && typeof window !== 'undefined') {
-        const testData = { db, allSegmentsMounted };
-        window.testData = testData;
-
-        if (pageReadyResolver) {
-            pageReadyResolver(testData);
-        }
-    }
-
     let content = '';
     let playerPosition = 0;
     let formattedTime = '';
@@ -81,10 +47,6 @@
             subtitles.push(newSub);
         });
 
-        console.log(
-            'transferring subtitleTiming: ',
-            data.timePositionsToTimecodesMap
-        );
         db = new SubtitleDatabase(
             subtitles,
             data.timePositionsToTimecodesMap,
@@ -129,15 +91,6 @@
 
         // Initial scroll after mount
         setTimeout(() => {
-            // console.log(allSegmentsMounted, '104ru');
-
-            // console.log('SIZE: ', mountedSegments.size, '115ru');
-            // console.log(db.subtitleCuePointsInSec.slice(-3), 'final 3 values 115ru');
-            // console.log(db.timePositionsToTimecodes.size, mountedSegments.size, '++ 172ru');
-
-            // const entries = Array.from(db.timePositionsToTimecodes.entries());
-            // console.log('First 3:', entries.slice(0, 3));
-            // console.log('Last 3:', entries.slice(-3));
             if (allSegmentsMounted) {
                 // highlightPlayerPositionSegment(playerPosition);
                 scrollToClosestSubtitle(playerPosition, db, scrollContainer);
@@ -225,7 +178,11 @@
 <div class="container">
     <div class="subtitle-panel">
         <div class="subtitle-header">Subtitles</div>
-        <div class="subtitle-content" bind:this={scrollContainer}>
+        <div
+            class="subtitle-content"
+            data-testid="scroll-container"
+            bind:this={scrollContainer}
+        >
             {#if data.segments.length > 0}
                 {#each data.segments as segment}
                     <SubtitleSegment

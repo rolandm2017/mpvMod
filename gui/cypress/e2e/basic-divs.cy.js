@@ -38,9 +38,8 @@ describe('Page Structure', () => {
         cy.window().should('have.property', 'testInteger', 99);
     });
 
-    it('has numerous basic qualities required for testing', async () => {
-        cy.window().then(async (win) => {
-            const testData = await win.pageReadyPromise;
+    it('has numerous basic qualities required for testing', () => {
+        cy.window().then((win) => {
             expect(testData).to.exist();
             expect(testData.db).to.exist();
             expect(testData.db.subtitleHeights).to.exist();
@@ -48,10 +47,9 @@ describe('Page Structure', () => {
         });
     });
 
-    it('reports the heights for every component when mounting is done', async () => {
-        cy.window().then(async (win) => {
+    it('reports the heights for every component when mounting is done', () => {
+        cy.window().then((win) => {
             // Option 1: Wait for the promise (if using Solution 1)
-            const testData = await win.pageReadyPromise;
             console.log('Test data from promise:', testData);
             expect(testData.allSegmentsMounted).to.be.true;
             expect(testData.db.subtitleHeights.size).to.equal(
@@ -60,10 +58,9 @@ describe('Page Structure', () => {
         });
     });
 
-    it('has each subtitle timing accessible, and each one has a height', async () => {
-        cy.window().then(async (win) => {
+    it('has each subtitle timing accessible, and each one has a height', () => {
+        cy.window().then((win) => {
             // Option 1: Wait for the promise (if using Solution 1)
-            const testData = await win.pageReadyPromise;
             console.log('Test data from promise:', testData);
             expect(testData.allSegmentsMounted).to.be.true;
             // subtitle timings are all available
@@ -82,15 +79,64 @@ describe('Page Structure', () => {
         });
     });
 
-    it('scrolls down to the right place when prompted', async () => {
+    it('starts scrolled all the way up', () => {
+        cy.window().its('scrollY').should('equal', 0);
+        cy.get('[data-testid="scroll-container"]')
+            .should('have.prop', 'scrollTop')
+            .and('equal', 0);
+    });
+
+    it('devScroll works', () => {
+        // step 1: show that it's at the top of the page
+        cy.window().its('scrollY').should('equal', 0);
+        cy.get('[data-testid="scroll-container"]')
+            .should('have.prop', 'scrollTop')
+            .and('equal', 0);
+        // step 2: implement scroll to position
+        cy.window().its('devtoolsScroller').should('exist');
+
+        cy.window().then((win) => {
+            expect(1).to.equal(2);
+            // Option 1: Wait for the promise (if using Solution 1)
+            console.log('Before scroll:', win.scrollY);
+            win.devtoolsScroller(1000);
+            console.log('After scroll call:', win.scrollY);
+            cy.wait(100);
+            console.log('After wait:', win.scrollY);
+
+            cy.get('[data-testid="scroll-container"]').then(($container) => {
+                const scrollTop = $container[0].scrollTop;
+                console.log('Container scrollTop:', scrollTop);
+                expect(scrollTop).to.be.greaterThan(900);
+            });
+            // step 3: show it's scrolled down to that div. The  subtitle's text is now on screen!
+            cy.window().its('scrollY').should('be.greaterThan', 900);
+
+            cy.get('[data-testid="scroll-container"]') // or however you select your scrollContainer
+                .should('have.prop', 'scrollTop')
+                .and('be.greaterThan', 900);
+
+            expect(1).to.equal(2);
+
+            // step 4: exactly where should it be?
+        });
+    });
+
+    it('scrolls down to the right place when prompted', () => {
         // step 1: show that it's at the top of the page
         cy.window().its('scrollY').should('equal', 0);
         // step 2: implement scroll to position
         cy.window().its('devtoolsScroller').should('exist');
 
-        cy.window().then(async (win) => {
+        console.log('HERe');
+        console.log('HERe');
+        console.log('HERe');
+        cy.window().then((win) => {
+            expect(1).to.equal(2);
             // Option 1: Wait for the promise (if using Solution 1)
-            await win.pageReadyPromise;
+            console.log('HEOIDrhjawesiufhiawseuhnrf');
+            console.log('HEOIDrhjawesiufhiawseuhnrf');
+            console.log('HEOIDrhjawesiufhiawseuhnrf');
             console.log('Before scroll:', win.scrollY);
             win.devtoolsScroller(1000);
             console.log('After scroll call:', win.scrollY);
@@ -98,6 +144,19 @@ describe('Page Structure', () => {
             console.log('After wait:', win.scrollY);
             // step 3: show it's scrolled down to that div. The  subtitle's text is now on screen!
             cy.window().its('scrollY').should('be.greaterThan', 0);
+
+            cy.window().then((win) => {
+                console.log('Window scrollY:', win.scrollY);
+
+                cy.get('[data-testid="scroll-container"]').then(
+                    ($container) => {
+                        const scrollTop = $container[0].scrollTop;
+                        console.log('Container scrollTop:', scrollTop);
+                        console.log('Expected > 900, actual:', scrollTop);
+                        expect(scrollTop).to.be.greaterThan(900);
+                    }
+                );
+            });
 
             // step 4: exactly where should it be?
         });

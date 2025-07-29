@@ -1,7 +1,7 @@
 // See https://svelte.dev/docs/kit/types#app.d.ts
 
-import type { ElectronAPI } from '$lib/interfaces'
-import type { SubtitleDatabase } from '$lib/utils/subtitleDatabase'
+import type { ElectronAPI } from '$lib/interfaces';
+import type { SubtitleDatabase } from '$lib/utils/subtitleDatabase';
 
 // for information about these interfaces
 declare global {
@@ -14,14 +14,12 @@ declare global {
     }
 
     interface Window {
-        electronAPI: ElectronAPI
+        electronAPI: ElectronAPI;
         testData: {
-            db: SubtitleDatabase
-            allSegmentsMounted: boolean
-        }
-        pageReadyPromise: Promise
-        testInteger: number
+            db: SubtitleDatabase;
+            allSegmentsMounted: boolean;
+        };
     }
 }
 
-export {}
+export {};
