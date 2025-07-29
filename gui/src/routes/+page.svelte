@@ -1,99 +1,102 @@
 <script lang="ts">
-    import { onMount, onDestroy, getContext } from 'svelte'
+    import { onMount, onDestroy, getContext } from 'svelte';
 
-    import CardBuilder from '$lib/CardBuilder.svelte'
-    import SubtitleSegment from '$lib/SubtitleSegment.svelte'
+    import CardBuilder from '$lib/CardBuilder.svelte';
+    import SubtitleSegment from '$lib/SubtitleSegment.svelte';
 
     import {
         Finder,
         parseTimecodeToSeconds,
         scrollToClosestSubtitle,
-    } from '$lib/utils/subtitleScroll.js'
-    import { Subtitle, SubtitleDatabase } from '$lib/utils/subtitleDatabase.js'
-    import type { TimecodeString } from '$lib/types.js'
+    } from '$lib/utils/subtitleScroll.js';
+    import { Subtitle, SubtitleDatabase } from '$lib/utils/subtitleDatabase.js';
+    import type { TimecodeString } from '$lib/types.js';
 
-    export let data
+    export let data;
 
-    let scrollContainer: HTMLDivElement
+    let scrollContainer: HTMLDivElement;
 
-    let currentHighlightedElement: HTMLDivElement | null = null
-    let currentHighlightedTimecode = ''
-    let segmentElements = new Map<string, HTMLDivElement>() // timecode -> element reference
+    let currentHighlightedElement: HTMLDivElement | null = null;
+    let currentHighlightedTimecode = '';
+    let segmentElements = new Map<string, HTMLDivElement>(); // timecode -> element reference
 
     // let timePositionsToTimecodes = new Map<number, string>();
 
-    let db: SubtitleDatabase
+    let db: SubtitleDatabase;
 
-    let pageReadyResolver: (value: any) => void
+    let pageReadyResolver: (value: any) => void;
     let pageReadyPromise = new Promise((resolve) => {
-        pageReadyResolver = resolve
-    })
+        pageReadyResolver = resolve;
+    });
 
     // Expose the promise to window immediately
     if (typeof window !== 'undefined') {
-        window.testInteger = 99
+        window.testInteger = 99;
 
-        window.pageReadyPromise = pageReadyPromise
+        window.pageReadyPromise = pageReadyPromise;
     }
 
     // Expose the promise to window immediately
     // Update your existing reactive statement:
     $: if (typeof window !== 'undefined' && db && allSegmentsMounted) {
-        const testData = { db, allSegmentsMounted }
-        window.testData = testData
+        const testData = { db, allSegmentsMounted };
+        window.testData = testData;
 
         // Resolve the promise when everything is ready
         if (pageReadyResolver) {
-            pageReadyResolver(testData)
+            pageReadyResolver(testData);
         }
     }
 
     // Also update when allSegmentsMounted changes:
     $: if (allSegmentsMounted && db && typeof window !== 'undefined') {
-        const testData = { db, allSegmentsMounted }
-        window.testData = testData
+        const testData = { db, allSegmentsMounted };
+        window.testData = testData;
 
         if (pageReadyResolver) {
-            pageReadyResolver(testData)
+            pageReadyResolver(testData);
         }
     }
 
-    let content = ''
-    let playerPosition = 0
-    let formattedTime = ''
+    let content = '';
+    let playerPosition = 0;
+    let formattedTime = '';
 
-    let lastScrollTime = 0
+    let lastScrollTime = 0;
 
     // scrollToLocation(heightForSub);
-    let mountedSegments = new Set<number>() // track which segments have reported their position
-    let allSegmentsMounted = false
+    let mountedSegments = new Set<number>(); // track which segments have reported their position
+    let allSegmentsMounted = false;
 
     // TODO: Color the subtitle in question
 
     onMount(() => {
-        ;(window as any).devtoolsScroller = devtoolsScroller
+        (window as any).devtoolsScroller = devtoolsScroller;
 
-        let subtitles: Subtitle[] = []
+        let subtitles: Subtitle[] = [];
 
         // Use the pre-built arrays from server
         data.segments.forEach((s) => {
-            let newSub = new Subtitle(s.text, s.timecode, s.startTimeSeconds)
-            subtitles.push(newSub)
-        })
+            let newSub = new Subtitle(s.text, s.timecode, s.startTimeSeconds);
+            subtitles.push(newSub);
+        });
 
-        console.log('It goes in: ', data.timePositionsToTimecodes)
+        console.log(
+            'transferring subtitleTiming: ',
+            data.timePositionsToTimecodesMap
+        );
         db = new SubtitleDatabase(
             subtitles,
-            data.timePositionsToTimecodes,
+            data.timePositionsToTimecodesMap,
             data.subtitleCuePointsInSec,
             data.timecodes
-        )
+        );
 
-        console.log('Window object:', window)
-        console.log('electronAPI available:', !!window.electronAPI)
+        console.log('Window object:', window);
+        console.log('electronAPI available:', !!window.electronAPI);
 
         if (window.electronAPI) {
-            console.log('Running onMPVstate')
+            console.log('Running onMPVstate');
             window.electronAPI.onMPVState((data) => {
                 // content :  "⏱️  0:13.6 / 22:35.7 (1.0%)"
                 // formatted_duration :  "22:35.7"
@@ -102,22 +105,26 @@
                 // time_pos :  13.555
                 // timestamp :  1753652691.9598007
                 // type :  "time_update"
-                content = data.content
-                playerPosition = data.time_pos
-                formattedTime = data.formatted_time
+                content = data.content;
+                playerPosition = data.time_pos;
+                formattedTime = data.formatted_time;
 
                 // Auto-scroll to current position (throttled)
-                const now = Date.now()
+                const now = Date.now();
                 if (now - lastScrollTime > 2000) {
                     // Throttle to every 500ms
                     // highlightPlayerPositionSegment(playerPosition);
-                    scrollToClosestSubtitle(playerPosition, db, scrollContainer)
+                    scrollToClosestSubtitle(
+                        playerPosition,
+                        db,
+                        scrollContainer
+                    );
 
-                    lastScrollTime = now
+                    lastScrollTime = now;
                 }
-            })
+            });
         } else {
-            console.error('electronAPI not available')
+            console.error('electronAPI not available');
         }
 
         // Initial scroll after mount
@@ -133,10 +140,10 @@
             // console.log('Last 3:', entries.slice(-3));
             if (allSegmentsMounted) {
                 // highlightPlayerPositionSegment(playerPosition);
-                scrollToClosestSubtitle(playerPosition, db, scrollContainer)
+                scrollToClosestSubtitle(playerPosition, db, scrollContainer);
             }
-        }, 150)
-    })
+        }, 150);
+    });
 
     /*
      * I have to go from, so, the timestamp, i'm using that to decide which subtitle to highlight.
@@ -150,14 +157,14 @@
         const corresponding: number = Finder.findPlayerTimeForSubtitleTiming(
             playerPosition,
             db.subtitleCuePointsInSec
-        )
+        );
         // FIXME: timecode's are not found. the timePositions are never loaded
         // FIXME: the problem is i'm doing "get" for a precise value, when I want fuzzy matching
-        const timecode = db.timePositionsToTimecodes.get(corresponding)
+        const timecode = db.timePositionsToTimecodes.get(corresponding);
         if (timecode) {
-            highlightSegment(timecode)
+            highlightSegment(timecode);
         } else {
-            console.log(timecode, 'not found')
+            console.log(timecode, 'not found');
         }
     }
 
@@ -167,19 +174,19 @@
          */
 
         // why did i need that? i know i need it, but why?
-        const timecodeAsSeconds = parseTimecodeToSeconds(timecode)
+        const timecodeAsSeconds = parseTimecodeToSeconds(timecode);
 
         // Remove highlight from previous element
         if (currentHighlightedElement) {
-            currentHighlightedElement.classList.remove('highlighted')
+            currentHighlightedElement.classList.remove('highlighted');
         }
 
         // Add highlight to new element
-        const element = segmentElements.get(timecode)
+        const element = segmentElements.get(timecode);
         if (element) {
-            element.classList.add('highlighted')
-            currentHighlightedElement = element
-            currentHighlightedTimecode = timecode
+            element.classList.add('highlighted');
+            currentHighlightedElement = element;
+            currentHighlightedTimecode = timecode;
         }
     }
 
@@ -191,27 +198,27 @@
         /* Used to transmit a component's Y height into the holder arr.
          */
 
-        const timecodeAsSeconds = parseTimecodeToSeconds(timecode)
+        const timecodeAsSeconds = parseTimecodeToSeconds(timecode);
 
-        mountedSegments.add(timecodeAsSeconds)
-        db.subtitleHeights.set(timecodeAsSeconds, y)
+        mountedSegments.add(timecodeAsSeconds);
+        db.subtitleHeights.set(timecodeAsSeconds, y);
         // is now "db.subtitleCuePointsInSec"
         // subtitleStartTimes.push(timecodeAsSeconds);
 
-        segmentElements.set(timecode, element)
+        segmentElements.set(timecode, element);
 
         // Check if all segments have mounted
         if (mountedSegments.size === data.segments.length) {
-            allSegmentsMounted = true
-            console.log('All segments mounted, positions ready')
+            allSegmentsMounted = true;
+            console.log('All segments mounted, positions ready');
         }
     }
 
     // export function devtoolsScroller(timestamp: number) {
     export function devtoolsScroller(playerPosition: number) {
-        console.log('SCROLLING!', playerPosition)
+        console.log('SCROLLING!', playerPosition);
         // highlightPlayerPositionSegment(playerPosition);
-        scrollToClosestSubtitle(playerPosition, db, scrollContainer)
+        scrollToClosestSubtitle(playerPosition, db, scrollContainer);
     }
 </script>
 
