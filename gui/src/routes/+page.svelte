@@ -11,6 +11,7 @@
     } from '$lib/utils/subtitleScroll.js';
     import { Subtitle, SubtitleDatabase } from '$lib/utils/subtitleDatabase.js';
     import type { TimecodeString } from '$lib/types.js';
+    import { SegmentMountingTracker } from '$lib/utils/SegmentMountingTracker.js';
 
     export let data;
 
@@ -21,6 +22,7 @@
     let segmentElements = new Map<string, HTMLDivElement>(); // timecode -> element reference
 
     let db: SubtitleDatabase;
+    let mountingTracker: SegmentMountingTracker;
 
     let content = '';
     let playerPosition = 0;
@@ -29,7 +31,6 @@
     let lastScrollTime = 0;
 
     // scrollToLocation(heightForSub);
-    let mountedSegments = new Set<string>(); // track which segments have reported their position
     let allSegmentsMounted = false;
 
     // TODO: Color the subtitle in question
@@ -53,10 +54,11 @@
 
         db = new SubtitleDatabase(
             subtitles,
-            data.timePositionsToTimecodesMap,
+            data.subtitleTimingToTimecodesMap,
             data.subtitleCuePointsInSec,
             data.timecodes
         );
+        mountingTracker = new SegmentMountingTracker(data.segments.length);
 
         console.log('Window object:', window);
         console.log('electronAPI available:', !!window.electronAPI);
@@ -134,40 +136,27 @@
         }
     }
 
-    const ADDED: string[] = [];
-
-    function storeSegmentPosition(
-        timecode: string,
+    export function storeSegmentPosition(
+        timecode: TimecodeString,
         y: number,
         element: HTMLDivElement
     ) {
-        /* Used to transmit a component's Y height into the holder arr. */
+        if (!mountingTracker) {
+            console.error('mountingTracker not initialized');
+            return;
+        }
 
-        const timecodeAsSeconds = parseTimecodeToSeconds(timecode);
-
-        mountedSegments.add(timecode);
-        ADDED.push(timecode);
-        console.log(
-            'COUNT: ',
-            mountedSegments.size,
-            data.segments.length - mountedSegments.size,
-            'TOTAL: ',
-            data.segments.length
+        const result = mountingTracker.storeSegmentPosition(
+            timecode,
+            y,
+            element,
+            db
         );
-        const duplicates = [
-            ...new Set(
-                ADDED.filter((item, index) => ADDED.indexOf(item) !== index)
-            ),
-        ];
-        console.log('ADDED: ', ADDED.length);
-        console.log('dupes', duplicates);
 
-        db.subtitleHeights.set(timecodeAsSeconds, y);
+        // Handle completion
+        if (result.isComplete) {
+            console.log('All segments mounted:', mountingTracker.getStats());
 
-        segmentElements.set(timecode, element);
-
-        // Check if all segments have mounted
-        if (mountedSegments.size === data.segments.length) {
             allSegmentsMounted = true;
             console.log('All segments mounted, positions ready');
             // Expose to window for testing

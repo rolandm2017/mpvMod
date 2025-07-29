@@ -13,6 +13,27 @@ import type { ParsedSegmentObj } from '../src/routes/+page.server';
 
 import { SUBTITLE_CONSTANTS } from '$lib/constants';
 
+function checkDuplicateTimecodes(segments: ParsedSegmentObj[]): boolean {
+    const timecodes = segments.map((s) => s.timecode);
+    const duplicates = timecodes.filter((tc, i) => timecodes.indexOf(tc) !== i);
+
+    if (duplicates.length > 0) {
+        console.log('Duplicate timecodes found:', [...new Set(duplicates)]);
+        return true;
+    }
+    return false;
+}
+
+describe('SRT file qualities', () => {
+    const SRT_FILE_PATH = path.resolve('sample.srt');
+    const content = fs.readFileSync(SRT_FILE_PATH, 'utf-8');
+    const blocks: string[] = content.trim().split(/\n\s*\n/);
+    const segments = parseSrtFileIntoSegments(blocks);
+    it('contains no duplicates', () => {
+        expect(checkDuplicateTimecodes(segments)).toBe(false);
+    });
+});
+
 describe('PageServerLoad file loading', () => {
     const SRT_FILE_PATH = path.resolve('sample.srt');
     const content = fs.readFileSync(SRT_FILE_PATH, 'utf-8');

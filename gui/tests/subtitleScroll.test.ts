@@ -1,127 +1,180 @@
 import { describe, it, expect, vi } from 'vitest';
+import path from 'path';
+import fs from 'fs';
+
+import { parseTimecodeToSeconds } from '$lib/utils/parsing';
 import {
-	scrollToClosestSubtitle,
-	scrollToLocation,
-	Finder,
-	parseTimecodeToSeconds
+    scrollToClosestSubtitle,
+    scrollToLocation,
+    Finder,
 } from '../src/lib/utils/subtitleScroll';
 import { SubtitleHeights } from '../src/lib/utils/subtitleHeights';
 import { SubtitleDatabase } from '../src/lib/utils/subtitleDatabase';
 import type { SubtitleTiming, TimecodeString } from '$lib/types';
+import type { ParsedSegmentObj } from '../src/routes/+page.server';
 
 describe('Finder', () => {
-	describe('findPlayerTimeForSubtitleTiming', () => {
-		it('should find the largest time that does not exceed timestamp', () => {
-			const times = [1.0, 5.5, 10.0, 15.5];
+    describe('findPlayerTimeForSubtitleTiming', () => {
+        it('should find the largest time that does not exceed timestamp', () => {
+            const times = [1.0, 5.5, 10.0, 15.5];
 
-			expect(Finder.findPlayerTimeForSubtitleTiming(7.0, times)).toBe(5.5);
-			expect(Finder.findPlayerTimeForSubtitleTiming(5.5, times)).toBe(5.5);
-			expect(Finder.findPlayerTimeForSubtitleTiming(0.5, times)).toBe(0);
-			expect(Finder.findPlayerTimeForSubtitleTiming(20.0, times)).toBe(15.5);
-		});
+            expect(Finder.findPlayerTimeForSubtitleTiming(7.0, times)).toBe(
+                5.5
+            );
+            expect(Finder.findPlayerTimeForSubtitleTiming(5.5, times)).toBe(
+                5.5
+            );
+            expect(Finder.findPlayerTimeForSubtitleTiming(0.5, times)).toBe(0);
+            expect(Finder.findPlayerTimeForSubtitleTiming(20.0, times)).toBe(
+                15.5
+            );
+        });
 
-		it('should handle empty array', () => {
-			expect(Finder.findPlayerTimeForSubtitleTiming(5.0, [])).toBe(0);
-		});
-	});
-	describe('findSubtitleIndexAtPlayerTime', () => {
-		it('should find the largest time that does not exceed timestamp', () => {
-			const times = [1.0, 5.5, 10.0, 15.5];
+        it('should handle empty array', () => {
+            expect(Finder.findPlayerTimeForSubtitleTiming(5.0, [])).toBe(0);
+        });
+    });
+    describe('findSubtitleIndexAtPlayerTime', () => {
+        it('should find the largest time that does not exceed timestamp', () => {
+            const times = [1.0, 5.5, 10.0, 15.5];
 
-			expect(Finder.findSubtitleIndexAtPlayerTime(7.0, times)).toBe(1); // 7 closest to 5.5, hence 1
-			expect(Finder.findSubtitleIndexAtPlayerTime(5.5, times)).toBe(1); // 5.5 closest to 5.5, hence 1
-			expect(Finder.findSubtitleIndexAtPlayerTime(0.5, times)).toBe(0);
-			expect(Finder.findSubtitleIndexAtPlayerTime(20.0, times)).toBe(3); // 20 closest to 15.5, hence 3
-		});
+            expect(Finder.findSubtitleIndexAtPlayerTime(7.0, times)).toBe(1); // 7 closest to 5.5, hence 1
+            expect(Finder.findSubtitleIndexAtPlayerTime(5.5, times)).toBe(1); // 5.5 closest to 5.5, hence 1
+            expect(Finder.findSubtitleIndexAtPlayerTime(0.5, times)).toBe(0);
+            expect(Finder.findSubtitleIndexAtPlayerTime(20.0, times)).toBe(3); // 20 closest to 15.5, hence 3
+        });
 
-		it('should handle empty array', () => {
-			expect(Finder.findSubtitleIndexAtPlayerTime(5.0, [])).toBe(0);
-		});
-	});
-});
-
-describe('parseTimecodeToSeconds', () => {
-	it('should parse standard timecode format', () => {
-		expect(parseTimecodeToSeconds('00:05:23.450')).toBe(323.45);
-		expect(parseTimecodeToSeconds('01:30:45.200')).toBe(5445.2);
-		expect(parseTimecodeToSeconds('00:00:10.000')).toBe(10);
-	});
-
-	it('should handle invalid formats', () => {
-		expect(parseTimecodeToSeconds('invalid')).toBe(0);
-		expect(parseTimecodeToSeconds('5:30')).toBe(0);
-	});
+        it('should handle empty array', () => {
+            expect(Finder.findSubtitleIndexAtPlayerTime(5.0, [])).toBe(0);
+        });
+    });
 });
 
 describe('scrollToLocation', () => {
-	it('should call scrollTo on the container', () => {
-		const mockScrollContainer = {
-			scrollTo: vi.fn()
-		} as unknown as HTMLDivElement;
+    it('should call scrollTo on the container', () => {
+        const mockScrollContainer = {
+            scrollTo: vi.fn(),
+        } as unknown as HTMLDivElement;
 
-		scrollToLocation(100, mockScrollContainer);
+        scrollToLocation(100, mockScrollContainer);
 
-		expect(mockScrollContainer.scrollTo).toHaveBeenCalledWith({
-			top: 100,
-			behavior: 'auto'
-		});
-	});
+        expect(mockScrollContainer.scrollTo).toHaveBeenCalledWith({
+            top: 100,
+            behavior: 'auto',
+        });
+    });
 });
 
 describe('scrollToClosestSubtitle', () => {
-	it('should scroll to the correct subtitle height', () => {
-		const mockScrollContainer = {
-			scrollTo: vi.fn()
-		} as unknown as HTMLDivElement;
+    it('should scroll to the correct subtitle height', () => {
+        const mockScrollContainer = {
+            scrollTo: vi.fn(),
+        } as unknown as HTMLDivElement;
 
-		const timecodes: TimecodeString[] = ['1.0', '5.5', '10.5', '15.5'];
-		const timings: SubtitleTiming[] = [1.0, 5.5, 10.0, 15.5];
-		const timePositionsToTimecodes = new Map<SubtitleTiming, TimecodeString>();
-		timePositionsToTimecodes.set(timings[0], '1.0');
-		timePositionsToTimecodes.set(timings[1], '5.5');
-		timePositionsToTimecodes.set(timings[2], '10.5');
-		timePositionsToTimecodes.set(timings[2], '15.5');
+        const timecodes: TimecodeString[] = ['1.0', '5.5', '10.5', '15.5'];
+        const timings: SubtitleTiming[] = [1.0, 5.5, 10.0, 15.5];
+        const timePositionsToTimecodes = new Map<
+            SubtitleTiming,
+            TimecodeString
+        >();
+        timePositionsToTimecodes.set(timings[0], '1.0');
+        timePositionsToTimecodes.set(timings[1], '5.5');
+        timePositionsToTimecodes.set(timings[2], '10.5');
+        timePositionsToTimecodes.set(timings[2], '15.5');
 
-		const db = new SubtitleDatabase([], timePositionsToTimecodes, timings, timecodes);
-		db.setHeight(5.5, 250);
+        const db = new SubtitleDatabase(
+            [],
+            timePositionsToTimecodes,
+            timings,
+            timecodes
+        );
+        db.setHeight(5.5, 250);
 
-		// Mock console.log to avoid test output noise
-		const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+        // Mock console.log to avoid test output noise
+        const consoleSpy = vi
+            .spyOn(console, 'log')
+            .mockImplementation(() => {});
 
-		scrollToClosestSubtitle(7.0, db, mockScrollContainer);
+        scrollToClosestSubtitle(7.0, db, mockScrollContainer);
 
-		expect(mockScrollContainer.scrollTo).toHaveBeenCalledWith({
-			top: 250,
-			behavior: 'auto'
-		});
+        expect(mockScrollContainer.scrollTo).toHaveBeenCalledWith({
+            top: 250,
+            behavior: 'auto',
+        });
 
-		consoleSpy.mockRestore();
-	});
+        consoleSpy.mockRestore();
+    });
 
-	it('should use 0 height when subtitle not found in heights map', () => {
-		const mockScrollContainer = {
-			scrollTo: vi.fn()
-		} as unknown as HTMLDivElement;
+    it('should use 0 height when subtitle not found in heights map', () => {
+        const mockScrollContainer = {
+            scrollTo: vi.fn(),
+        } as unknown as HTMLDivElement;
 
-		const timecodes: TimecodeString[] = ['1.0', '5.5', '10.5', '15.5'];
-		const timings: SubtitleTiming[] = [1.0, 5.5, 10.0, 15.5];
-		const timePositionsToTimecodes = new Map<SubtitleTiming, TimecodeString>();
-		timePositionsToTimecodes.set(timings[0], '1.0');
-		timePositionsToTimecodes.set(timings[1], '5.5');
-		timePositionsToTimecodes.set(timings[2], '10.5');
-		timePositionsToTimecodes.set(timings[2], '15.5');
+        const timecodes: TimecodeString[] = ['1.0', '5.5', '10.5', '15.5'];
+        const timings: SubtitleTiming[] = [1.0, 5.5, 10.0, 15.5];
+        const timePositionsToTimecodes = new Map<
+            SubtitleTiming,
+            TimecodeString
+        >();
+        timePositionsToTimecodes.set(timings[0], '1.0');
+        timePositionsToTimecodes.set(timings[1], '5.5');
+        timePositionsToTimecodes.set(timings[2], '10.5');
+        timePositionsToTimecodes.set(timings[2], '15.5');
 
-		const db = new SubtitleDatabase([], timePositionsToTimecodes, timings, timecodes);
+        const db = new SubtitleDatabase(
+            [],
+            timePositionsToTimecodes,
+            timings,
+            timecodes
+        );
 
-		const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+        const consoleSpy = vi
+            .spyOn(console, 'log')
+            .mockImplementation(() => {});
 
-		scrollToClosestSubtitle(7.0, db, mockScrollContainer);
+        scrollToClosestSubtitle(7.0, db, mockScrollContainer);
 
-		expect(mockScrollContainer.scrollTo).toHaveBeenCalledWith({
-			top: 0,
-			behavior: 'auto'
-		});
+        expect(mockScrollContainer.scrollTo).toHaveBeenCalledWith({
+            top: 0,
+            behavior: 'auto',
+        });
 
-		consoleSpy.mockRestore();
-	});
+        consoleSpy.mockRestore();
+    });
+});
+
+describe('parseTimecodeToSeconds', () => {
+    it('should parse standard timecode format', () => {
+        expect(parseTimecodeToSeconds('00:05:23.450')).toBe(323.45);
+        expect(parseTimecodeToSeconds('01:30:45.200')).toBe(5445.2);
+        expect(parseTimecodeToSeconds('00:00:10.000')).toBe(10);
+    });
+
+    it('should handle invalid formats', () => {
+        expect(parseTimecodeToSeconds('invalid')).toBe(0);
+        expect(parseTimecodeToSeconds('5:30')).toBe(0);
+    });
+
+    it('parses all 434 subtitles correctly', () => {
+        // const SRT_FILE_PATH = path.resolve('sample.srt');
+        // let segments: ParsedSegmentObj[] = [];
+        // const timePositionsToTimecodesMap = new Map<
+        //     SubtitleTiming,
+        //     TimecodeString
+        // >();
+        // // "subtitleStartInSec" -> Don't call this a timestamp!
+        // // Need to keep both: " i want is to be able to search for the startTimeSeconds
+        // // that is closest to n but not exceeding n, and get the timecode from it"
+        // // https://claude.ai/chat/82b6c551-ecff-4e57-8de1-5d01a294c5ed
+        // const subtitleCuePointsInSec: number[] = segments.map(
+        //     (s) => s.startTimeSeconds
+        // );
+        // const timecodes: string[] = segments.map((s) => s.timecode);
+        // const subtitles = '';
+        // const storage = [];
+        // for (const subtitle of subtitles) {
+        //     const yield = parseTimecodeToSeconds(subtitle.timecode);
+        //     storage.push(yield);
+        // }
+    });
 });
