@@ -3,10 +3,10 @@ import type { SubtitleDatabase } from './SubtitleDatabase';
 import type { SubtitleHeights } from './SubtitleHeights';
 
 export class Finder {
-	static findPlayerTimeForSubtitleIndex(
+	static findPlayerTimeForSubtitleTiming(
 		playerPosition: PlayerPosition,
 		subtitleCuePointsArr: SubtitleTiming[]
-	) {
+	): SubtitleTiming {
 		/**
 		 * For finding a subtitle that goes with a playerPosition.
 		 *
@@ -79,7 +79,11 @@ export function scrollToClosestSubtitle(
 	 * @param subtitleCuePointsArr - an arr of all subtitle's start times
 	 */
 	console.log('Scrolling for ', playerPosition);
-	const corresponding: number = Finder.findPlayerTimeForSubtitleIndex(
+	// PLAYER POSITION -> ??? ->
+	// ?? -> SubtitleTiming
+	// SubtitleTiming -> Height
+	console.log('Available:', db.subtitleCuePointsInSec); // FIXME: empty
+	const corresponding: SubtitleTiming = Finder.findPlayerTimeForSubtitleTiming(
 		playerPosition,
 		db.subtitleCuePointsInSec
 	);

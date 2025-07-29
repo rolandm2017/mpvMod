@@ -63,6 +63,7 @@
 			subtitles.push(newSub);
 		});
 
+		console.log('It goes in: ', data.timePositionsToTimecodes);
 		db = new SubtitleDatabase(
 			subtitles,
 			data.timePositionsToTimecodes,
@@ -128,7 +129,7 @@
 	 */
 
 	function highlightPlayerPositionSegment(playerPosition: number) {
-		const corresponding: number = Finder.findPlayerTimeForSubtitleIndex(
+		const corresponding: number = Finder.findPlayerTimeForSubtitleTiming(
 			playerPosition,
 			db.subtitleCuePointsInSec
 		);

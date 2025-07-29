@@ -6,20 +6,22 @@ import {
 	parseTimecodeToSeconds
 } from './subtitleScroll';
 import { SubtitleHeights } from './SubtitleHeights';
+import { SubtitleDatabase } from './SubtitleDatabase';
+import type { SubtitleTiming, TimecodeString } from '$lib/types';
 
 describe('Finder', () => {
-	describe('findPlayerTimeForSubtitleIndex', () => {
+	describe('findPlayerTimeForSubtitleTiming', () => {
 		it('should find the largest time that does not exceed timestamp', () => {
 			const times = [1.0, 5.5, 10.0, 15.5];
 
-			expect(Finder.findPlayerTimeForSubtitleIndex(7.0, times)).toBe(5.5);
-			expect(Finder.findPlayerTimeForSubtitleIndex(5.5, times)).toBe(5.5);
-			expect(Finder.findPlayerTimeForSubtitleIndex(0.5, times)).toBe(0);
-			expect(Finder.findPlayerTimeForSubtitleIndex(20.0, times)).toBe(15.5);
+			expect(Finder.findPlayerTimeForSubtitleTiming(7.0, times)).toBe(5.5);
+			expect(Finder.findPlayerTimeForSubtitleTiming(5.5, times)).toBe(5.5);
+			expect(Finder.findPlayerTimeForSubtitleTiming(0.5, times)).toBe(0);
+			expect(Finder.findPlayerTimeForSubtitleTiming(20.0, times)).toBe(15.5);
 		});
 
 		it('should handle empty array', () => {
-			expect(Finder.findPlayerTimeForSubtitleIndex(5.0, [])).toBe(0);
+			expect(Finder.findPlayerTimeForSubtitleTiming(5.0, [])).toBe(0);
 		});
 	});
 	describe('findSubtitleIndexAtPlayerTime', () => {
@@ -72,15 +74,21 @@ describe('scrollToClosestSubtitle', () => {
 			scrollTo: vi.fn()
 		} as unknown as HTMLDivElement;
 
-		const subtitleHeights = new SubtitleHeights();
-		subtitleHeights.set(5.5, 250);
+		const timecodes: TimecodeString[] = ['1.0', '5.5', '10.5', '15.5'];
+		const timings: SubtitleTiming[] = [1.0, 5.5, 10.0, 15.5];
+		const timePositionsToTimecodes = new Map<SubtitleTiming, TimecodeString>();
+		timePositionsToTimecodes.set(timings[0], '1.0');
+		timePositionsToTimecodes.set(timings[1], '5.5');
+		timePositionsToTimecodes.set(timings[2], '10.5');
+		timePositionsToTimecodes.set(timings[2], '15.5');
 
-		const times = [1.0, 5.5, 10.0, 15.5];
+		const db = new SubtitleDatabase([], timePositionsToTimecodes, timings, timecodes);
+		db.setHeight(5.5, 250);
 
 		// Mock console.log to avoid test output noise
 		const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
-		scrollToClosestSubtitle(7.0, times, subtitleHeights, mockScrollContainer);
+		scrollToClosestSubtitle(7.0, db, mockScrollContainer);
 
 		expect(mockScrollContainer.scrollTo).toHaveBeenCalledWith({
 			top: 250,
@@ -95,13 +103,19 @@ describe('scrollToClosestSubtitle', () => {
 			scrollTo: vi.fn()
 		} as unknown as HTMLDivElement;
 
-		const subtitleHeights = new SubtitleHeights();
+		const timecodes: TimecodeString[] = ['1.0', '5.5', '10.5', '15.5'];
+		const timings: SubtitleTiming[] = [1.0, 5.5, 10.0, 15.5];
+		const timePositionsToTimecodes = new Map<SubtitleTiming, TimecodeString>();
+		timePositionsToTimecodes.set(timings[0], '1.0');
+		timePositionsToTimecodes.set(timings[1], '5.5');
+		timePositionsToTimecodes.set(timings[2], '10.5');
+		timePositionsToTimecodes.set(timings[2], '15.5');
 
-		const times = [1.0, 5.5, 10.0, 15.5];
+		const db = new SubtitleDatabase([], timePositionsToTimecodes, timings, timecodes);
 
 		const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
 
-		scrollToClosestSubtitle(7.0, times, subtitleHeights, mockScrollContainer);
+		scrollToClosestSubtitle(7.0, db, mockScrollContainer);
 
 		expect(mockScrollContainer.scrollTo).toHaveBeenCalledWith({
 			top: 0,

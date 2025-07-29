@@ -55,6 +55,10 @@ export class SubtitleDatabase {
 		return this.subtitleHeights.getHeight(position);
 	}
 
+	setHeight(time: SubtitleTiming, height: number) {
+		this.subtitleHeights.set(time, height);
+	}
+
 	getTimecodeForPlayerPosition(playerPosition: PlayerPosition) {
 		/*
 		 *
