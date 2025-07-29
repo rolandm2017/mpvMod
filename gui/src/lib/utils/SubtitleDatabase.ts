@@ -1,5 +1,5 @@
 import type { PlayerPosition, SubtitleTiming, TimecodeString } from '$lib/types';
-import { SubtitleHeights } from './SubtitleHeights';
+import { SubtitleHeights } from './subtitleHeights';
 import { Finder, parseTimecodeToSeconds } from './subtitleScroll';
 
 export class SubtitleDatabase {

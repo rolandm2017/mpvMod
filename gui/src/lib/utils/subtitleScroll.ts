@@ -1,6 +1,6 @@
 import type { PlayerPosition, SubtitleTiming, TimecodeString } from '$lib/types';
-import type { SubtitleDatabase } from './SubtitleDatabase';
-import type { SubtitleHeights } from './SubtitleHeights';
+import type { SubtitleDatabase } from './subtitleDatabase';
+import type { SubtitleHeights } from './subtitleHeights';
 
 export class Finder {
 	static findPlayerTimeForSubtitleTiming(

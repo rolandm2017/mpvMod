@@ -4,9 +4,9 @@ import {
 	scrollToLocation,
 	Finder,
 	parseTimecodeToSeconds
-} from './subtitleScroll';
-import { SubtitleHeights } from './SubtitleHeights';
-import { SubtitleDatabase } from './SubtitleDatabase';
+} from '../src/lib/utils/subtitleScroll';
+import { SubtitleHeights } from '../src/lib/utils/subtitleHeights';
+import { SubtitleDatabase } from '../src/lib/utils/subtitleDatabase';
 import type { SubtitleTiming, TimecodeString } from '$lib/types';
 
 describe('Finder', () => {

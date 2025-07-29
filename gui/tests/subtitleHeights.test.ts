@@ -1,5 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
-import { SubtitleHeights } from './SubtitleHeights';
+import { SubtitleHeights } from '../src/lib/utils/subtitleHeights';
 
 describe('SubtitleHeights', () => {
 	it('stores a variety of different timecode-height pairs', () => {
