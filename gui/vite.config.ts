@@ -6,39 +6,25 @@ export default defineConfig({
 	test: {
 		projects: [
 			{
-				extends: './vite.config.ts',
+				name: 'unit',
 				test: {
-					// Run tests in Node.js environment by default
 					environment: 'node',
-					// Only use browser for tests that specifically need it
-					browser: {
-						enabled: false, // Disable browser mode for now
-						name: 'chromium',
-						provider: 'playwright'
-					}
+					include: ['tests/**/*.{test,spec}.{js,ts}'],
+					exclude: ['tests/integration/**']
 				}
-				// test: {
-				// 	name: 'client',
-				// 	environment: 'browser',
-				// 	browser: {
-				// 		enabled: true,
-				// 		provider: 'playwright',
-				// 		instances: [{ browser: 'chromium' }]
-				// 	},
-				// 	include: ['src/**/*.svelte.{test,spec}.{js,ts}'],
-				// 	exclude: ['src/lib/server/**'],
-				// 	setupFiles: ['./vitest-setup-client.ts']
-				// }
 			},
 			{
-				extends: './vite.config.ts',
+				name: 'integration',
 				test: {
-					name: 'server',
-					environment: 'node',
-					include: ['src/**/*.{test,spec}.{js,ts}'],
-					exclude: ['src/**/*.svelte.{test,spec}.{js,ts}']
+					environment: 'jsdom',
+					include: ['tests/integration/**/*.{test,spec}.{js,ts}'],
+					setupFiles: ['./tests/setup.js']
 				}
 			}
-		]
+		],
+		globals: true,
+		coverage: {
+			reporter: ['text', 'json', 'html']
+		}
 	}
 });

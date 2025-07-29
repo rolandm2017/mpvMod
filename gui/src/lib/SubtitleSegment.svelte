@@ -24,7 +24,12 @@
 	});
 </script>
 
-<div class="subtitle-segment" bind:this={el}>
+<div
+	class="subtitle-segment"
+	bind:this={el}
+	data-testid="subtitle-segment"
+	data-timecode={timecode}
+>
 	<div class="subtitle-text">{text}</div>
 </div>
 

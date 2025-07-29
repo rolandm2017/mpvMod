@@ -1,4 +1,7 @@
 // See https://svelte.dev/docs/kit/types#app.d.ts
+
+import type { ElectronAPI } from '$lib/interfaces';
+
 // for information about these interfaces
 declare global {
 	namespace App {
@@ -10,20 +13,7 @@ declare global {
 	}
 
 	interface Window {
-		electronAPI: {
-			onMPVState: (
-				callback: (data: {
-					content: string;
-					formatted_duration: string;
-					formatted_time: string;
-					progress: number;
-					time_pos: number;
-					timestamp: number;
-					type: string;
-				}) => void
-			) => void;
-			removeMPVListener: () => void;
-		};
+		electronAPI: ElectronAPI;
 	}
 }
 

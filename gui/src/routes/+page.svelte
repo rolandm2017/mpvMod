@@ -9,7 +9,7 @@
 		parseTimecodeToSeconds,
 		scrollToClosestSubtitle
 	} from '$lib/utils/subtitleScroll.js';
-	import { Subtitle, SubtitleDatabase } from '$lib/utils/SubtitleDatabase.js';
+	import { Subtitle, SubtitleDatabase } from '$lib/utils/subtitleDatabase.js';
 	import type { TimecodeString } from '$lib/types.js';
 
 	export let data;
