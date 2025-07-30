@@ -20,7 +20,6 @@
 
     let currentHighlightedElement: HTMLDivElement | null = null;
     let currentHighlightedTimecode = '';
-    let segmentElements = new Map<string, HTMLDivElement>(); // timecode -> element reference
 
     let db: SubtitleDatabase;
     let mountingTracker: SegmentMountingTracker;
@@ -85,7 +84,11 @@
                 const now = Date.now();
                 if (now - lastScrollTime > 2000) {
                     // Throttle to every 500ms
-                    // highlightPlayerPositionSegment(playerPosition);
+                    highlightPlayerPositionSegment(playerPosition);
+                    console.log(
+                        'Time to scroll again! going to: ',
+                        playerPosition
+                    );
                     scrollToClosestSubtitle(
                         playerPosition,
                         db,
@@ -101,19 +104,99 @@
     });
 
     function highlightPlayerPositionSegment(playerPosition: number) {
-        const corresponding: number = Finder.findPlayerTimeForSubtitleTiming(
+        const indexToHighlight = Finder.findSubtitleIndexAtPlayerTime(
             playerPosition,
             db.subtitleCuePointsInSec
         );
+        console.log(
+            'highlighting target: ',
+            playerPosition,
+            indexToHighlight,
+            '112ru'
+        );
+        const timecodeStringOfTargetEl =
+            db.subtitles[indexToHighlight].timecode;
         // FIXME: timecode's are not found. the timePositions are never loaded
         // FIXME: the problem is i'm doing "get" for a precise value, when I want fuzzy matching
-        const timecode = db.subtitleTimingToTimecodesMap.get(corresponding);
-        if (timecode) {
-            highlightSegment(timecode);
+
+        if (timecodeStringOfTargetEl) {
+            console.log('Trying to highlight: ', timecodeStringOfTargetEl);
+            highlightSegment(timecodeStringOfTargetEl);
         } else {
-            console.log(timecode, 'not found');
+            console.log(timecodeStringOfTargetEl, 'not found');
         }
     }
+
+    function debugHighlightStyles(el: any) {
+        console.log('=== DEBUGGING ELEMENT STYLES ===');
+        console.log('Element:', el);
+        console.log('Classes:', el.className);
+        console.log(
+            'Has highlighted class:',
+            el.classList.contains('highlighted')
+        );
+
+        // Check computed styles
+        const computedStyle = window.getComputedStyle(el);
+        console.log('Background color:', computedStyle.backgroundColor);
+        console.log('Border left:', computedStyle.borderLeft);
+
+        // Check if CSS is loaded
+        const stylesheets = document.styleSheets;
+        console.log('Number of stylesheets:', stylesheets.length);
+
+        // Force style by directly setting it
+        console.log('Setting style directly...');
+        el.style.backgroundColor = '#ffeb3b';
+        el.style.borderLeft = '4px solid #ff9800';
+        console.log('Direct style applied');
+
+        // Check if element is visible
+        const rect = el.getBoundingClientRect();
+        console.log('Element bounds:', rect);
+        console.log('Element visible:', rect.width > 0 && rect.height > 0);
+    }
+
+    function highlightAll() {
+        // made as a sanity check
+        console.log('Highllighting all!');
+        console.log('Highllighting all!');
+        console.log('Highllighting all!');
+        const triedToUse = [];
+        for (const subtitle of db.subtitles) {
+            console.log(subtitle.timecode, 'HERE , 23432984324 137ru');
+            const el = mountingTracker.getElement(subtitle.timecode);
+            triedToUse.push(subtitle.timecode);
+            if (el) {
+                console.log('ADDING HIHGLIGHTI TO EL to el', el);
+                el.classList.add('highlighted');
+
+                // FORCE the visual styles directly
+                // el.style.backgroundColor = '#ffeb3b';
+                // el.style.borderLeft = '4px solid #ff9800';
+                // el.style.transition = 'all 0.2s ease';
+
+                if (triedToUse.length === 1) {
+                    // debugHighlightStyles(el);
+                }
+
+                console.log(
+                    'does el have highlighted',
+                    el.classList.contains('highlighted')
+                );
+            } else {
+                console.log('No el found', el, subtitle.timecode);
+                throw new Error('No el found error');
+            }
+        }
+        mountingTracker.inspectElements();
+
+        // FOUND ELEMENTS IS ZERO
+        console.log(foundElements.length, 'IS IT DONE? 148ru');
+        console.log('Tried to use: ', triedToUse);
+    }
+
+    const foundElements = [];
 
     export function highlightSegment(timecode: TimecodeString) {
         /*
@@ -123,10 +206,16 @@
         if (currentHighlightedElement) {
             currentHighlightedElement.classList.remove('highlighted');
         }
+        console.log(
+            'Is this the full Timing with ---> or is it just the first half?',
+            timecode
+        );
+        const element = mountingTracker.getElement(timecode);
 
-        const element = segmentElements.get(timecode);
         if (element) {
+            foundElements.push(element);
             element.classList.add('highlighted');
+            console.log(element, 'receiving HIGHLIGHT');
             currentHighlightedElement = element;
             currentHighlightedTimecode = timecode;
         }
@@ -157,6 +246,8 @@
 
         // Handle completion
         if (result.isComplete) {
+            console.log(result.isComplete, '12382193213ru');
+            // highlightAll();
             // console.log('All segments mounted:', mountingTracker.getStats());
 
             allSegmentsMounted = true;

@@ -1,5 +1,12 @@
+import type { TimecodeString } from '$lib/types';
 import { parseTimecodeToSeconds } from './parsing';
 import type { SubtitleDatabase } from './subtitleDatabase';
+
+interface SubtitleComponentInterface {
+    highlight(): void;
+    unhighlight(): void;
+    getDomElement?(): HTMLElement;
+}
 
 export interface MountingStats {
     mountedCount: number;
@@ -13,9 +20,12 @@ export interface MountingStats {
 export class SegmentMountingTracker {
     private mountedSegments = new Set<string>();
     private duplicateTimecodes = new Map<string, number>();
-    private segmentElements = new Map<string, HTMLDivElement>();
+
+    private segmentElements = new Map<TimecodeString, HTMLDivElement>(); // timecode -> element reference
     private expectedCount: number;
     private allSegmentsMounted = false;
+
+    private components = new Map<string, SubtitleComponentInterface>();
 
     constructor(expectedCount: number) {
         this.expectedCount = expectedCount;
@@ -43,6 +53,7 @@ export class SegmentMountingTracker {
 
         // Store positions and elements
         db.setHeight(timecodeAsSeconds, y);
+        console.log('SEGMENT ELEMENT set key: ', timecode);
         this.segmentElements.set(timecode, element);
 
         // Check completion
@@ -57,6 +68,14 @@ export class SegmentMountingTracker {
         return {
             isComplete: completedMounting,
         };
+    }
+
+    addComponent(timecode: string, component: SubtitleComponentInterface) {
+        this.components.set(timecode, component);
+    }
+
+    getComponent(timecode: string): SubtitleComponentInterface | undefined {
+        return this.components.get(timecode);
     }
 
     getStats(): MountingStats {
@@ -77,8 +96,12 @@ export class SegmentMountingTracker {
     }
 
     // Get element for highlighting
-    getElement(timecode: string): HTMLDivElement | undefined {
+    getElement(timecode: TimecodeString): HTMLDivElement | undefined {
         return this.segmentElements.get(timecode);
+    }
+
+    inspectElements() {
+        console.log([...this.segmentElements.keys()], '89ru');
     }
 }
 

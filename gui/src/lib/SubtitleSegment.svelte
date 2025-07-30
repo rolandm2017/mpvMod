@@ -5,10 +5,30 @@
 
     let el: HTMLDivElement;
 
+    let isHighlighted = $state(false);
+
+    // // Export function to be called from parent
+    // export function highlight() {
+    //     isHighlighted = true;
+    // }
+
+    // export function unhighlight() {
+    //     isHighlighted = false;
+    // }
+
+    // let componentInstance = $state();
+
     onMount(() => {
         // const y = el.getBoundingClientRect().top;
         // // console.log(`Segment ${timecode} top Y:`, y);
         // emitTopOfContainer(y);
+
+        // componentInstance = {
+        //     highlight,
+        //     unhighlight,
+        //     getDomElement: () => el,
+        //     timecode,
+        // };
 
         // Use a small delay to ensure element is fully rendered
         setTimeout(() => {
@@ -28,6 +48,7 @@
 
 <div
     class="subtitle-segment"
+    class:highlighted={false}
     bind:this={el}
     data-testid="subtitle-segment-{index}"
     data-timecode={timecode}
@@ -36,6 +57,13 @@
 </div>
 
 <style>
+    /* for when the subtitle is, well, highlighted */
+    .subtitle-segment.highlighted {
+        background-color: #ffeb3b;
+        border-left: 4px solid #ff9800;
+        /* or whatever highlight style you want */
+    }
+
     .subtitle-segment {
         margin-bottom: 15px;
         padding: 12px 15px;
@@ -61,12 +89,5 @@
     .subtitle-text {
         line-height: 1.4;
         color: #e0e0e0;
-    }
-
-    /* for when the subtitle is, well, highlighted */
-    .subtitle-segment.highlighted {
-        background-color: #ffeb3b;
-        border-left: 4px solid #ff9800;
-        /* or whatever highlight style you want */
     }
 </style>
