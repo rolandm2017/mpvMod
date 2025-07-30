@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import path from 'path';
 import fs from 'fs';
 
-import { SegmentMountingTracker } from '$lib/utils/SegmentMountingTracker';
+import { SegmentMountingTracker } from '$lib/utils/mountingTracker';
 import { SubtitleDatabase } from '$lib/utils/subtitleDatabase';
 import type { SubtitleTiming, TimecodeString } from '$lib/types';
 

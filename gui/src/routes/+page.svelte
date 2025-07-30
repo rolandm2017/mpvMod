@@ -12,7 +12,7 @@
     } from '$lib/utils/subtitleScroll.js';
     import { Subtitle, SubtitleDatabase } from '$lib/utils/subtitleDatabase.js';
     import type { PlayerPosition, TimecodeString } from '$lib/types.js';
-    import { SegmentMountingTracker } from '$lib/utils/SegmentMountingTracker.js';
+    import { SegmentMountingTracker } from '$lib/utils/mountingTracker.js';
 
     export let data;
 
