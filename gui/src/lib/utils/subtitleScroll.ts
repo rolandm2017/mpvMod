@@ -36,8 +36,6 @@ export class Finder {
             }
         }
 
-        console.log('RESULT: ', result);
-
         return result === -1 ? 0 : subtitleCuePointsArr[result];
     }
 
@@ -82,7 +80,6 @@ export function scrollToClosestSubtitle(
      * @param playerPosition - the playerPosition of the frame
      * @param subtitleCuePointsArr - an arr of all subtitle's start times
      */
-    console.log('Scrolling for ', playerPosition);
     // PLAYER POSITION -> ??? ->
     // ?? -> SubtitleTiming
     // SubtitleTiming -> Height
@@ -92,7 +89,6 @@ export function scrollToClosestSubtitle(
             playerPosition,
             db.subtitleCuePointsInSec
         );
-    console.log('corresponding: ', corresponding);
     const heightForSub = db.getHeightFromPlayerPosition(corresponding) ?? 0;
 
     // WANT: viewport at position of related subtitle

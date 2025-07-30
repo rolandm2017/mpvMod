@@ -64,8 +64,8 @@
             window.db = db;
         }
 
-        console.log('Window object:', window);
-        console.log('electronAPI available:', !!window.electronAPI);
+        // console.log('Window object:', window);
+        // console.log('electronAPI available:', !!window.electronAPI);
 
         if (window.electronAPI) {
             console.log('Running onMPVstate');
@@ -170,12 +170,10 @@
 
     // export function devtoolsScroller(timestamp: number) {
     export function playerPositionDevTool(playerPosition: PlayerPosition) {
-        console.log('SCROLLING!', playerPosition);
         // highlightPlayerPositionSegment(playerPosition);
         scrollToClosestSubtitle(playerPosition, db, scrollContainer);
     }
     export function timecodeDevTool(timecode: TimecodeString) {
-        console.log('SCROLLING!', playerPosition);
         // tiumecode to player position
         const height = db.getHeightFromTimecode(timecode);
         scrollToLocation(height, scrollContainer);
@@ -193,6 +191,7 @@
             {#if data.segments.length > 0}
                 {#each data.segments as segment}
                     <SubtitleSegment
+                        index={segment.index}
                         timecode={segment.timecode}
                         text={segment.text}
                         emitTopOfContainer={storeSegmentPosition}

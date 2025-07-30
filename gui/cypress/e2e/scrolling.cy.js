@@ -83,7 +83,7 @@ describe('Page Structure', () => {
             .its('db')
             .then((db) => {
                 // Option 1: Wait for the promise (if using Solution 1)
-                console.log('Test data from promise:', db);
+                cy.log('Test data from promise:', db);
                 // subtitle timings are all available
                 expect(db.subtitleCuePointsInSec.length).to.equal(
                     SUBTITLES.TOTAL_COUNT
@@ -122,10 +122,6 @@ describe('Page Structure', () => {
             .then((playerPositionDevTool) => {
                 cy.wait(30);
 
-                cy.window().then((win) => {
-                    console.log('Before scroll:', win.scrollY);
-                });
-
                 // step 2:  scroll to position
                 cy.window().then((win) => {
                     win.playerPositionDevTool(1000);
@@ -137,7 +133,6 @@ describe('Page Structure', () => {
                 cy.get('[data-testid="scroll-container"]').then(
                     ($container) => {
                         const scrollTop = $container[0].scrollTop;
-                        console.log('Container scrollTop:', scrollTop);
                         // why 4000? no idea
                         const someArbitraryLargeNumber = 4000;
                         expect(scrollTop).to.be.greaterThan(
@@ -166,37 +161,84 @@ describe('Page Structure', () => {
 
         cy.window()
             .its('db')
+            .should('exist')
             .then((db) => {
+                expect(db.subtitles.length).to.equal(SUBTITLES.TOTAL_COUNT);
                 // pick some midpoint kinda subtitle
                 const choice = SUBTITLES.TOTAL_COUNT - 200;
-            });
+                //   playerPosition,
+                //         db,
+                //         scrollContainer
+                const targetIndex = choice;
+                // TODO: Install a "min and max" property for all timestamps
+                const playerPosition = db.subtitleCuePointsInSec[choice];
 
-        cy.window().then((win) => {
-            // Option 1: Wait for the promise (if using Solution 1)
-            console.log('HEOIDrhjawesiufhiawseuhnrf');
-            console.log('HEOIDrhjawesiufhiawseuhnrf');
-            console.log('Before scroll:', win.scrollY);
-            win.playerPositionDevTool(1000);
-            console.log('After scroll call:', win.scrollY);
-            cy.wait(100);
-            console.log('After wait:', win.scrollY);
-            // step 3: show it's scrolled down to that div. The  subtitle's text is now on screen!
-            cy.window().its('scrollY').should('be.greaterThan', 0);
-
-            cy.window().then((win) => {
-                console.log('Window scrollY:', win.scrollY);
-
-                cy.get('[data-testid="scroll-container"]').then(
-                    ($container) => {
-                        const scrollTop = $container[0].scrollTop;
-                        console.log('Container scrollTop:', scrollTop);
-                        console.log('Expected > 900, actual:', scrollTop);
-                        expect(scrollTop).to.be.greaterThan(900);
-                    }
+                const expectedSubtitle = db.subtitles.find(
+                    (s) => s.timecodeInSeconds === playerPosition
                 );
-            });
+                const expectedText = expectedSubtitle.text;
+                // now just execute the devtoolScroll
+                cy.window().then((win) => {
+                    // The " - 1" makes it work
+                    win.playerPositionDevTool(playerPosition - 1);
+                    cy.wait(40);
 
-            // step 4: exactly where should it be?
-        });
+                    //DEBUG:
+                    cy.get('[data-testid="scroll-container"]').within(() => {
+                        const visibleTexts = [];
+                        cy.get('*').each(($el) => {
+                            if ($el.is(':visible') && $el.text().trim()) {
+                                visibleTexts.push($el.text().trim());
+                            }
+                        });
+                        console.log(visibleTexts, '190ru');
+                    });
+
+                    cy.get(
+                        '[data-testid="scroll-container"] [data-testid^="subtitle-segment-"]:visible'
+                    ).then(($visibleElements) => {
+                        const testIds = [];
+                        $visibleElements.each((index, el) => {
+                            const testId = el.getAttribute('data-testid');
+                            testIds.push(testId);
+                            const className = el.className;
+                            cy.log(`${testId} - classes: ${className}`);
+                        });
+                        console.log('Visible test IDs:', testIds.join(', '));
+                        console.log(
+                            'And target: ',
+                            `subtitle-segment-${targetIndex}`
+                        );
+                        expect(testIds).to.include(
+                            `subtitle-segment-${targetIndex}`
+                        );
+                    });
+
+                    cy.get(
+                        `[data-testid="subtitle-segment-${targetIndex}"]`
+                    ).then(($el) => {
+                        // Custom assertion for "meaningful visibility" (e.g., at least 50% visible)
+                        const rect = $el[0].getBoundingClientRect();
+                        const viewportHeight = Cypress.config('viewportHeight');
+                        const elementHeight = rect.height;
+
+                        const visibleTop = Math.max(0, rect.top);
+                        const visibleBottom = Math.min(
+                            viewportHeight,
+                            rect.bottom
+                        );
+                        const visibleHeight = Math.max(
+                            0,
+                            visibleBottom - visibleTop
+                        );
+                        const visibilityRatio = visibleHeight / elementHeight;
+
+                        expect(visibilityRatio).to.be.at.least(
+                            0.5,
+                            'Element should be at least 50% visible'
+                        );
+                    });
+                });
+            });
     });
 });
