@@ -8,9 +8,10 @@
     import {
         Finder,
         scrollToClosestSubtitle,
+        scrollToLocation,
     } from '$lib/utils/subtitleScroll.js';
     import { Subtitle, SubtitleDatabase } from '$lib/utils/subtitleDatabase.js';
-    import type { TimecodeString } from '$lib/types.js';
+    import type { PlayerPosition, TimecodeString } from '$lib/types.js';
     import { SegmentMountingTracker } from '$lib/utils/SegmentMountingTracker.js';
 
     export let data;
@@ -36,13 +37,8 @@
     // TODO: Color the subtitle in question
 
     onMount(() => {
-        (window as any).devtoolsScroller = devtoolsScroller;
-
-        // Expose for testing
-        if (typeof window !== 'undefined') {
-            window.allSegmentsMounted = false;
-            window.testInteger = 99;
-        }
+        (window as any).playerPositionDevTool = playerPositionDevTool;
+        (window as any).timecodeDevTool = timecodeDevTool;
 
         let subtitles: Subtitle[] = [];
 
@@ -59,6 +55,14 @@
             data.timecodes
         );
         mountingTracker = new SegmentMountingTracker(data.segments.length);
+
+        // Expose for testing
+        if (typeof window !== 'undefined') {
+            window.allSegmentsMounted = false;
+            window.testInteger = 99;
+            window.tracker = mountingTracker;
+            window.db = db;
+        }
 
         console.log('Window object:', window);
         console.log('electronAPI available:', !!window.electronAPI);
@@ -94,14 +98,6 @@
         } else {
             console.error('electronAPI not available');
         }
-
-        // Initial scroll after mount
-        setTimeout(() => {
-            if (allSegmentsMounted) {
-                // highlightPlayerPositionSegment(playerPosition);
-                scrollToClosestSubtitle(playerPosition, db, scrollContainer);
-            }
-        }, 150);
     });
 
     function highlightPlayerPositionSegment(playerPosition: number) {
@@ -111,7 +107,7 @@
         );
         // FIXME: timecode's are not found. the timePositions are never loaded
         // FIXME: the problem is i'm doing "get" for a precise value, when I want fuzzy matching
-        const timecode = db.timePositionsToTimecodes.get(corresponding);
+        const timecode = db.subtitleTimingToTimecodesMap.get(corresponding);
         if (timecode) {
             highlightSegment(timecode);
         } else {
@@ -136,6 +132,8 @@
         }
     }
 
+    let callcount = 0;
+
     export function storeSegmentPosition(
         timecode: TimecodeString,
         y: number,
@@ -145,6 +143,10 @@
             console.error('mountingTracker not initialized');
             return;
         }
+
+        callcount += 1;
+
+        window.callcount = callcount;
 
         const result = mountingTracker.storeSegmentPosition(
             timecode,
@@ -167,10 +169,16 @@
     }
 
     // export function devtoolsScroller(timestamp: number) {
-    export function devtoolsScroller(playerPosition: number) {
+    export function playerPositionDevTool(playerPosition: PlayerPosition) {
         console.log('SCROLLING!', playerPosition);
         // highlightPlayerPositionSegment(playerPosition);
         scrollToClosestSubtitle(playerPosition, db, scrollContainer);
+    }
+    export function timecodeDevTool(timecode: TimecodeString) {
+        console.log('SCROLLING!', playerPosition);
+        // tiumecode to player position
+        const height = db.getHeightFromTimecode(timecode);
+        scrollToLocation(height, scrollContainer);
     }
 </script>
 

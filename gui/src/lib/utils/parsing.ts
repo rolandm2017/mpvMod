@@ -37,17 +37,19 @@ export function prebuildLookupArrays(segments: ParsedSegmentObj[]) {
     return { subtitleTimingToTimecodesMap, subtitleCuePointsInSec, timecodes };
 }
 
-export function parseTimecodeToSeconds(
-    timecode: TimecodeString
-): SubtitleTiming {
-    // Parse timecode format - adjust this based on your actual format
-    // Example: "00:05:23.450" -> seconds
+export function parseTimecodeToSeconds(timecode: TimecodeString): number {
     const parts = timecode.split(':');
     if (parts.length >= 3) {
-        const hours = parseInt(parts[0]) || 0;
-        const minutes = parseInt(parts[1]) || 0;
-        const seconds = parseFloat(parts[2]) || 0;
-        return hours * 3600 + minutes * 60 + seconds;
+        const hours = parseInt(parts[0], 10) || 0;
+        const minutes = parseInt(parts[1], 10) || 0;
+        const secondsAndMs = parts[2].split(',');
+        const seconds = parseInt(secondsAndMs[0], 10) || 0;
+        const msInt = parseInt(secondsAndMs[1], 10) || 0;
+
+        // Convert milliseconds to fraction of a second, rounded to 3 decimals
+        const fractional = Math.round((msInt / 1000) * 1000) / 1000;
+
+        return hours * 3600 + minutes * 60 + seconds + fractional;
     }
     return 0;
 }

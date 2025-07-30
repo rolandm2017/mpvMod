@@ -145,9 +145,9 @@ describe('scrollToClosestSubtitle', () => {
 
 describe('parseTimecodeToSeconds', () => {
     it('should parse standard timecode format', () => {
-        expect(parseTimecodeToSeconds('00:05:23.450')).toBe(323.45);
-        expect(parseTimecodeToSeconds('01:30:45.200')).toBe(5445.2);
-        expect(parseTimecodeToSeconds('00:00:10.000')).toBe(10);
+        expect(parseTimecodeToSeconds('00:05:23,450')).toBe(323.45);
+        expect(parseTimecodeToSeconds('01:30:45,200')).toBe(5445.2);
+        expect(parseTimecodeToSeconds('00:00:10,000')).toBe(10);
     });
 
     it('should handle invalid formats', () => {

@@ -1,3 +1,3 @@
-export const SUBTITLE_CONSTANTS = {
+export const SUBTITLES = {
     TOTAL_COUNT: 434,
-}
+};
