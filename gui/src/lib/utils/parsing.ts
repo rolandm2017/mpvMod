@@ -38,6 +38,7 @@ export function prebuildLookupArrays(segments: ParsedSegmentObj[]) {
 }
 
 export function parseTimecodeToSeconds(timecode: TimecodeString): number {
+    /* Expects the --> to be split off first */
     const parts = timecode.split(':');
     if (parts.length >= 3) {
         const hours = parseInt(parts[0], 10) || 0;

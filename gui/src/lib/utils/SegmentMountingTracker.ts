@@ -42,7 +42,7 @@ export class SegmentMountingTracker {
         this.mountedSegments.add(timecode);
 
         // Store positions and elements
-        db.subtitleHeights.set(timecodeAsSeconds, y);
+        db.setHeight(timecodeAsSeconds, y);
         this.segmentElements.set(timecode, element);
 
         // Check completion

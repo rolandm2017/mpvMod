@@ -157,10 +157,10 @@
 
         // Handle completion
         if (result.isComplete) {
-            console.log('All segments mounted:', mountingTracker.getStats());
+            // console.log('All segments mounted:', mountingTracker.getStats());
 
             allSegmentsMounted = true;
-            console.log('All segments mounted, positions ready');
+            // console.log('All segments mounted, positions ready');
             // Expose to window for testing
             if (typeof window !== 'undefined') {
                 window.allSegmentsMounted = true;

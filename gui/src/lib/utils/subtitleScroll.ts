@@ -86,14 +86,14 @@ export function scrollToClosestSubtitle(
     // PLAYER POSITION -> ??? ->
     // ?? -> SubtitleTiming
     // SubtitleTiming -> Height
-    console.log('Available:', db.subtitleCuePointsInSec); // FIXME: empty
+    console.log('Available:', db.subtitleCuePointsInSec.length); // FIXME: empty
     const corresponding: SubtitleTiming =
         Finder.findPlayerTimeForSubtitleTiming(
             playerPosition,
             db.subtitleCuePointsInSec
         );
     console.log('corresponding: ', corresponding);
-    const heightForSub = db.subtitleHeights.getHeight(corresponding) ?? 0;
+    const heightForSub = db.getHeightFromPlayerPosition(corresponding) ?? 0;
 
     // WANT: viewport at position of related subtitle
     console.log(heightForSub, 'found height');

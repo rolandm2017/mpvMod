@@ -53,25 +53,24 @@ export class SubtitleDatabase {
     // 		- Subtitle -> Player position
 
     getHeightFromTimecode(timecode: TimecodeString) {
-        const timecodeAsSeconds = parseTimecodeToSeconds(timecode);
-        return this.subtitleHeights.getHeight(timecodeAsSeconds);
+        const timecodeAsSeconds = parseTimecodeToSeconds(
+            timecode.split(' --> ')[0]
+        );
+        return this.subtitleHeights.getHeightInternal(timecodeAsSeconds);
     }
 
     getHeightFromPlayerPosition(position: PlayerPosition) {
         // FIXME: you're confusing position for timing
         // getHeight works off SRT Timing
         // Actually, does it matter?
-        return this.subtitleHeights.getHeight(position);
+        return this.subtitleHeights.getHeightInternal(position);
     }
 
     setHeight(time: SubtitleTiming, height: number) {
-        this.subtitleHeights.set(time, height);
+        this.subtitleHeights.setHeightInternal(time, height);
     }
 
     getTimecodeForPlayerPosition(playerPosition: PlayerPosition) {
-        /*
-         *
-         */
         const index = Finder.findSubtitleIndexAtPlayerTime(
             playerPosition,
             this.subtitleCuePointsInSec

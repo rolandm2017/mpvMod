@@ -19,7 +19,7 @@ export class SubtitleHeights {
 
     // FIXME How can there be updates? The subtitles never change height
 
-    set(time: SubtitleTiming, height: number) {
+    setHeightInternal(time: SubtitleTiming, height: number) {
         /**
          *  Insert in sorted order or update existing
          * */
@@ -37,13 +37,12 @@ export class SubtitleHeights {
             // bool would be "shouldInsertBetween"
             this.entries.splice(index, 0, [time, height]); // insert
         }
+        this.size += 1;
     }
-
-    findFirstGrea() {}
 
     // Time = Timecode as seconds
 
-    getHeight(time: SubtitleTiming): number {
+    getHeightInternal(time: SubtitleTiming): number {
         if (this.entries.length === 0) return 0;
 
         // Binary search for insertion point
