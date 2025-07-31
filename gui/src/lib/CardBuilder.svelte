@@ -40,10 +40,10 @@
         }
     }
 
-    let nativeLangTranslation = '';
+    let nativeLangTranslation = $state('');
 
-    let startTime = '8:06';
-    let endTime = '8:13';
+    let startTime = $state('8:06');
+    let endTime = $state('8:13');
 
     function nudgeStart(direction: number) {
         let [minutes, seconds] = startTime.split(':').map(Number);
@@ -166,6 +166,7 @@
                 <!-- the image is about the size of the Anki thumbnail -->
                 <!-- TODO: the image should be shrunk behind the scenes to save space in Anki -->
                 <img
+                    class="take-full-container"
                     src={screenshotDataUrl}
                     class:hidden={!screenshotDataUrl}
                     alt="MPV screenshot for Anki flashcard"
@@ -236,17 +237,23 @@
     }
 
     .image-target-container {
-        height: 200px;
+        height: 170px;
         width: 400px;
-        border: 2px solid grey;
+        border: 4px solid grey;
         border-radius: 8px;
     }
 
-    .image-target {
-        height: 100%;
-        width: 100%;
+    .image-target img {
+        max-height: calc(170px - 16px); /* Container height minus all borders */
+        max-width: calc(400px - 16px); /* Container width minus all borders */
         background-color: #eeeeee;
         border-radius: 8px;
+        border: 4px solid red;
+    }
+
+    .take-full-container {
+        height: 100%;
+        width: 100%;
     }
 
     .control-panel {
@@ -287,6 +294,43 @@
         font-weight: 600;
     }
 
+    .image-target-container {
+        display: inline-block;
+        vertical-align: top;
+    }
+
+    .image-target {
+        display: inline-block;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        padding: 2px;
+        background: white;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    }
+
+    .image-target img {
+        display: block;
+        /* max-width: 200px;
+        max-height: 300px; */
+        height: 100%;
+        width: 100%;
+        width: auto;
+        height: auto;
+        object-fit: contain;
+        cursor: pointer;
+    }
+
+    /* Hidden state */
+    .hidden {
+        display: none !important;
+    }
+
+    /* Optional: Add hover effect for better UX */
+    .image-target:hover {
+        border-color: #999;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
+    }
+
     .input-group {
         margin-bottom: 15px;
     }
@@ -299,8 +343,7 @@
         font-size: 0.9em;
     }
 
-    .input-group input,
-    .input-group select {
+    .input-group input {
         width: 100%;
         padding: 10px 12px;
         border: 1px solid #ced4da;
@@ -312,36 +355,16 @@
             box-shadow 0.15s ease-in-out;
     }
 
-    .input-group input:focus,
-    .input-group select:focus {
+    .input-group input:focus {
         outline: none;
         border-color: #80bdff;
         box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
-    }
-
-    .input-row {
-        display: flex;
-        gap: 15px;
-    }
-
-    .input-row .input-group {
-        flex: 1;
     }
 
     .button-group {
         display: flex;
         gap: 10px;
         flex-wrap: wrap;
-    }
-
-    .primary-btn {
-        background: #007bff;
-        color: white;
-    }
-
-    .primary-btn:hover {
-        background: #0056b3;
-        transform: translateY(-1px);
     }
 
     .secondary-btn {

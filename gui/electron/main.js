@@ -120,7 +120,7 @@ function connectMPV() {
                         );
                     }
                 } else {
-                    console.log('Unaught type:', message);
+                    console.log('Unaught type:', message.type, message.command);
                     mainWindow.webContents.send('mpv-state', message);
                 }
             }
