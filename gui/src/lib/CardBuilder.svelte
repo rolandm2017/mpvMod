@@ -45,38 +45,6 @@
 
     let nativeLangTranslation = $state('');
 
-    let startTime = $state('8:06');
-    let endTime = $state('8:13');
-
-    function nudgeStart(direction: number) {
-        let [minutes, seconds] = startTime.split(':').map(Number);
-        let totalSeconds = minutes * 60 + seconds;
-        totalSeconds += direction;
-
-        if (totalSeconds < 0) totalSeconds = 0;
-
-        let newMinutes = Math.floor(totalSeconds / 60);
-        let newSeconds = totalSeconds % 60;
-        startTime = `${newMinutes}:${newSeconds.toString().padStart(2, '0')}`;
-    }
-
-    function nudgeEnd(direction: number) {
-        let [minutes, seconds] = endTime.split(':').map(Number);
-        let totalSeconds = minutes * 60 + seconds;
-        totalSeconds += direction;
-
-        if (totalSeconds < 0) totalSeconds = 0;
-
-        let newMinutes = Math.floor(totalSeconds / 60);
-        let newSeconds = totalSeconds % 60;
-        endTime = `${newMinutes}:${newSeconds.toString().padStart(2, '0')}`;
-    }
-
-    function playAudio() {
-        console.log(`Playing audio from ${startTime} to ${endTime}`);
-        // Add your audio playback logic here
-    }
-
     // Function to handle backspace deletion
     function handleImageFieldKeydown(event: KeyboardEvent) {
         if (event.key === 'Backspace') {
@@ -146,37 +114,6 @@
         <h3>Sentence Audio</h3>
         <div class="time-controls">
             <Wavesurfer mp3={mp3snippet} />
-            <div class="time-row flex-row push-items-top sml-space-below">
-                <div class="time-group half-container-fill">
-                    <h4 class="push-items-top">Start Time</h4>
-                    <div class="time-display">
-                        <button class="nudge-btn" onclick={() => nudgeStart(-1)}
-                            >←</button
-                        >
-                        <span class="time-value">{startTime}</span>
-                        <button class="nudge-btn" onclick={() => nudgeStart(-1)}
-                            >→</button
-                        >
-                    </div>
-                </div>
-
-                <div class="time-group half-container-fill">
-                    <h4 class="push-items-top">End Time</h4>
-                    <div class="time-display">
-                        <button class="nudge-btn" onclick={() => nudgeEnd(-1)}
-                            >←</button
-                        >
-                        <span class="time-value">{endTime}</span>
-                        <button class="nudge-btn" onclick={() => nudgeEnd(1)}
-                            >→</button
-                        >
-                    </div>
-                </div>
-            </div>
-
-            <button class="play-btn sml-space-below" onclick={playAudio}
-                >▶ Play Audio</button
-            >
         </div>
     </div>
     <div class="control-section">
@@ -227,10 +164,6 @@
 <style>
     /* Your styles here */
 
-    h4 {
-        font-weight: 400;
-    }
-
     button {
         padding: 10px 20px;
         border: none;
@@ -244,27 +177,6 @@
 
     .flex-row {
         display: flex;
-    }
-
-    .half-container-fill {
-        width: 50%;
-    }
-
-    .push-items-top {
-        margin-top: 0;
-    }
-
-    .sml-space-below {
-        margin-bottom: 10px;
-    }
-
-    .time-display .nudge-btn {
-        width: 50px;
-        min-width: 50px;
-        background-color: #dddddd;
-        box-shadow:
-            0 4px 6px -1px rgba(0, 0, 0, 0.1),
-            0 2px 4px -1px rgba(0, 0, 0, 0.06);
     }
 
     .image-target-container {
@@ -407,11 +319,6 @@
         cursor: pointer;
     } */
 
-    /* Hidden state */
-    .hidden {
-        display: none !important;
-    }
-
     /* Optional: Add hover effect for better UX */
     /* .image-target:hover {
         border-color: #999;
@@ -483,6 +390,8 @@
         background: #c82333;
         transform: translateY(-1px);
     }
+
+    /* Hidden state */
 
     .hidden {
         display: none;

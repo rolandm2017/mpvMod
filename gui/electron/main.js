@@ -22,7 +22,7 @@ if (isDev) {
     process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true';
 }
 
-const DEFAULT_SILENCE_CLIP = 'soft-rain-on-window-358384.mp3';
+const DEFAULT_SILENCE_CLIP = 'soft-rain-on-window-358384-boosted.mp3';
 
 const BACKEND_DIR = path.join(__dirname, '../../backend'); // Adjust path as needed
 
