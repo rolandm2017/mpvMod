@@ -37,7 +37,12 @@
     // scrollToLocation(heightForSub);
     let allSegmentsMounted = false;
 
-    // TODO: Color the subtitle in question
+    let registeredHotkeys = $state({
+        screenshot: 'Ctrl + Shift + S',
+        audioClip: 'F5',
+        copySubtitle: 'Ctrl + C',
+        copyWord: 'Ctrl + X',
+    });
 
     onMount(() => {
         (window as any).playerPositionDevTool = playerPositionDevTool;
@@ -193,6 +198,49 @@
         showOptions = !showOptions;
     }
 
+    function handleKeyDown(e: KeyboardEvent) {
+        // Build hotkey string
+        const parts: string[] = [];
+        if (e.ctrlKey) parts.push('Ctrl');
+        if (e.shiftKey) parts.push('Shift');
+        if (e.altKey) parts.push('Alt');
+        if (e.metaKey) parts.push('Cmd');
+
+        let key = e.key;
+        if (key === ' ') key = 'Space';
+        else if (key.length === 1) key = key.toUpperCase();
+
+        parts.push(key);
+        const hotkeyString = parts.join(' + ');
+
+        // Check if this matches a registered hotkey, i.e.
+        // the q, " ['Ctrl + Shift + S', 'F5', 'Ctrl + C', 'Ctrl + X'] contains "Ctrl + X" ?""
+        const action = Object.entries(registeredHotkeys).find(
+            ([k, v]) => v === hotkeyString
+        )?.[0];
+        if (action) {
+            e.preventDefault();
+            executeAction(action);
+        }
+    }
+
+    function executeAction(action: string) {
+        // TODO: Convert to use websockets cmd
+
+        console.log('EXECUTING: ', action);
+        // switch (action) {
+        //     case 'screenshot':
+        //         window.electronAPI?.takeScreenshot();
+        //         break;
+        //     case 'audioClip':
+        //         window.electronAPI?.toggleAudioClip();
+        //         break;
+        //     case 'copySubtitle':
+        //         copySelectedSubtitle();
+        //         break;
+        // }
+    }
+
     // export function devtoolsScroller(timestamp: number) {
     export function playerPositionDevTool(playerPosition: PlayerPosition) {
         // highlightPlayerPositionSegment(playerPosition);
@@ -204,6 +252,8 @@
         scrollToLocation(height, scrollContainer);
     }
 </script>
+
+<svelte:window on:keydown={handleKeyDown} />
 
 {#if showOptions}
     <HotkeyConfig {showOptions} {toggleOptions} />

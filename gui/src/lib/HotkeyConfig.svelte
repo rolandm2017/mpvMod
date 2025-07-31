@@ -75,7 +75,7 @@
     async function saveHotkeys() {
         // Save to electron store
         if (window.electronAPI?.saveHotkeys) {
-            await window.electronAPI.saveHotkeys(hotkeys);
+            await window.electronAPI.saveHotkeys({ ...hotkeys });
         }
     }
 
