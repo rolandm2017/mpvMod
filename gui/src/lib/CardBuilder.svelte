@@ -95,12 +95,12 @@
     <div class="panel-header flex-row">
         <div><h2 class="header-text">Card Builder</h2></div>
         <div>
-            // TODO: make a reminder of the set hotkeys top right, right here.
+            <!-- // TODO: make a reminder of the set hotkeys top right, right here. -->
             <button>img</button>
         </div>
         <!-- // todo: make it responsive -->
         <div>
-            // TODO: make a reminder of the set hotkeys top right, right here.
+            <!-- // TODO: make a reminder of the set hotkeys top right, right here. -->
             <button>audio</button>
         </div>
         <div>

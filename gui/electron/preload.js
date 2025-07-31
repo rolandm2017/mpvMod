@@ -23,13 +23,16 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
     takeScreenshot: () => ipcRenderer.invoke('take-screenshot'),
     startAudioClip: () => ipcRenderer.invoke('start-audio-clip'),
-    endAudioClip: () => ipcRenderer.invoke('end-audio-clip'),
+    concludeAudioClip: () => ipcRenderer.invoke('end-audio-clip'),
     getMPVStatus: () => ipcRenderer.invoke('get-mpv-status'),
 
     onScreenshotReady: (callback) => {
         ipcRenderer.on('screenshot-ready', (event, dataURL) =>
             callback(dataURL)
         );
+    },
+    onAudioReady: (callback) => {
+        ipcRenderer.on('audio-ready', (event, dataURL) => callback(dataURL));
     },
 });
 

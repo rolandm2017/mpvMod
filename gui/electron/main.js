@@ -119,6 +119,30 @@ function connectMPV() {
                             }
                         );
                     }
+                } else if (
+                    message.type === 'command_response' &&
+                    message.command === 'end_audio_clip'
+                ) {
+                    console.log(message, '126ru');
+                    if (message.success && message.file_path) {
+                        // Now you have the file_path from your Python server
+                        const fullMp3Path = path.join(
+                            BACKEND_DIR,
+                            message.file_path
+                        );
+
+                        // Convert immediately:
+                        loadAudioAsDataURL(fullMp3Path)
+                            .then((dataURL) => {
+                                mainWindow.webContents.send(
+                                    'audio-ready',
+                                    dataURL
+                                );
+                            })
+                            .catch((error) => {
+                                console.error('Failed to load audio:', error);
+                            });
+                    }
                 } else {
                     console.log('Unaught type:', message.type, message.command);
                     mainWindow.webContents.send('mpv-state', message);
@@ -148,6 +172,16 @@ async function loadImageAsDataURL(filePath) {
         return `data:${mimeType};base64,${base64}`;
     } catch (error) {
         throw new Error(`Failed to load image: ${error.message}`);
+    }
+}
+
+async function loadAudioAsDataURL(filePath) {
+    try {
+        const audioBuffer = await fs.readFile(filePath);
+        const base64 = audioBuffer.toString('base64');
+        return `data:audio/mpeg;base64,${base64}`;
+    } catch (error) {
+        throw new Error(`Failed to load audio: ${error.message}`);
     }
 }
 

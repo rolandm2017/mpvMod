@@ -18,7 +18,7 @@ export interface ElectronAPI {
     // send cmds
     takeScreenshot: () => Promise<boolean>;
     startAudioClip: () => Promise<boolean>;
-    endAudioClip: () => Promise<boolean>;
+    concludeAudioClip: () => Promise<boolean>;
     getMPVStatus: () => Promise<boolean>;
     sendMPVCommand: (command: object) => Promise<boolean>;
 
@@ -27,6 +27,7 @@ export interface ElectronAPI {
 
     // Add screenshot listener
     onScreenshotReady: (callback: (dataURL: string) => void) => void;
+    onAudioReady: (callback: (dataURL: string) => void) => void;
 }
 
 export interface HotkeyRegister {
@@ -47,13 +48,13 @@ export interface StartAudioClipResponse {
     success: boolean;
 }
 
-export interface EndAudioClipResponse {
+export interface ConcludeAudioClipResponse {
     command: 'end_audio_clip';
     success: true;
     file_path: string;
 }
 
-export interface EndAudioClipError {
+export interface ConcludeAudioClipError {
     command: 'end_audio_clip';
     success: false;
     error: string;
@@ -62,5 +63,5 @@ export interface EndAudioClipError {
 export type CommandResponse =
     | TakeScreenshotResponse
     | StartAudioClipResponse
-    | EndAudioClipResponse
-    | EndAudioClipError;
+    | ConcludeAudioClipResponse
+    | ConcludeAudioClipError;

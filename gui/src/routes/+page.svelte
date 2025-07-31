@@ -60,6 +60,7 @@
     // TODO: User puts in target word, it's validated as a real word in <target language>.
     // THEN, the word gets a "word audio" mp3 from a service.
     let screenshotDataUrl = $state('');
+    let mp3DataUrl = $state('');
     let audioClipPath = '';
     let isClipping = false;
 
@@ -151,6 +152,13 @@
                     dataURL.substring(0, 50) + '...'
                 );
                 screenshotDataUrl = dataURL; // Store the data URL
+            });
+            window.electronAPI.onAudioReady((dataURL: string) => {
+                console.log(
+                    'in the +page.svelte screenshot api:',
+                    dataURL.substring(0, 50) + '...'
+                );
+                mp3DataUrl = dataURL; // Store the data URL
             });
         } else {
             console.error('electronAPI not available');
@@ -280,6 +288,8 @@
         }
     }
 
+    let currentlyRecording = $state(false);
+
     function executeAction(action: string) {
         // TODO: Convert to use websockets cmd
 
@@ -289,7 +299,14 @@
                 window.electronAPI?.takeScreenshot();
                 break;
             case 'audioClip':
-                window.electronAPI?.startAudioClip();
+                // TODO:
+                if (currentlyRecording) {
+                    window.electronAPI?.concludeAudioClip();
+                    currentlyRecording = false;
+                } else {
+                    currentlyRecording = true;
+                    window.electronAPI?.startAudioClip();
+                }
                 break;
             case 'copySubtitle':
                 copySelectedSubtitle();
@@ -350,42 +367,6 @@
                     // You could play this audio file now
                 }
                 break;
-        }
-    }
-
-    async function takeScreenshot() {
-        try {
-            await window.electronAPI.takeScreenshot();
-            console.log('Screenshot command sent');
-        } catch (error) {
-            console.error('Failed to take screenshot:', error);
-        }
-    }
-
-    async function startAudioClip() {
-        try {
-            await window.electronAPI.startAudioClip();
-            console.log('Start audio clip command sent');
-        } catch (error) {
-            console.error('Failed to start audio clip:', error);
-        }
-    }
-
-    async function endAudioClip() {
-        try {
-            await window.electronAPI.endAudioClip();
-            console.log('End audio clip command sent');
-        } catch (error) {
-            console.error('Failed to end audio clip:', error);
-        }
-    }
-
-    async function getStatus() {
-        try {
-            await window.electronAPI.getMPVStatus();
-            console.log('Status request sent');
-        } catch (error) {
-            console.error('Failed to get status:', error);
         }
     }
 
