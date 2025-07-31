@@ -7,6 +7,7 @@ import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
 import dotenv from 'dotenv';
+import Store from 'electron-store';
 
 const __filename = fileURLToPath(import.meta.url); // Not import.meta.dirname
 const __dirname = dirname(__filename);
@@ -22,6 +23,8 @@ if (isDev) {
 
 let mpvWS;
 let mainWindow;
+
+const store = new Store();
 
 function createWindow() {
     const primaryDisplay = screen.getPrimaryDisplay();

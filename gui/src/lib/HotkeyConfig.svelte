@@ -1,6 +1,7 @@
 <script lang="ts">
     import { onMount, onDestroy } from 'svelte';
     import type { HotkeyRegister } from './interfaces';
+    import HotkeyItem from './components/HotkeyItem.svelte';
 
     let { showOptions, toggleOptions } = $props();
 
@@ -12,9 +13,43 @@
         copyTargetWord: 'Not set',
     });
 
+    // FIXME: Should NOT be able to bind the same key twice!
+    //      -> Correct behavior is, "Double bind key -> Original key is unbound"
+    //      -> Another option is, Double Bind Key -> Get override prompt. "Override?"
+    // TODO:
+
     // Track which hotkey is currently being set
     let activeHotkey: string | null = $state(null);
     let keyListener: ((e: KeyboardEvent) => void) | null = null;
+
+    // Hotkey definitions for easier management
+    const hotkeyDefinitions = [
+        {
+            name: 'copyTargetWord',
+            title: 'Copy Target Word',
+            description: 'Copy selected word/phrase to Target word field',
+        },
+        {
+            name: 'copySubtitle',
+            title: 'Copy Selected Subtitle',
+            description:
+                'Copy selected text from subtitles to Example sentence field',
+        },
+        {
+            name: 'screenshot',
+            title: 'Take Screenshot',
+            description: 'Capture current MPV frame to Image field',
+        },
+        {
+            name: 'audioClip',
+            title: 'Start/Stop Audio Clip',
+            description:
+                'Record audio from current position to Sentence audio field',
+        },
+    ];
+
+    // TODO-LATER: Add setup for automatic ChatGPT prompting based on sentence, word.
+    // TODO-LATER: Add setup for automatic translation using DeepL, Google Translate, etc.
 
     // Load saved hotkeys on mount
     onMount(() => {
@@ -131,121 +166,17 @@
     </div>
 
     <div class="hotkey-list">
-        <div class="hotkey-item">
-            <div class="hotkey-description">
-                <strong>Take Screenshot</strong>
-                <span>Capture current MPV frame to Image field</span>
-            </div>
-            <div class="hotkey-input-group">
-                <button
-                    class="hotkey-input"
-                    class:active={activeHotkey === 'screenshot'}
-                    class:has-value={hotkeys.screenshot !== 'Not set'}
-                    onclick={() => startHotkeyCapture('screenshot')}
-                >
-                    {activeHotkey === 'screenshot'
-                        ? 'Press a key...'
-                        : hotkeys.screenshot}
-                </button>
-                {#if hotkeys.screenshot !== 'Not set'}
-                    <button
-                        class="clear-btn"
-                        onclick={() => clearHotkey('screenshot')}
-                        title="Clear hotkey"
-                    >
-                        ×
-                    </button>
-                {/if}
-            </div>
-        </div>
-
-        <div class="hotkey-item">
-            <div class="hotkey-description">
-                <strong>Start/Stop Audio Clip</strong>
-                <span
-                    >Record audio from current position to Sentence audio field</span
-                >
-            </div>
-            <div class="hotkey-input-group">
-                <button
-                    class="hotkey-input"
-                    class:active={activeHotkey === 'audioClip'}
-                    class:has-value={hotkeys.audioClip !== 'Not set'}
-                    onclick={() => startHotkeyCapture('audioClip')}
-                >
-                    {activeHotkey === 'audioClip'
-                        ? 'Press a key...'
-                        : hotkeys.audioClip}
-                </button>
-                {#if hotkeys.audioClip !== 'Not set'}
-                    <button
-                        class="clear-btn"
-                        onclick={() => clearHotkey('audioClip')}
-                        title="Clear hotkey"
-                    >
-                        ×
-                    </button>
-                {/if}
-            </div>
-        </div>
-
-        <div class="hotkey-item">
-            <div class="hotkey-description">
-                <strong>Copy Selected Subtitle</strong>
-                <span
-                    >Copy selected text from subtitles to Example sentence field</span
-                >
-            </div>
-            <div class="hotkey-input-group">
-                <button
-                    class="hotkey-input"
-                    class:active={activeHotkey === 'copySubtitle'}
-                    class:has-value={hotkeys.copySubtitle !== 'Not set'}
-                    onclick={() => startHotkeyCapture('copySubtitle')}
-                >
-                    {activeHotkey === 'copySubtitle'
-                        ? 'Press a key...'
-                        : hotkeys.copySubtitle}
-                </button>
-                {#if hotkeys.copySubtitle !== 'Not set'}
-                    <button
-                        class="clear-btn"
-                        onclick={() => clearHotkey('copySubtitle')}
-                        title="Clear hotkey"
-                    >
-                        ×
-                    </button>
-                {/if}
-            </div>
-        </div>
-
-        <div class="hotkey-item">
-            <div class="hotkey-description">
-                <strong>Copy Target Word</strong>
-                <span>Copy selected word/phrase to Target word field</span>
-            </div>
-            <div class="hotkey-input-group">
-                <button
-                    class="hotkey-input"
-                    class:active={activeHotkey === 'copyTargetWord'}
-                    class:has-value={hotkeys.copyTargetWord !== 'Not set'}
-                    onclick={() => startHotkeyCapture('copyTargetWord')}
-                >
-                    {activeHotkey === 'copyTargetWord'
-                        ? 'Press a key...'
-                        : hotkeys.copyTargetWord}
-                </button>
-                {#if hotkeys.copyTargetWord !== 'Not set'}
-                    <button
-                        class="clear-btn"
-                        onclick={() => clearHotkey('copyTargetWord')}
-                        title="Clear hotkey"
-                    >
-                        ×
-                    </button>
-                {/if}
-            </div>
-        </div>
+        {#each hotkeyDefinitions as hotkey}
+            <HotkeyItem
+                name={hotkey.name}
+                title={hotkey.title}
+                description={hotkey.description}
+                value={hotkeys[hotkey.name as keyof typeof hotkeys]}
+                isActive={activeHotkey === hotkey.name}
+                onCapture={startHotkeyCapture}
+                onClear={clearHotkey}
+            />
+        {/each}
     </div>
 
     {#if activeHotkey}

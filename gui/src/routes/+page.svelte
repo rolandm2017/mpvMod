@@ -87,6 +87,12 @@
                 // Auto-scroll to current position (throttled)
                 const now = Date.now();
                 if (now - lastScrollTime > 2000) {
+                    const noPointInUpdatingPage = showOptions === true;
+                    if (noPointInUpdatingPage) {
+                        // do nothing. the subtitle container isn't showing.
+                        console.log('Skipping update because on options page');
+                        return;
+                    }
                     // Throttle to every 500ms
                     highlightPlayerPositionSegment(playerPosition);
                     scrollToClosestSubtitle(
