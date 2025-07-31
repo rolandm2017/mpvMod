@@ -88,6 +88,7 @@
         activeHotkey = hotkeyName;
 
         keyListener = (e: KeyboardEvent) => {
+            console.log('THIS HPAP:ENED 91ru');
             e.preventDefault();
             e.stopPropagation();
 
@@ -100,6 +101,7 @@
 
             // Handle special keys
             let key = e.key;
+            console.log('KEY FOR HOTKEY: ', key);
             if (key === ' ') key = 'Space';
             else if (key === 'Escape') key = 'Esc';
             else if (key.length === 1) key = key.toUpperCase();
@@ -113,6 +115,7 @@
             const hotkeyString = parts.join(' + ');
 
             // Update the hotkey
+            console.log('FOO ', hotkeyString);
             hotkeys[hotkeyName as keyof typeof hotkeys] = hotkeyString;
 
             // Clear capture state

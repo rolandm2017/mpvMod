@@ -44,6 +44,8 @@
         copyWord: 'Ctrl + X',
     });
 
+    let failCount = 0;
+
     onMount(() => {
         (window as any).playerPositionDevTool = playerPositionDevTool;
         (window as any).timecodeDevTool = timecodeDevTool;
@@ -91,22 +93,27 @@
 
                 // Auto-scroll to current position (throttled)
                 const now = Date.now();
-                if (now - lastScrollTime > 2000) {
+                const enabledUpdates = failCount < 3;
+                if (now - lastScrollTime > 2000 && enabledUpdates) {
                     const noPointInUpdatingPage = showOptions === true;
                     if (noPointInUpdatingPage) {
                         // do nothing. the subtitle container isn't showing.
                         console.log('Skipping update because on options page');
                         return;
                     }
-                    // Throttle to every 500ms
-                    highlightPlayerPositionSegment(playerPosition);
-                    scrollToClosestSubtitle(
-                        playerPosition,
-                        db,
-                        scrollContainer
-                    );
+                    try {
+                        // Throttle to every 500ms
+                        highlightPlayerPositionSegment(playerPosition);
+                        scrollToClosestSubtitle(
+                            playerPosition,
+                            db,
+                            scrollContainer
+                        );
 
-                    lastScrollTime = now;
+                        lastScrollTime = now;
+                    } catch (e) {
+                        failCount += 1;
+                    }
                 }
             });
         } else {
@@ -119,19 +126,12 @@
             playerPosition,
             db.subtitleCuePointsInSec
         );
-        console.log(
-            'highlighting target: ',
-            playerPosition,
-            indexToHighlight,
-            '112ru'
-        );
         const timecodeStringOfTargetEl =
             db.subtitles[indexToHighlight].timecode;
         // FIXME: timecode's are not found. the timePositions are never loaded
         // FIXME: the problem is i'm doing "get" for a precise value, when I want fuzzy matching
 
         if (timecodeStringOfTargetEl) {
-            console.log('Trying to highlight: ', timecodeStringOfTargetEl);
             highlightSegment(timecodeStringOfTargetEl);
         } else {
             console.log(timecodeStringOfTargetEl, 'not found');
@@ -251,6 +251,10 @@
         const height = db.getHeightFromTimecode(timecode);
         scrollToLocation(height, scrollContainer);
     }
+
+    export function restoreUpdates() {
+        //
+    }
 </script>
 
 <svelte:window on:keydown={handleKeyDown} />
@@ -317,6 +321,18 @@
         color: #888;
         text-align: center;
         padding: 50px 20px;
+    }
+
+    .hidden {
+        display: none;
+    }
+    .options-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        visibility: hidden;
     }
 
     .subtitle-content::-webkit-scrollbar {
