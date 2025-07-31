@@ -9,15 +9,21 @@ export interface MPVStateData {
 }
 
 export interface ElectronAPI {
+    // MPVstate update - time stream
     onMPVState: (callback: (data: MPVStateData) => void) => void;
     removeMPVListener: () => void;
+    // hotkeys
     getHotkeys: () => HotkeyRegister;
     saveHotkeys: (hotkeys: any) => void;
+    // send cmds
     takeScreenshot: () => Promise<boolean>;
     startAudioClip: () => Promise<boolean>;
     endAudioClip: () => Promise<boolean>;
     getMPVStatus: () => Promise<boolean>;
     sendMPVCommand: (command: object) => Promise<boolean>;
+
+    // Add clipboard support
+    copyToClipboard?: (text: string) => Promise<void>;
 }
 
 export interface HotkeyRegister {

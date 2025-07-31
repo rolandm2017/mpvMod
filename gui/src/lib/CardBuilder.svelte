@@ -1,7 +1,7 @@
 <!-- CardBuilder.svelte -->
 <script lang="ts">
     // Props - data passed in from parent
-    let { foofoo = $bindable(''), showOptions, toggleOptions } = $props();
+    let { exampleSentenceField, showOptions, toggleOptions } = $props();
 
     // Local state
     let selectedLanguage = $state('en');
@@ -30,7 +30,6 @@
     }
 
     let wordField = '';
-    let exampleSentenceField = '';
     let nativeLangTranslation = '';
 
     let startTime = '8:06';
@@ -68,7 +67,7 @@
 
 <div class="control-panel">
     <div class="panel-header flex-row">
-        <div><h2>Card Builder</h2></div>
+        <div><h2 class="header-text">Card Builder</h2></div>
         <div>
             <button onclick={() => toggleOptions()}>
                 {showOptions ? 'Back' : 'Options'}
@@ -237,11 +236,17 @@
     }
 
     .panel-header {
-        padding: 15px 20px;
+        padding: 3px 20px;
         background: #e9ecef;
         border-bottom: 1px solid #dee2e6;
         font-weight: 600;
         font-size: 1.1em;
+    }
+
+    .header-text {
+        margin: 10px 0px 10px 0px;
+        padding: 6px 12px;
+        background-color: #eee5ed;
     }
 
     .control-section {

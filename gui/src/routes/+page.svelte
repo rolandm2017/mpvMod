@@ -53,6 +53,7 @@
     let failCount = 0;
 
     let mpvState = {};
+    let selectedSubtitleText = $state('');
     let screenshotPath = '';
     let audioClipPath = '';
     let isClipping = false;
@@ -259,17 +260,17 @@
         // TODO: Convert to use websockets cmd
 
         console.log('EXECUTING: ', action);
-        // switch (action) {
-        //     case 'screenshot':
-        //         window.electronAPI?.takeScreenshot();
-        //         break;
-        //     case 'audioClip':
-        //         window.electronAPI?.toggleAudioClip();
-        //         break;
-        //     case 'copySubtitle':
-        //         copySelectedSubtitle();
-        //         break;
-        // }
+        switch (action) {
+            case 'screenshot':
+                window.electronAPI?.takeScreenshot();
+                break;
+            case 'audioClip':
+                window.electronAPI?.startAudioClip();
+                break;
+            case 'copySubtitle':
+                copySelectedSubtitle();
+                break;
+        }
     }
 
     function handleCommandResponse(data: CommandResponse) {
@@ -338,6 +339,25 @@
         }
     }
 
+    function copySelectedSubtitle() {
+        /**
+         // MOSTLY this is just putting the subtitle text
+         * into the state var so i can push it to input field.
+        */
+        try {
+            // Get the currently selected text from the window
+            const selection = window.getSelection();
+            const selectedText = selection?.toString().trim() || '';
+
+            if (!selectedText) return;
+
+            selectedSubtitleText = selectedText;
+            navigator.clipboard.writeText(selectedText);
+        } catch (error) {
+            console.error('Error in copySelectedSubtitle:', error);
+        }
+    }
+
     // export function devtoolsScroller(timestamp: number) {
     export function playerPositionDevTool(playerPosition: PlayerPosition) {
         // highlightPlayerPositionSegment(playerPosition);
@@ -381,7 +401,11 @@
                 {/if}
             </div>
         </div>
-        <CardBuilder {showOptions} {toggleOptions} />
+        <CardBuilder
+            {showOptions}
+            {toggleOptions}
+            exampleSentenceField={selectedSubtitleText}
+        />
     </div>
 </div>
 <div class="options-overlay" class:visible={showOptions}>
