@@ -3,6 +3,8 @@
 import { app, BrowserWindow, ipcMain, screen } from 'electron';
 import WebSocket from 'ws';
 
+import fs from 'fs/promises';
+
 import { fileURLToPath } from 'url';
 import { dirname } from 'path';
 
@@ -21,16 +23,13 @@ if (isDev) {
     process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true';
 }
 
+const BACKEND_DIR = path.join(__dirname, '../../backend'); // Adjust path as needed
+
 let mpvWS;
 let mainWindow;
 
 const store = new Store();
-console.log(new Store().path);
-console.log(new Store().path);
-console.log(new Store().path);
-console.log(new Store().path);
-console.log(new Store().path);
-console.log(new Store().path);
+
 console.log(new Store().path);
 
 function createWindow() {
@@ -89,10 +88,41 @@ function connectMPV() {
 
     mpvWS.on('message', (data) => {
         try {
-            const parsed = JSON.parse(data);
+            const message = JSON.parse(data);
             // Send to renderer
             if (mainWindow && !mainWindow.isDestroyed()) {
-                mainWindow.webContents.send('mpv-state', parsed);
+                // TODO: Handle switch statement nicely
+                if (message.type === 'time_update') {
+                    mainWindow.webContents.send('mpv-state', message);
+                } else if (message.type === 'status') {
+                    mainWindow.webContents.send('mpv-state', message);
+                } else if (
+                    message.type === 'command_response' &&
+                    message.command === 'take_screenshot'
+                ) {
+                    console.log(message, '90ru');
+                    if (message.success && message.file_path) {
+                        // Now you have the file_path from your Python server
+                        const fullScreenshotPath = path.join(
+                            BACKEND_DIR,
+                            message.file_path
+                        );
+
+                        // Convert immediately:
+                        loadImageAsDataURL(fullScreenshotPath).then(
+                            (dataURL) => {
+                                // Send to renderer via your preferred method
+                                mainWindow.webContents.send(
+                                    'screenshot-ready',
+                                    dataURL
+                                );
+                            }
+                        );
+                    }
+                } else {
+                    console.log('Unaught type:', message);
+                    mainWindow.webContents.send('mpv-state', message);
+                }
             }
         } catch (e) {
             console.error('Failed to parse MPV data:', e);
@@ -107,6 +137,18 @@ function connectMPV() {
     mpvWS.on('error', (error) => {
         console.error('MPV WebSocket error:', error);
     });
+}
+
+async function loadImageAsDataURL(filePath) {
+    try {
+        const imageBuffer = await fs.readFile(filePath);
+        const ext = path.extname(filePath).toLowerCase();
+        const mimeType = ext === '.png' ? 'image/png' : 'image/jpeg';
+        const base64 = imageBuffer.toString('base64');
+        return `data:${mimeType};base64,${base64}`;
+    } catch (error) {
+        throw new Error(`Failed to load image: ${error.message}`);
+    }
 }
 
 // Function to send commands to MPV server

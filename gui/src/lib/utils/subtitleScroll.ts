@@ -81,7 +81,7 @@ export function scrollToClosestSubtitle(
      * @param subtitleCuePointsArr - an arr of all subtitle's start times
      */
     if (!scrollContainer) {
-        console.log(scrollContainer);
+        // console.log(scrollContainer);
         throw new Error('Scroll Container was null');
     }
     // PLAYER POSITION -> ??? ->

@@ -24,6 +24,9 @@ export interface ElectronAPI {
 
     // Add clipboard support
     copyToClipboard?: (text: string) => Promise<void>;
+
+    // Add screenshot listener
+    onScreenshotReady: (callback: (dataURL: string) => void) => void;
 }
 
 export interface HotkeyRegister {

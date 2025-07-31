@@ -53,9 +53,13 @@
     let failCount = 0;
 
     let mpvState = {};
+    // TODO: User edits the example sentence in the input, the reactive variable changes to house it.
     let selectedSubtitleText = $state('');
+    // TODO: User edits the target word in the input, the reactive variable changes to house it.
     let selectedTargetWordText = $state('');
-    let screenshotPath = '';
+    // TODO: User puts in target word, it's validated as a real word in <target language>.
+    // THEN, the word gets a "word audio" mp3 from a service.
+    let screenshotDataUrl = $state('');
     let audioClipPath = '';
     let isClipping = false;
 
@@ -139,6 +143,14 @@
                 if (isCommandResponse(data)) {
                     handleCommandResponse(data);
                 }
+            });
+            // Handle screenshot data separately
+            window.electronAPI.onScreenshotReady((dataURL: string) => {
+                console.log(
+                    'in the +page.svelte screenshot api:',
+                    dataURL.substring(0, 50) + '...'
+                );
+                screenshotDataUrl = dataURL; // Store the data URL
             });
         } else {
             console.error('electronAPI not available');
@@ -254,8 +266,8 @@
 
         const hotkeyString = parts.join(' + ');
 
-        console.log('THIS IS: ', hotkeyString, '227ru');
-        console.log('WHATS IN HERE', registeredHotkeys);
+        // console.log('THIS IS: ', hotkeyString, '227ru');
+        // console.log('WHATS IN HERE', registeredHotkeys);
 
         // Check if this matches a registered hotkey, i.e.
         // the q, " ['Ctrl + Shift + S', 'F5', 'Ctrl + C', 'Ctrl + X'] contains "Ctrl + X" ?""
@@ -294,8 +306,31 @@
         switch (data.command) {
             case 'take_screenshot':
                 if (data.success && data.file_path) {
-                    screenshotPath = data.file_path;
-                    console.log('Screenshot saved:', screenshotPath);
+                    screenshotDataUrl = data.file_path;
+                    // FIXME: youget
+                    // FIXME: youget
+                    // FIXME: youget
+                    // FIXME: youget
+                    // FIXME: youget
+                    // FIXME: youget
+                    /*
+
+                    Screenshot saved: screenshots\screenshot_1753944568_5-39.1.png
+                    Screenshot saved: screenshots\screenshot_1753944568_5-39.1.png
+                    Screenshot saved: screenshots\screenshot_1753944568_5-39.1.png
+                    Screenshot saved: screenshots\screenshot_1753944568_5-39.1.png
+                    Screenshot saved: screenshots\screenshot_1753944568_5-39.1.png
+                    Screenshot saved: screenshots\screenshot_1753944568_5-39.1.png
+
+                    BUT that's not it. I need absolute path. or a path relative from gui
+                    BUT that's not it. I need absolute path. or a path relative from gui
+                    BUT that's not it. I need absolute path. or a path relative from gui
+                    BUT that's not it. I need absolute path. or a path relative from gui
+                    BUT that's not it. I need absolute path. or a path relative from gui
+                    BUT that's not it. I need absolute path. or a path relative from gui
+
+                    */
+                    console.log('Screenshot saved:', screenshotDataUrl);
                     // You could load this image in your UI now
                 }
                 break;
@@ -464,6 +499,7 @@
             {toggleOptions}
             exampleSentenceField={selectedSubtitleText}
             targetWordField={selectedTargetWordText}
+            {screenshotDataUrl}
         />
     </div>
 </div>

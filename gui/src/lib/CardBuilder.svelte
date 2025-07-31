@@ -1,8 +1,18 @@
 <!-- CardBuilder.svelte -->
 <script lang="ts">
     // Props - data passed in from parent
-    let { exampleSentenceField, targetWordField, showOptions, toggleOptions } =
-        $props();
+    let {
+        exampleSentenceField,
+        targetWordField,
+        screenshotDataUrl,
+        showOptions,
+        toggleOptions,
+    } = $props();
+
+    // Watch for changes in screenshotDataUrl
+    $effect(() => {
+        console.log('screenshotDataUrl changed:', screenshotDataUrl);
+    });
 
     // Local state
     let selectedLanguage = $state('en');
@@ -68,6 +78,13 @@
 <div class="control-panel">
     <div class="panel-header flex-row">
         <div><h2 class="header-text">Card Builder</h2></div>
+        <div>
+            <button>img</button>
+        </div>
+        <!-- // todo: make it responsive -->
+        <div>
+            <button>audio</button>
+        </div>
         <div>
             <button onclick={() => toggleOptions()}>
                 {showOptions ? 'Back' : 'Options'}
@@ -148,6 +165,11 @@
                 <!-- container div with an image that is dynamically set -->
                 <!-- the image is about the size of the Anki thumbnail -->
                 <!-- TODO: the image should be shrunk behind the scenes to save space in Anki -->
+                <img
+                    src={screenshotDataUrl}
+                    class:hidden={!screenshotDataUrl}
+                    alt="MPV screenshot for Anki flashcard"
+                />
             </div>
         </div>
     </div>
@@ -350,6 +372,10 @@
     .danger-btn:hover {
         background: #c82333;
         transform: translateY(-1px);
+    }
+
+    .hidden {
+        display: none;
     }
 
     button:active {

@@ -25,6 +25,12 @@ contextBridge.exposeInMainWorld('electronAPI', {
     startAudioClip: () => ipcRenderer.invoke('start-audio-clip'),
     endAudioClip: () => ipcRenderer.invoke('end-audio-clip'),
     getMPVStatus: () => ipcRenderer.invoke('get-mpv-status'),
+
+    onScreenshotReady: (callback) => {
+        ipcRenderer.on('screenshot-ready', (event, dataURL) =>
+            callback(dataURL)
+        );
+    },
 });
 
 console.log('electronAPI exposed to window');
