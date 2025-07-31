@@ -28,6 +28,8 @@ export interface ElectronAPI {
     // Add screenshot listener
     onScreenshotReady: (callback: (dataURL: string) => void) => void;
     onAudioReady: (callback: (dataURL: string) => void) => void;
+    onDefaultAudio: (callback: (nullishMp3File: string) => void) => void;
+    requestDefaultAudio: () => void;
 }
 
 export interface HotkeyRegister {

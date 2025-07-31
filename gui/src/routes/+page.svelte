@@ -109,6 +109,26 @@
         // console.log('electronAPI available:', !!window.electronAPI);
 
         if (window.electronAPI) {
+            console.log('electronAPI is available, setting up listeners...');
+
+            window.electronAPI.onDefaultAudio((audioDataURL) => {
+                console.log(
+                    'Default silence audio received:',
+                    audioDataURL?.substring(0, 50) + '...'
+                );
+                mp3DataUrl = audioDataURL;
+            });
+
+            setTimeout(async () => {
+                console.log('Manually requesting default audio...');
+                try {
+                    await window.electronAPI.requestDefaultAudio();
+                    console.log('Manual request completed');
+                } catch (error) {
+                    console.error('Manual request failed:', error);
+                }
+                // 100 ms to ready all listeners
+            }, 100);
             console.log('Running onMPVstate');
             window.electronAPI.onMPVState((data) => {
                 // content :  "⏱️  0:13.6 / 22:35.7 (1.0%)"
@@ -324,29 +344,7 @@
             case 'take_screenshot':
                 if (data.success && data.file_path) {
                     screenshotDataUrl = data.file_path;
-                    // FIXME: youget
-                    // FIXME: youget
-                    // FIXME: youget
-                    // FIXME: youget
-                    // FIXME: youget
-                    // FIXME: youget
-                    /*
 
-                    Screenshot saved: screenshots\screenshot_1753944568_5-39.1.png
-                    Screenshot saved: screenshots\screenshot_1753944568_5-39.1.png
-                    Screenshot saved: screenshots\screenshot_1753944568_5-39.1.png
-                    Screenshot saved: screenshots\screenshot_1753944568_5-39.1.png
-                    Screenshot saved: screenshots\screenshot_1753944568_5-39.1.png
-                    Screenshot saved: screenshots\screenshot_1753944568_5-39.1.png
-
-                    BUT that's not it. I need absolute path. or a path relative from gui
-                    BUT that's not it. I need absolute path. or a path relative from gui
-                    BUT that's not it. I need absolute path. or a path relative from gui
-                    BUT that's not it. I need absolute path. or a path relative from gui
-                    BUT that's not it. I need absolute path. or a path relative from gui
-                    BUT that's not it. I need absolute path. or a path relative from gui
-
-                    */
                     console.log('Screenshot saved:', screenshotDataUrl);
                     // You could load this image in your UI now
                 }
@@ -481,6 +479,7 @@
             exampleSentenceField={selectedSubtitleText}
             targetWordField={selectedTargetWordText}
             {screenshotDataUrl}
+            mp3snippet={mp3DataUrl}
         />
     </div>
 </div>

@@ -34,6 +34,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
     onAudioReady: (callback) => {
         ipcRenderer.on('audio-ready', (event, dataURL) => callback(dataURL));
     },
+
+    requestDefaultAudio: () => ipcRenderer.invoke('request-default-audio'),
+
+    onDefaultAudio: (callback) => {
+        ipcRenderer.on('default-audio-ready', (event, dataURL) => {
+            callback(dataURL);
+        });
+    },
 });
 
 console.log('electronAPI exposed to window');

@@ -6,6 +6,9 @@
     let container: HTMLDivElement;
     let wavesurfer: WaveSurfer | null = null;
 
+    // mp3 is a dataUrl formed in the Electron main.js
+    const { mp3 } = $props();
+
     /**
      * 1. Avoid re-initializing wavesurfer on every prop change
      * "Don’t re-run your WaveSurfer setup logic (WaveSurfer.create(...)) every time a Svelte prop or state variable changes."
@@ -21,6 +24,7 @@
      */
 
     onMount(() => {
+        console.log(mp3, 'mp3 mp3 227ru');
         const init = async () => {
             // Can enable the below if you want to lazy load.
             // the cost is that user might see that part of the app loading.
@@ -40,8 +44,6 @@
             plugins: [regionsPlugin],
         });
 
-        wavesurfer.load('/audio/sample.mp3');
-
         // Add regions after initialization
         wavesurfer.on('ready', () => {
             regionsPlugin.addRegion({
@@ -56,6 +58,15 @@
             wavesurfer?.destroy();
         };
     });
+
+    $effect(() => {
+        if (wavesurfer && mp3) {
+            console.log('Loading mp3: ', mp3);
+            wavesurfer.load(mp3);
+        } else {
+            console.log(wavesurfer, mp3, 'Nothing');
+        }
+    });
 </script>
 
-<div bind:this={container} class="w-full" />
+<div bind:this={container} class="w-full"></div>

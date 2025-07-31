@@ -6,7 +6,7 @@ import WebSocket from 'ws';
 import fs from 'fs/promises';
 
 import { fileURLToPath } from 'url';
-import { dirname } from 'path';
+import path, { dirname } from 'path';
 
 import dotenv from 'dotenv';
 import Store from 'electron-store';
@@ -16,12 +16,13 @@ const __dirname = dirname(__filename);
 
 dotenv.config({ path: path.join(__dirname, '../.env') });
 
-import path from 'path';
 const isDev = process.argv.includes('--dev') || !app.isPackaged;
 
 if (isDev) {
     process.env['ELECTRON_DISABLE_SECURITY_WARNINGS'] = 'true';
 }
+
+const DEFAULT_SILENCE_CLIP = 'soft-rain-on-window-358384.mp3';
 
 const BACKEND_DIR = path.join(__dirname, '../../backend'); // Adjust path as needed
 
@@ -227,6 +228,72 @@ ipcMain.handle('save-hotkeys', (event, hotkeys) => {
     store.set('hotkeys', hotkeys);
 });
 
+ipcMain.handle('request-default-audio', async () => {
+    console.log('Manual request for default audio received');
+    await loadDefaultSilenceAudio();
+    return true;
+});
+
+// Function to load and send the default silence audio
+async function loadDefaultSilenceAudio() {
+    try {
+        const defaultAudioPath = path.join(__dirname, DEFAULT_SILENCE_CLIP);
+        console.log(
+            'Attempting to load default silence audio from:',
+            defaultAudioPath
+        );
+
+        // Check if file exists first
+        try {
+            await fs.access(defaultAudioPath);
+            console.log('File exists at:', defaultAudioPath);
+        } catch (accessError) {
+            console.error('File does not exist at:', defaultAudioPath);
+
+            // Try alternative path in case the file is in gui/electron/
+            const altPath = path.join(__dirname, '../' + DEFAULT_SILENCE_CLIP);
+            console.log('Trying alternative path:', altPath);
+
+            try {
+                await fs.access(altPath);
+                console.log('File found at alternative path:', altPath);
+                const audioDataURL = await loadAudioAsDataURL(altPath);
+
+                if (mainWindow && !mainWindow.isDestroyed()) {
+                    mainWindow.webContents.send(
+                        'default-audio-ready',
+                        audioDataURL
+                    );
+                    console.log(
+                        'Default silence audio sent to renderer from alt path'
+                    );
+                }
+                return;
+            } catch (altAccessError) {
+                console.error(
+                    'File not found at alternative path either:',
+                    altPath
+                );
+                throw new Error(
+                    `File not found at ${defaultAudioPath} or ${altPath}`
+                );
+            }
+        }
+
+        const audioDataURL = await loadAudioAsDataURL(defaultAudioPath);
+
+        if (mainWindow && !mainWindow.isDestroyed()) {
+            console.log(
+                'Sending default audio via IPC channel: default-audio-ready'
+            );
+            console.log('Audio data URL length:', audioDataURL.length);
+            mainWindow.webContents.send('default-audio-ready', audioDataURL);
+            console.log('Default silence audio sent to renderer');
+        }
+    } catch (error) {
+        console.error('Failed to load default silence audio:', error);
+    }
+}
 app.whenReady().then(createWindow);
 
 app.on('window-all-closed', () => {

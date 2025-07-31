@@ -1,10 +1,13 @@
 <!-- CardBuilder.svelte -->
 <script lang="ts">
+    import Wavesurfer from './components/Wavesurfer.svelte';
+
     // Props - data passed in from parent
     let {
         exampleSentenceField,
         targetWordField,
         screenshotDataUrl,
+        mp3snippet,
         showOptions,
         toggleOptions,
     } = $props();
@@ -142,6 +145,7 @@
     <div class="control-section">
         <h3>Sentence Audio</h3>
         <div class="time-controls">
+            <Wavesurfer mp3={mp3snippet} />
             <div class="time-row flex-row push-items-top sml-space-below">
                 <div class="time-group half-container-fill">
                     <h4 class="push-items-top">Start Time</h4>
@@ -212,7 +216,7 @@
             <button class="danger-btn" onclick={handleClearSubtitles}>
                 Clear All
             </button>
-            TODO: Show confirmation dialogue for "Clear all?" since it's destructive
+            <!-- TODO: Show confirmation dialogue for "Clear all?" since it's destructive -->
             <button class="secondary-btn" onclick={handleSearchSubtitles}>
                 Shutdown
             </button>
