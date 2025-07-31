@@ -9,7 +9,7 @@ import { dirname } from 'path';
 import dotenv from 'dotenv';
 import Store from 'electron-store';
 
-const __filename = fileURLToPath(import.meta.url); // Not import.meta.dirname
+const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 dotenv.config({ path: path.join(__dirname, '../.env') });
@@ -30,14 +30,6 @@ function createWindow() {
     const primaryDisplay = screen.getPrimaryDisplay();
 
     const displays = screen.getAllDisplays();
-    // console.log('Available displays:');
-    // displays.forEach((display, index) => {
-    //     console.log(`Display ${index}:`, {
-    //         bounds: display.bounds,
-    //         size: display.size,
-    //         workArea: display.workArea,
-    //     });
-    // });
 
     const targetMonitor = process.env.ELECTRON_MONITOR || 0;
     const targetDisplay = displays[parseInt(targetMonitor)] || displays[0];
@@ -45,12 +37,11 @@ function createWindow() {
     console.log('Target monitor index:', targetMonitor);
     console.log('Target display bounds:', targetDisplay.bounds);
 
-    console.log(process.env.ELECTRON_MONITOR, '89329478u23947324');
     const { width: screenWidth, height: screenHeight } =
         primaryDisplay.workAreaSize;
 
-    const windowWidth = 1400; // Your desired window width
-    const windowHeight = 1000; // Your desired window height
+    const windowWidth = 1400;
+    const windowHeight = 1000;
 
     mainWindow = new BrowserWindow({
         width: windowWidth,
@@ -64,10 +55,8 @@ function createWindow() {
         },
     });
 
-    // In development, load from Vite dev server
-    // In production, load from built files
     if (isDev) {
-        mainWindow.loadURL('http://localhost:5173'); // Vite's default dev server
+        mainWindow.loadURL('http://localhost:5173');
     } else {
         mainWindow.loadFile(path.join(__dirname, '../dist/index.html'));
     }
@@ -87,6 +76,8 @@ function connectMPV() {
 
     mpvWS.on('open', () => {
         console.log('Connected to MPV server');
+        // Send initial status request
+        sendMPVCommand({ command: 'get_status' });
     });
 
     mpvWS.on('message', (data) => {
@@ -111,7 +102,40 @@ function connectMPV() {
     });
 }
 
-// In your main process
+// Function to send commands to MPV server
+function sendMPVCommand(command) {
+    if (mpvWS && mpvWS.readyState === WebSocket.OPEN) {
+        console.log('Sending command to MPV:', command);
+        mpvWS.send(JSON.stringify(command));
+        return true;
+    } else {
+        console.error('MPV WebSocket not connected');
+        return false;
+    }
+}
+
+// IPC handlers for renderer to send commands
+ipcMain.handle('send-mpv-command', (event, command) => {
+    return sendMPVCommand(command);
+});
+
+ipcMain.handle('take-screenshot', () => {
+    return sendMPVCommand({ command: 'take_screenshot' });
+});
+
+ipcMain.handle('start-audio-clip', () => {
+    return sendMPVCommand({ command: 'start_audio_clip' });
+});
+
+ipcMain.handle('end-audio-clip', () => {
+    return sendMPVCommand({ command: 'end_audio_clip' });
+});
+
+ipcMain.handle('get-mpv-status', () => {
+    return sendMPVCommand({ command: 'get_status' });
+});
+
+// Existing hotkey handlers
 ipcMain.handle('get-hotkeys', () => {
     return store.get('hotkeys', {});
 });

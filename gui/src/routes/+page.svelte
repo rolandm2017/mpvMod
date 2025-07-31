@@ -1,3 +1,4 @@
+<!-- page.svelte, the main and only page -->
 <script lang="ts">
     import { onMount, onDestroy, getContext } from 'svelte';
 
@@ -14,6 +15,11 @@
     import type { PlayerPosition, TimecodeString } from '$lib/types.js';
     import { SegmentMountingTracker } from '$lib/utils/mountingTracker.js';
     import HotkeyConfig from '$lib/HotkeyConfig.svelte';
+    import type {
+        CommandResponse,
+        HotkeyRegister,
+        MPVStateData,
+    } from '$lib/interfaces.js';
 
     let { data } = $props();
 
@@ -38,13 +44,28 @@
     let allSegmentsMounted = false;
 
     let registeredHotkeys = $state({
-        screenshot: 'Ctrl + Shift + S',
-        audioClip: 'F5',
-        copySubtitle: 'Ctrl + C',
-        copyWord: 'Ctrl + X',
+        screenshot: 'loading',
+        audioClip: 'loading',
+        copySubtitle: 'loading',
+        copyWord: 'loading',
     });
 
     let failCount = 0;
+
+    let mpvState = {};
+    let screenshotPath = '';
+    let audioClipPath = '';
+    let isClipping = false;
+
+    async function loadHotkeysIntoRegister() {
+        //
+        if (window.electronAPI?.getHotkeys) {
+            const saved: HotkeyRegister = await window.electronAPI.getHotkeys();
+            if (saved) {
+                registeredHotkeys = { ...saved };
+            }
+        }
+    }
 
     onMount(() => {
         (window as any).playerPositionDevTool = playerPositionDevTool;
@@ -73,6 +94,8 @@
             window.tracker = mountingTracker;
             window.db = db;
         }
+
+        loadHotkeysIntoRegister();
 
         // console.log('Window object:', window);
         // console.log('electronAPI available:', !!window.electronAPI);
@@ -109,11 +132,21 @@
                         failCount += 1;
                     }
                 }
+
+                if (isCommandResponse(data)) {
+                    handleCommandResponse(data);
+                }
             });
         } else {
             console.error('electronAPI not available');
         }
     });
+
+    function isCommandResponse(
+        data: MPVStateData
+    ): data is MPVStateData & CommandResponse {
+        return data.type === 'command_response' && 'command' in data;
+    }
 
     function highlightPlayerPositionSegment(playerPosition: number) {
         const indexToHighlight = Finder.findSubtitleIndexAtPlayerTime(
@@ -205,7 +238,11 @@
         else if (key.length === 1) key = key.toUpperCase();
 
         parts.push(key);
+
         const hotkeyString = parts.join(' + ');
+
+        console.log('THIS IS: ', hotkeyString, '227ru');
+        console.log(registeredHotkeys, '228ru');
 
         // Check if this matches a registered hotkey, i.e.
         // the q, " ['Ctrl + Shift + S', 'F5', 'Ctrl + C', 'Ctrl + X'] contains "Ctrl + X" ?""
@@ -233,6 +270,72 @@
         //         copySelectedSubtitle();
         //         break;
         // }
+    }
+
+    function handleCommandResponse(data: CommandResponse) {
+        console.log('Command response:', data);
+
+        switch (data.command) {
+            case 'take_screenshot':
+                if (data.success && data.file_path) {
+                    screenshotPath = data.file_path;
+                    console.log('Screenshot saved:', screenshotPath);
+                    // You could load this image in your UI now
+                }
+                break;
+
+            case 'start_audio_clip':
+                if (data.success) {
+                    isClipping = true;
+                    console.log('Started audio clipping');
+                }
+                break;
+
+            case 'end_audio_clip':
+                isClipping = false;
+                if (data.success && data.file_path) {
+                    audioClipPath = data.file_path;
+                    console.log('Audio clip saved:', audioClipPath);
+                    // You could play this audio file now
+                }
+                break;
+        }
+    }
+
+    async function takeScreenshot() {
+        try {
+            await window.electronAPI.takeScreenshot();
+            console.log('Screenshot command sent');
+        } catch (error) {
+            console.error('Failed to take screenshot:', error);
+        }
+    }
+
+    async function startAudioClip() {
+        try {
+            await window.electronAPI.startAudioClip();
+            console.log('Start audio clip command sent');
+        } catch (error) {
+            console.error('Failed to start audio clip:', error);
+        }
+    }
+
+    async function endAudioClip() {
+        try {
+            await window.electronAPI.endAudioClip();
+            console.log('End audio clip command sent');
+        } catch (error) {
+            console.error('Failed to end audio clip:', error);
+        }
+    }
+
+    async function getStatus() {
+        try {
+            await window.electronAPI.getMPVStatus();
+            console.log('Status request sent');
+        } catch (error) {
+            console.error('Failed to get status:', error);
+        }
     }
 
     // export function devtoolsScroller(timestamp: number) {

@@ -5,6 +5,9 @@ const { contextBridge, ipcRenderer } = require('electron');
 console.log('Preload script loaded!');
 
 contextBridge.exposeInMainWorld('electronAPI', {
+    getHotkeys: () => ipcRenderer.invoke('get-hotkeys'),
+    saveHotkeys: (hotkeys) => ipcRenderer.invoke('save-hotkeys', hotkeys),
+
     onMPVState: (callback) => {
         console.log('onMPVState called');
         ipcRenderer.on('mpv-state', (event, data) => {
@@ -18,8 +21,10 @@ contextBridge.exposeInMainWorld('electronAPI', {
         ipcRenderer.removeAllListeners('mpv-state');
     },
 
-    getHotkeys: () => ipcRenderer.invoke('get-hotkeys'),
-    saveHotkeys: (hotkeys) => ipcRenderer.invoke('save-hotkeys', hotkeys),
+    takeScreenshot: () => ipcRenderer.invoke('take-screenshot'),
+    startAudioClip: () => ipcRenderer.invoke('start-audio-clip'),
+    endAudioClip: () => ipcRenderer.invoke('end-audio-clip'),
+    getMPVStatus: () => ipcRenderer.invoke('get-mpv-status'),
 });
 
 console.log('electronAPI exposed to window');

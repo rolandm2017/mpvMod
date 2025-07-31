@@ -8,11 +8,10 @@ import time
 import sys
 import signal
 import threading
+import subprocess
 from pathlib import Path
 from typing import Optional
 import mpv
-
-# FIXME: the MPV, and harvesting time, should be a layer behind the WS Server
 
 class MPVWebSocketServer:
     def __init__(self, poll_interval=0.208):
@@ -24,7 +23,11 @@ class MPVWebSocketServer:
         self.last_time_pos = None
         self.clients = set()
         self.server = None
-        self.loop: Optional[asyncio.AbstractEventLoop] = None  # Will store the event loop reference
+        self.loop: Optional[asyncio.AbstractEventLoop] = None
+        
+        # For audio clipping
+        self.clip_start_time = None
+        self.current_file_path = None
         
         # Create MPV instance
         self.player = mpv.MPV(
@@ -34,8 +37,7 @@ class MPVWebSocketServer:
             input_default_bindings=True,
             input_vo_keyboard=True,
             autofit='50%',
-            geometry='+0+0'  # Right edge (+-0) and top edge (+0)
-
+            geometry='+0+0'
         )
         
         self.setup_event_handlers()
@@ -46,6 +48,12 @@ class MPVWebSocketServer:
         
         @self.player.event_callback('start-file')
         def on_start_file(event):
+            # Store current file path for clipping
+            try:
+                self.current_file_path = self.player.filename
+            except:
+                self.current_file_path = None
+            
             message = f"🟢 Started playing: {self.get_filename()}"
             self.broadcast_message("event", message)
             
@@ -77,12 +85,16 @@ class MPVWebSocketServer:
             self.player_active = False
             self.stop_monitoring()
     
-    def get_time_pos(self):
+    def get_time_pos(self) -> Optional[float]:
         """Get current time position"""
         try:
             if not self.player_active:
                 return None
-            return self.player.time_pos
+            time_pos = self.player.time_pos
+            # Ensure we return a float or None
+            if isinstance(time_pos, (int, float)):
+                return float(time_pos)
+            return None
         except:
             return None
     
@@ -125,10 +137,186 @@ class MPVWebSocketServer:
         secs = seconds % 60
         return f"{minutes}:{secs:04.1f}"
     
+    def take_screenshot(self):
+        """Take a screenshot of current frame"""
+        try:
+            if not self.player_active or not self.current_file_path:
+                return None
+            
+            # Create screenshots directory if it doesn't exist
+            screenshots_dir = Path("screenshots")
+            screenshots_dir.mkdir(exist_ok=True)
+            
+            # Generate filename with timestamp
+            timestamp = int(time.time())
+            current_time = self.get_time_pos()
+            time_str = self.format_time(current_time).replace(":", "-") if current_time else "unknown"
+            
+            screenshot_path = screenshots_dir / f"screenshot_{timestamp}_{time_str}.png"
+            
+            # Use MPV's screenshot command
+            self.player.screenshot_to_file(str(screenshot_path))
+            
+            return str(screenshot_path)
+            
+        except Exception as e:
+            self.broadcast_message("error", f"❌ Screenshot failed: {e}")
+            return None
+    
+    def start_audio_clip(self):
+        """Mark the start time for audio clipping"""
+        if not self.player_active:
+            return False
+        
+        self.clip_start_time = self.get_time_pos()
+        if self.clip_start_time is not None:
+            self.broadcast_message("info", f"🎵 Audio clip start marked at {self.format_time(self.clip_start_time)}")
+            return True
+        return False
+    
+    def end_audio_clip(self):
+        """End audio clipping and create MP3"""
+        if not self.player_active or not self.current_file_path or self.clip_start_time is None:
+            return None
+        
+        clip_end_time = self.get_time_pos()
+        
+        # Type check and validate both times are numeric
+        no_end_time = clip_end_time is None
+        end_time_not_numeric = not isinstance(clip_end_time, (int, float))
+        start_time_not_numeric = not isinstance(self.clip_start_time, (int, float))
+        negative_time_range = clip_end_time <= self.clip_start_time if isinstance(clip_end_time, (int, float)) and isinstance(self.clip_start_time, (int, float)) else False
+        
+        if (no_end_time or 
+            end_time_not_numeric or 
+            start_time_not_numeric or
+            negative_time_range):
+            self.broadcast_message("error", "❌ Invalid clip end time")
+            return None
+        
+        try:
+            # Create clips directory if it doesn't exist
+            clips_dir = Path("clips")
+            clips_dir.mkdir(exist_ok=True)
+            
+            # Generate filename
+            timestamp = int(time.time())
+            start_str = self.format_time(self.clip_start_time).replace(":", "-")
+            end_str = self.format_time(clip_end_time).replace(":", "-")
+            
+            clip_path = clips_dir / f"clip_{timestamp}_{start_str}_to_{end_str}.mp3"
+            
+            # Use ffmpeg to extract audio clip
+            duration = clip_end_time - self.clip_start_time
+            
+            command = [
+                "ffmpeg",
+                "-i", self.current_file_path,
+                "-ss", str(self.clip_start_time),
+                "-t", str(duration),
+                "-vn",  # No video
+                "-acodec", "mp3",
+                "-ab", "192k",  # Audio bitrate
+                "-y",  # Overwrite output file
+                str(clip_path)
+            ]
+            
+            self.broadcast_message("info", f"🎵 Creating audio clip: {clip_path.name}")
+            
+            # Run ffmpeg in a separate thread to avoid blocking
+            def run_ffmpeg():
+                try:
+                    result = subprocess.run(command, capture_output=True, text=True, timeout=30)
+                    if result.returncode == 0:
+                        self.broadcast_message("command_response", f"✅ Audio clip created", {
+                            "command": "end_audio_clip",
+                            "success": True,
+                            "file_path": str(clip_path)
+                        })
+                    else:
+                        self.broadcast_message("command_response", f"❌ FFmpeg error: {result.stderr}", {
+                            "command": "end_audio_clip",
+                            "success": False,
+                            "error": result.stderr
+                        })
+                except subprocess.TimeoutExpired:
+                    self.broadcast_message("command_response", "❌ FFmpeg timeout", {
+                        "command": "end_audio_clip",
+                        "success": False,
+                        "error": "Timeout"
+                    })
+                except Exception as e:
+                    self.broadcast_message("command_response", f"❌ FFmpeg failed: {e}", {
+                        "command": "end_audio_clip",
+                        "success": False,
+                        "error": str(e)
+                    })
+            
+            threading.Thread(target=run_ffmpeg, daemon=True).start()
+            
+            # Reset clip start time
+            self.clip_start_time = None
+            return str(clip_path)
+            
+        except Exception as e:
+            self.broadcast_message("error", f"❌ Audio clip failed: {e}")
+            return None
+    
+    async def handle_command(self, command_data):
+        """Handle incoming commands from WebSocket clients"""
+        try:
+            command = command_data.get("command")
+            
+            if command == "take_screenshot":
+                screenshot_path = self.take_screenshot()
+                response = {
+                    "command": "take_screenshot",
+                    "success": screenshot_path is not None,
+                    "file_path": screenshot_path
+                }
+                self.broadcast_message("command_response", 
+                    f"📸 Screenshot saved: {Path(screenshot_path).name}" if screenshot_path else "❌ Screenshot failed",
+                    response
+                )
+                
+            elif command == "start_audio_clip":
+                success = self.start_audio_clip()
+                response = {
+                    "command": "start_audio_clip", 
+                    "success": success
+                }
+                if not success:
+                    self.broadcast_message("command_response", "❌ Failed to start audio clip", response)
+                
+            elif command == "end_audio_clip":
+                # The end_audio_clip method handles its own response via the ffmpeg thread
+                self.end_audio_clip()
+                
+            elif command == "get_status":
+                status = {
+                    "command": "get_status",
+                    "player_active": self.player_active,
+                    "filename": self.get_filename(),
+                    "time_pos": self.get_time_pos(),
+                    "duration": self.get_duration(),
+                    "paused": self.is_paused(),
+                    "clip_start_time": self.clip_start_time
+                }
+                self.broadcast_message("command_response", "📊 Status update", status)
+                
+            else:
+                self.broadcast_message("command_response", f"❌ Unknown command: {command}", {
+                    "command": command,
+                    "success": False,
+                    "error": "Unknown command"
+                })
+                
+        except Exception as e:
+            self.broadcast_message("error", f"❌ Command error: {e}")
+    
     def broadcast_message(self, msg_type, content, extra_data=None):
         """Broadcast message to all connected WebSocket clients"""
         if not self.clients:
-            # If no WebSocket clients, print to console like original
             print(content)
             return
             
@@ -140,12 +328,9 @@ class MPVWebSocketServer:
         
         if extra_data:
             message.update(extra_data)
-            # message["extra_data"] = extra_data
         
-        # Print to console as well
         print(content)
         
-        # Schedule the async broadcast from the thread
         if self.clients and self.loop:
             asyncio.run_coroutine_threadsafe(
                 self._async_broadcast(message), 
@@ -160,13 +345,12 @@ class MPVWebSocketServer:
         disconnected_clients = set()
         json_message = json.dumps(message)
         
-        for client in self.clients.copy():  # Use copy to avoid modification during iteration
+        for client in self.clients.copy():
             try:
                 await client.send(json_message)
             except Exception as e:
                 disconnected_clients.add(client)
         
-        # Remove disconnected clients
         for client in disconnected_clients:
             self.clients.discard(client)
             print(f"Removed disconnected WebSocket client. Remaining: {len(self.clients)}")
@@ -182,7 +366,6 @@ class MPVWebSocketServer:
                     continue
                 
                 time_pos = self.get_time_pos()
-
                 
                 if time_pos is not None:
                     duration = self.get_duration()
@@ -193,10 +376,8 @@ class MPVWebSocketServer:
                         formatted_duration = self.format_time(duration)
                         content = f"⏱️  {formatted_time} / {formatted_duration} ({progress:.1f}%)"
                         
-                        # Send structured data for WebSocket clients
                         extra_data = {
                             "time_pos": round(time_pos, 3),  
-                            # "duration": duration,
                             "progress": round(progress, 3),
                             "formatted_time": formatted_time,
                             "formatted_duration": formatted_duration
@@ -264,13 +445,13 @@ class MPVWebSocketServer:
         self.clients.add(websocket)
         print(f"WebSocket client connected. Total clients: {len(self.clients)}")
         
-        # Send welcome message with current status
         welcome = {
             "type": "welcome",
             "content": "Connected to MPV WebSocket Server",
             "timestamp": time.time(),
             "player_active": self.player_active,
-            "filename": self.get_filename() if self.player_active else None
+            "filename": self.get_filename() if self.player_active else None,
+            "available_commands": ["take_screenshot", "start_audio_clip", "end_audio_clip", "get_status"]
         }
         await websocket.send(json.dumps(welcome))
     
@@ -280,11 +461,26 @@ class MPVWebSocketServer:
         print(f"WebSocket client disconnected. Total clients: {len(self.clients)}")
     
     async def handle_client(self, websocket):
-        """Handle WebSocket client connections - one-way streaming only"""
+        """Handle WebSocket client connections - now bidirectional!"""
         await self.register_client(websocket)
         try:
-            # Keep connection alive, but don't process any incoming messages
-            await websocket.wait_closed()
+            async for message in websocket:
+                try:
+                    command_data = json.loads(message)
+                    print(f"📨 Received command: {command_data}")
+                    await self.handle_command(command_data)
+                except json.JSONDecodeError:
+                    await websocket.send(json.dumps({
+                        "type": "error",
+                        "content": "Invalid JSON format",
+                        "timestamp": time.time()
+                    }))
+                except Exception as e:
+                    await websocket.send(json.dumps({
+                        "type": "error", 
+                        "content": f"Command processing error: {e}",
+                        "timestamp": time.time()
+                    }))
         except websockets.exceptions.ConnectionClosed:
             pass
         finally:
@@ -326,13 +522,9 @@ async def main():
     host = sys.argv[2] if len(sys.argv) > 2 else "localhost"
     port = int(sys.argv[3]) if len(sys.argv) > 3 else 8765
     
-    # Create the MPV WebSocket server
     server = MPVWebSocketServer(poll_interval=0.208)
-    
-    # Start monitoring
     server.start_monitoring()
     
-    # Load the video file
     if not server.load_file(filepath):
         print("❌ Failed to load video file")
         sys.exit(1)
@@ -341,21 +533,19 @@ async def main():
     print(f"\n🎮 WebSocket Server Info:")
     print(f"   URL: ws://{host}:{port}")
     print(f"   Video: {Path(filepath).name}")
-    print(f"\n💡 Usage:")
-    print(f"   - Connect to ws://{host}:{port} to receive live MPV data stream")
-    print(f"   - One-way communication: Server → Client only")
-    print(f"   - Postman: Use WebSocket request to ws://{host}:{port}")
-    print(f"   - Control MPV directly via the player window")
-    print(f"   - Ctrl+C: Quit")
+    print(f"\n💡 Available Commands:")
+    print(f"   - take_screenshot: Capture current frame")
+    print(f"   - start_audio_clip: Mark start time for audio clip")  
+    print(f"   - end_audio_clip: Create MP3 from marked start to current time")
+    print(f"   - get_status: Get current player status")
+    print(f"\n📨 Send commands as JSON: {{'command': 'take_screenshot'}}")
+    print(f"   Control MPV directly via the player window")
+    print(f"   Ctrl+C: Quit")
     
     try:
-        # Store the event loop for thread-safe broadcasting
         server.loop = asyncio.get_running_loop()
-        
-        # Start WebSocket server
         ws_server = await server.start_websocket_server(host, port)
         
-        # Keep running until player closes or Ctrl+C
         while server.player_active:
             await asyncio.sleep(1)
         
@@ -370,5 +560,4 @@ async def main():
             await server.server.wait_closed()
 
 if __name__ == "__main__":
-    # Install required packages: pip install websockets python-mpv
     asyncio.run(main())

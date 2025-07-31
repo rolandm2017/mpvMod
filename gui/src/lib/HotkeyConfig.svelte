@@ -1,3 +1,4 @@
+<!-- hotkeyConfig.svelte -->
 <script lang="ts">
     import { onMount, onDestroy } from 'svelte';
     import type { HotkeyRegister } from './interfaces';
