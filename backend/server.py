@@ -27,17 +27,19 @@ class MPVWebSocketServer:
         
         # For audio clipping
         self.clip_start_time = None
-        self.current_file_path = None
+        self.current_file_path = None 
+        self.original_file_path = None  
         
         # Create MPV instance
         self.player = mpv.MPV(
             idle=True,
             osc=True,
+            mute=True,
             sub_auto='all',
             input_default_bindings=True,
             input_vo_keyboard=True,
             autofit='50%',
-            geometry='+0+0'
+            geometry='+0+0',
         )
         
         self.setup_event_handlers()
@@ -51,6 +53,13 @@ class MPVWebSocketServer:
             # Store current file path for clipping
             try:
                 self.current_file_path = self.player.filename
+                print(self.current_file_path, "Stored for clippping")
+                print(self.current_file_path, "Stored for clippping")
+                print(self.current_file_path, "Stored for clippping")
+                print(self.current_file_path, "Stored for clippping")
+                print(self.current_file_path, "Stored for clippping")
+                print(self.current_file_path, "Stored for clippping")
+                print(self.current_file_path, "Stored for clippping")
             except:
                 self.current_file_path = None
             
@@ -209,9 +218,10 @@ class MPVWebSocketServer:
             # Use ffmpeg to extract audio clip
             duration = clip_end_time - self.clip_start_time
             
+    
             command = [
                 "ffmpeg",
-                "-i", self.current_file_path,
+                "-i", self.original_file_path, 
                 "-ss", str(self.clip_start_time),
                 "-t", str(duration),
                 "-vn",  # No video
@@ -226,6 +236,7 @@ class MPVWebSocketServer:
             # Run ffmpeg in a separate thread to avoid blocking
             def run_ffmpeg():
                 try:
+                    
                     result = subprocess.run(command, capture_output=True, text=True, timeout=30)
                     if result.returncode == 0:
                         self.broadcast_message("command_response", f"✅ Audio clip created", {
@@ -234,6 +245,7 @@ class MPVWebSocketServer:
                             "file_path": str(clip_path)
                         })
                     else:
+                        print(result, "237ru")
                         self.broadcast_message("command_response", f"❌ FFmpeg error: {result.stderr}", {
                             "command": "end_audio_clip",
                             "success": False,
@@ -251,6 +263,10 @@ class MPVWebSocketServer:
                         "success": False,
                         "error": str(e)
                     })
+                    
+            print(f"Input file exists: {Path(self.current_file_path).exists()}")
+            print(f"Input file path: {self.current_file_path}")
+            print(f"Command: {' '.join(command)}")
             
             threading.Thread(target=run_ffmpeg, daemon=True).start()
             
@@ -418,6 +434,9 @@ class MPVWebSocketServer:
             if not self.player_active:
                 self.broadcast_message("error", "❌ Player is not active")
                 return False
+            # Store the original absolute path
+            self.original_file_path = str(Path(filepath).resolve())
+            self.current_file_path = self.original_file_path
             self.broadcast_message("info", f"📁 Loading: {Path(filepath).name}")
             self.player.play(filepath)
             return True
