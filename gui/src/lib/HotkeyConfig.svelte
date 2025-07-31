@@ -1,0 +1,438 @@
+<script lang="ts">
+    import { onMount, onDestroy } from 'svelte';
+    import type { HotkeyRegister } from './interfaces';
+
+    let { showOptions, toggleOptions } = $props();
+
+    // Hotkey configuration state
+    let hotkeys = $state({
+        screenshot: 'Not set',
+        audioClip: 'Not set',
+        copySubtitle: 'Not set',
+        copyTargetWord: 'Not set',
+    });
+
+    // Track which hotkey is currently being set
+    let activeHotkey: string | null = $state(null);
+    let keyListener: ((e: KeyboardEvent) => void) | null = null;
+
+    // Load saved hotkeys on mount
+    onMount(() => {
+        loadHotkeys();
+    });
+
+    onDestroy(() => {
+        if (keyListener) {
+            document.removeEventListener('keydown', keyListener);
+        }
+    });
+
+    async function loadHotkeys() {
+        // Load from electron store or localStorage
+        if (window.electronAPI?.getHotkeys) {
+            const saved: HotkeyRegister = await window.electronAPI.getHotkeys();
+            if (saved) {
+                hotkeys = { ...hotkeys, ...saved };
+            }
+        }
+    }
+
+    async function saveHotkeys() {
+        // Save to electron store
+        if (window.electronAPI?.saveHotkeys) {
+            await window.electronAPI.saveHotkeys(hotkeys);
+        }
+    }
+
+    function startHotkeyCapture(hotkeyName: string) {
+        // Clear any existing listener
+        if (keyListener) {
+            document.removeEventListener('keydown', keyListener);
+        }
+
+        activeHotkey = hotkeyName;
+
+        keyListener = (e: KeyboardEvent) => {
+            e.preventDefault();
+            e.stopPropagation();
+
+            // Build hotkey string
+            const parts: string[] = [];
+            if (e.ctrlKey) parts.push('Ctrl');
+            if (e.shiftKey) parts.push('Shift');
+            if (e.altKey) parts.push('Alt');
+            if (e.metaKey) parts.push('Cmd');
+
+            // Handle special keys
+            let key = e.key;
+            if (key === ' ') key = 'Space';
+            else if (key === 'Escape') key = 'Esc';
+            else if (key.length === 1) key = key.toUpperCase();
+
+            // Don't capture modifier keys alone
+            if (['Control', 'Shift', 'Alt', 'Meta'].includes(key)) {
+                return;
+            }
+
+            parts.push(key);
+            const hotkeyString = parts.join(' + ');
+
+            // Update the hotkey
+            hotkeys[hotkeyName as keyof typeof hotkeys] = hotkeyString;
+
+            // Clear capture state
+            activeHotkey = null;
+            document.removeEventListener('keydown', keyListener!);
+            keyListener = null;
+
+            // Save the updated hotkeys
+            saveHotkeys();
+        };
+
+        document.addEventListener('keydown', keyListener);
+    }
+
+    function clearHotkey(hotkeyName: string) {
+        hotkeys[hotkeyName as keyof typeof hotkeys] = 'Not set';
+        saveHotkeys();
+    }
+
+    function cancelCapture() {
+        if (keyListener) {
+            document.removeEventListener('keydown', keyListener);
+            keyListener = null;
+        }
+        activeHotkey = null;
+    }
+
+    // Handle escape key to cancel capture
+    function handleKeyDown(e: KeyboardEvent) {
+        if (e.key === 'Escape' && activeHotkey) {
+            cancelCapture();
+        }
+    }
+</script>
+
+<svelte:window on:keydown={handleKeyDown} />
+
+<div class="hotkey-config">
+    <div class="flex-row">
+        <div class="config-header">
+            <h2>Hotkey Configuration</h2>
+            <p>
+                Click on a hotkey field and press your desired key combination
+            </p>
+        </div>
+        <div>
+            <button onclick={() => toggleOptions()}>
+                {showOptions ? 'Back' : 'Options'}
+            </button>
+        </div>
+    </div>
+
+    <div class="hotkey-list">
+        <div class="hotkey-item">
+            <div class="hotkey-description">
+                <strong>Take Screenshot</strong>
+                <span>Capture current MPV frame to Image field</span>
+            </div>
+            <div class="hotkey-input-group">
+                <button
+                    class="hotkey-input"
+                    class:active={activeHotkey === 'screenshot'}
+                    class:has-value={hotkeys.screenshot !== 'Not set'}
+                    onclick={() => startHotkeyCapture('screenshot')}
+                >
+                    {activeHotkey === 'screenshot'
+                        ? 'Press a key...'
+                        : hotkeys.screenshot}
+                </button>
+                {#if hotkeys.screenshot !== 'Not set'}
+                    <button
+                        class="clear-btn"
+                        onclick={() => clearHotkey('screenshot')}
+                        title="Clear hotkey"
+                    >
+                        ×
+                    </button>
+                {/if}
+            </div>
+        </div>
+
+        <div class="hotkey-item">
+            <div class="hotkey-description">
+                <strong>Start/Stop Audio Clip</strong>
+                <span
+                    >Record audio from current position to Sentence audio field</span
+                >
+            </div>
+            <div class="hotkey-input-group">
+                <button
+                    class="hotkey-input"
+                    class:active={activeHotkey === 'audioClip'}
+                    class:has-value={hotkeys.audioClip !== 'Not set'}
+                    onclick={() => startHotkeyCapture('audioClip')}
+                >
+                    {activeHotkey === 'audioClip'
+                        ? 'Press a key...'
+                        : hotkeys.audioClip}
+                </button>
+                {#if hotkeys.audioClip !== 'Not set'}
+                    <button
+                        class="clear-btn"
+                        onclick={() => clearHotkey('audioClip')}
+                        title="Clear hotkey"
+                    >
+                        ×
+                    </button>
+                {/if}
+            </div>
+        </div>
+
+        <div class="hotkey-item">
+            <div class="hotkey-description">
+                <strong>Copy Selected Subtitle</strong>
+                <span
+                    >Copy selected text from subtitles to Example sentence field</span
+                >
+            </div>
+            <div class="hotkey-input-group">
+                <button
+                    class="hotkey-input"
+                    class:active={activeHotkey === 'copySubtitle'}
+                    class:has-value={hotkeys.copySubtitle !== 'Not set'}
+                    onclick={() => startHotkeyCapture('copySubtitle')}
+                >
+                    {activeHotkey === 'copySubtitle'
+                        ? 'Press a key...'
+                        : hotkeys.copySubtitle}
+                </button>
+                {#if hotkeys.copySubtitle !== 'Not set'}
+                    <button
+                        class="clear-btn"
+                        onclick={() => clearHotkey('copySubtitle')}
+                        title="Clear hotkey"
+                    >
+                        ×
+                    </button>
+                {/if}
+            </div>
+        </div>
+
+        <div class="hotkey-item">
+            <div class="hotkey-description">
+                <strong>Copy Target Word</strong>
+                <span>Copy selected word/phrase to Target word field</span>
+            </div>
+            <div class="hotkey-input-group">
+                <button
+                    class="hotkey-input"
+                    class:active={activeHotkey === 'copyTargetWord'}
+                    class:has-value={hotkeys.copyTargetWord !== 'Not set'}
+                    onclick={() => startHotkeyCapture('copyTargetWord')}
+                >
+                    {activeHotkey === 'copyTargetWord'
+                        ? 'Press a key...'
+                        : hotkeys.copyTargetWord}
+                </button>
+                {#if hotkeys.copyTargetWord !== 'Not set'}
+                    <button
+                        class="clear-btn"
+                        onclick={() => clearHotkey('copyTargetWord')}
+                        title="Clear hotkey"
+                    >
+                        ×
+                    </button>
+                {/if}
+            </div>
+        </div>
+    </div>
+
+    {#if activeHotkey}
+        <div class="capture-overlay">
+            <div class="capture-message">
+                Press your desired key combination for <strong
+                    >{activeHotkey}</strong
+                >
+                <br />
+                <small>Press Escape to cancel</small>
+            </div>
+        </div>
+    {/if}
+</div>
+
+<style>
+    .hotkey-config {
+        background: #2a2a2a;
+        color: #e0e0e0;
+        min-height: 100vh;
+        font-family:
+            -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        position: relative;
+    }
+
+    .config-header {
+        padding: 20px;
+        background: #333;
+        border-bottom: 1px solid #444;
+    }
+
+    .config-header h2 {
+        margin: 0 0 8px 0;
+        color: #e0e0e0;
+        font-size: 20px;
+        font-weight: 600;
+    }
+
+    .config-header p {
+        margin: 0;
+        color: #aaa;
+        font-size: 14px;
+    }
+
+    .hotkey-list {
+        padding: 20px;
+    }
+
+    .hotkey-item {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px 0;
+        border-bottom: 1px solid #444;
+    }
+
+    .hotkey-item:last-child {
+        border-bottom: none;
+    }
+
+    .hotkey-description {
+        flex: 1;
+        margin-right: 20px;
+    }
+
+    .hotkey-description strong {
+        display: block;
+        color: #e0e0e0;
+        font-size: 14px;
+        margin-bottom: 4px;
+    }
+
+    .hotkey-description span {
+        color: #aaa;
+        font-size: 12px;
+        line-height: 1.3;
+    }
+
+    .hotkey-input-group {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .hotkey-input {
+        min-width: 120px;
+        padding: 8px 12px;
+        background: #404040;
+        border: 2px solid #555;
+        border-radius: 6px;
+        color: #e0e0e0;
+        font-size: 13px;
+        font-family: monospace;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        text-align: center;
+    }
+
+    .hotkey-input:hover {
+        background: #4a4a4a;
+        border-color: #007acc;
+    }
+
+    .hotkey-input.active {
+        background: #0077cc;
+        border-color: #0098ff;
+        color: white;
+        animation: pulse 1.5s infinite;
+    }
+
+    .hotkey-input.has-value {
+        border-color: #007acc;
+    }
+
+    .clear-btn {
+        width: 24px;
+        height: 24px;
+        background: #555;
+        border: none;
+        border-radius: 50%;
+        color: #aaa;
+        cursor: pointer;
+        font-size: 16px;
+        line-height: 1;
+        transition: all 0.2s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    .clear-btn:hover {
+        background: #666;
+        color: #e0e0e0;
+    }
+
+    .capture-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(0, 0, 0, 0.8);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        z-index: 1000;
+        backdrop-filter: blur(2px);
+    }
+
+    .capture-message {
+        background: #333;
+        padding: 24px 32px;
+        border-radius: 12px;
+        border: 2px solid #0077cc;
+        text-align: center;
+        color: #e0e0e0;
+        animation: slideIn 0.2s ease;
+    }
+
+    .capture-message small {
+        color: #aaa;
+        margin-top: 8px;
+        display: block;
+    }
+
+    .flex-row {
+        display: flex;
+    }
+
+    @keyframes pulse {
+        0%,
+        100% {
+            box-shadow: 0 0 0 0 rgba(0, 119, 204, 0.4);
+        }
+        50% {
+            box-shadow: 0 0 0 8px rgba(0, 119, 204, 0);
+        }
+    }
+
+    @keyframes slideIn {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+</style>

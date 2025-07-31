@@ -16,6 +16,8 @@ declare global {
 
     interface Window {
         electronAPI: ElectronAPI;
+
+        // don't touch this
         db: SubtitleDatabase;
         tracker: SegmentMountingTracker;
         allSegmentsMounted: boolean;

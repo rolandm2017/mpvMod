@@ -12,11 +12,14 @@ contextBridge.exposeInMainWorld('electronAPI', {
             callback(data);
         });
     },
-    
+
     // Remove listener to prevent memory leaks
     removeMPVListener: () => {
         ipcRenderer.removeAllListeners('mpv-state');
-    }
+    },
+
+    getHotkeys: () => ipcRenderer.invoke('get-hotkeys'),
+    saveHotkeys: (hotkeys) => ipcRenderer.invoke('save-hotkeys', hotkeys),
 });
 
 console.log('electronAPI exposed to window');

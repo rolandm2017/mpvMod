@@ -13,10 +13,14 @@
     import { Subtitle, SubtitleDatabase } from '$lib/utils/subtitleDatabase.js';
     import type { PlayerPosition, TimecodeString } from '$lib/types.js';
     import { SegmentMountingTracker } from '$lib/utils/mountingTracker.js';
+    import HotkeyConfig from '$lib/HotkeyConfig.svelte';
 
-    export let data;
+    let { data } = $props();
 
+    //FIXME: src/routes/+page.svelte:20:8 `scrollContainer` is updated, but is not declared with `$state(...)`. Changing its value will not correctly trigger updates
     let scrollContainer: HTMLDivElement;
+
+    let showOptions = $state(false);
 
     let currentHighlightedElement: HTMLDivElement | null = null;
     let currentHighlightedTimecode = '';
@@ -178,6 +182,11 @@
         }
     }
 
+    function toggleOptions() {
+        //
+        showOptions = !showOptions;
+    }
+
     // export function devtoolsScroller(timestamp: number) {
     export function playerPositionDevTool(playerPosition: PlayerPosition) {
         // highlightPlayerPositionSegment(playerPosition);
@@ -190,30 +199,34 @@
     }
 </script>
 
-<div class="container">
-    <div class="subtitle-panel">
-        <div class="subtitle-header">Subtitles</div>
-        <div
-            class="subtitle-content"
-            data-testid="scroll-container"
-            bind:this={scrollContainer}
-        >
-            {#if data.segments.length > 0}
-                {#each data.segments as segment}
-                    <SubtitleSegment
-                        index={segment.index}
-                        timecode={segment.timecode}
-                        text={segment.text}
-                        emitTopOfContainer={storeSegmentPosition}
-                    />
-                {/each}
-            {:else}
-                <div class="loading">No subtitles found</div>
-            {/if}
+{#if showOptions}
+    <HotkeyConfig {showOptions} {toggleOptions} />
+{:else}
+    <div class="container">
+        <div class="subtitle-panel">
+            <div class="subtitle-header">Subtitles</div>
+            <div
+                class="subtitle-content"
+                data-testid="scroll-container"
+                bind:this={scrollContainer}
+            >
+                {#if data.segments.length > 0}
+                    {#each data.segments as segment}
+                        <SubtitleSegment
+                            index={segment.index}
+                            timecode={segment.timecode}
+                            text={segment.text}
+                            emitTopOfContainer={storeSegmentPosition}
+                        />
+                    {/each}
+                {:else}
+                    <div class="loading">No subtitles found</div>
+                {/if}
+            </div>
         </div>
+        <CardBuilder {showOptions} {toggleOptions} />
     </div>
-    <CardBuilder />
-</div>
+{/if}
 
 <style>
     .container {

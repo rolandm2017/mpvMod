@@ -1,6 +1,6 @@
 // electron/main.js
 
-import { app, BrowserWindow, screen } from 'electron';
+import { app, BrowserWindow, ipcMain, screen } from 'electron';
 import WebSocket from 'ws';
 
 import { fileURLToPath } from 'url';
@@ -107,6 +107,15 @@ function connectMPV() {
         console.error('MPV WebSocket error:', error);
     });
 }
+
+// In your main process
+ipcMain.handle('get-hotkeys', () => {
+    return store.get('hotkeys', {});
+});
+
+ipcMain.handle('save-hotkeys', (event, hotkeys) => {
+    store.set('hotkeys', hotkeys);
+});
 
 app.whenReady().then(createWindow);
 
