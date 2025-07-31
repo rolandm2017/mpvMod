@@ -4,14 +4,14 @@
     import type { HotkeyRegister } from './interfaces';
     import HotkeyItem from './components/HotkeyItem.svelte';
 
-    let { showOptions, toggleOptions } = $props();
+    let { showOptions, toggleOptions, updateMainPageHotkeys } = $props();
 
     // Hotkey configuration state
-    let hotkeys = $state({
+    let hotkeys: HotkeyRegister = $state({
         screenshot: 'Not set',
         audioClip: 'Not set',
         copySubtitle: 'Not set',
-        copyTargetWord: 'Not set',
+        copyWord: 'Not set',
     });
 
     // FIXME: Should NOT be able to bind the same key twice!
@@ -26,7 +26,7 @@
     // Hotkey definitions for easier management
     const hotkeyDefinitions = [
         {
-            name: 'copyTargetWord',
+            name: 'copyWord',
             title: 'Copy Target Word',
             description: 'Copy selected word/phrase to Target word field',
         },
@@ -126,6 +126,7 @@
 
             // Save the updated hotkeys
             saveHotkeys();
+            updateMainPageHotkeys(hotkeys);
         };
 
         document.addEventListener('keydown', keyListener);
@@ -134,6 +135,7 @@
     function clearHotkey(hotkeyName: string) {
         hotkeys[hotkeyName as keyof typeof hotkeys] = 'Not set';
         saveHotkeys();
+        updateMainPageHotkeys(hotkeys);
     }
 
     function cancelCapture() {
@@ -227,93 +229,6 @@
 
     .hotkey-list {
         padding: 20px;
-    }
-
-    .hotkey-item {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        padding: 16px 0;
-        border-bottom: 1px solid #444;
-    }
-
-    .hotkey-item:last-child {
-        border-bottom: none;
-    }
-
-    .hotkey-description {
-        flex: 1;
-        margin-right: 20px;
-    }
-
-    .hotkey-description strong {
-        display: block;
-        color: #e0e0e0;
-        font-size: 14px;
-        margin-bottom: 4px;
-    }
-
-    .hotkey-description span {
-        color: #aaa;
-        font-size: 12px;
-        line-height: 1.3;
-    }
-
-    .hotkey-input-group {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .hotkey-input {
-        min-width: 120px;
-        padding: 8px 12px;
-        background: #404040;
-        border: 2px solid #555;
-        border-radius: 6px;
-        color: #e0e0e0;
-        font-size: 13px;
-        font-family: monospace;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        text-align: center;
-    }
-
-    .hotkey-input:hover {
-        background: #4a4a4a;
-        border-color: #007acc;
-    }
-
-    .hotkey-input.active {
-        background: #0077cc;
-        border-color: #0098ff;
-        color: white;
-        animation: pulse 1.5s infinite;
-    }
-
-    .hotkey-input.has-value {
-        border-color: #007acc;
-    }
-
-    .clear-btn {
-        width: 24px;
-        height: 24px;
-        background: #555;
-        border: none;
-        border-radius: 50%;
-        color: #aaa;
-        cursor: pointer;
-        font-size: 16px;
-        line-height: 1;
-        transition: all 0.2s ease;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-
-    .clear-btn:hover {
-        background: #666;
-        color: #e0e0e0;
     }
 
     .capture-overlay {

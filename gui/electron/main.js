@@ -25,6 +25,13 @@ let mpvWS;
 let mainWindow;
 
 const store = new Store();
+console.log(new Store().path);
+console.log(new Store().path);
+console.log(new Store().path);
+console.log(new Store().path);
+console.log(new Store().path);
+console.log(new Store().path);
+console.log(new Store().path);
 
 function createWindow() {
     const primaryDisplay = screen.getPrimaryDisplay();

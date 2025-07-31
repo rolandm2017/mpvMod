@@ -3,3 +3,5 @@
 2. autofollow subs now autofollow - they follow along with the video automatically
 
 3. the current subtitle is now highlighted, automatically changing
+
+4. make cypress test the hotkey setting and adding and changing and clearing

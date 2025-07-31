@@ -43,7 +43,7 @@
     // scrollToLocation(heightForSub);
     let allSegmentsMounted = false;
 
-    let registeredHotkeys = $state({
+    let registeredHotkeys: HotkeyRegister = $state({
         screenshot: 'loading',
         audioClip: 'loading',
         copySubtitle: 'loading',
@@ -54,6 +54,7 @@
 
     let mpvState = {};
     let selectedSubtitleText = $state('');
+    let selectedTargetWordText = $state('');
     let screenshotPath = '';
     let audioClipPath = '';
     let isClipping = false;
@@ -71,6 +72,7 @@
     onMount(() => {
         (window as any).playerPositionDevTool = playerPositionDevTool;
         (window as any).timecodeDevTool = timecodeDevTool;
+        (window as any).resetHotkeys = resetAllHotkeys;
 
         let subtitles: Subtitle[] = [];
 
@@ -226,6 +228,16 @@
         showOptions = !showOptions;
     }
 
+    function updateMainPageHotkeys(config: HotkeyRegister) {
+        const update = {
+            screenshot: config.screenshot || 'loading',
+            audioClip: config.audioClip || 'loading',
+            copySubtitle: config.copySubtitle || 'loading',
+            copyWord: config.copyWord || 'loading',
+        };
+        registeredHotkeys = update;
+    }
+
     function handleKeyDown(e: KeyboardEvent) {
         // Build hotkey string
         const parts: string[] = [];
@@ -243,7 +255,7 @@
         const hotkeyString = parts.join(' + ');
 
         console.log('THIS IS: ', hotkeyString, '227ru');
-        console.log(registeredHotkeys, '228ru');
+        console.log('WHATS IN HERE', registeredHotkeys);
 
         // Check if this matches a registered hotkey, i.e.
         // the q, " ['Ctrl + Shift + S', 'F5', 'Ctrl + C', 'Ctrl + X'] contains "Ctrl + X" ?""
@@ -269,6 +281,9 @@
                 break;
             case 'copySubtitle':
                 copySelectedSubtitle();
+                break;
+            case 'copyWord':
+                copySelectedWord();
                 break;
         }
     }
@@ -352,6 +367,36 @@
             if (!selectedText) return;
 
             selectedSubtitleText = selectedText;
+            // FIXME: Need to process it. If two subtitles units are copied, There is no "\n" char
+            // where the \n or a whitespace really belogns. so it's: "if on separate subtitle, insert ' ' before join"
+            navigator.clipboard.writeText(selectedText);
+        } catch (error) {
+            console.error('Error in copySelectedSubtitle:', error);
+        }
+    }
+
+    function copySelectedWord() {
+        /**
+         // MOSTLY this is just putting the subtitle word
+         * into the state var so i can push it to input field.
+        */
+        try {
+            // Get the currently selected text from the window
+            console.log('HER HEirhaewilohrfasdfdis');
+            console.log('HER HEirhaewilohrfasdfdis');
+            console.log('HER HEirhaewilohrfasdfdis');
+            console.log('HER HEirhaewilohrfasdfdis');
+            console.log('HER HEirhaewilohrfasdfdis');
+            console.log('HER HEirhaewilohrfasdfdis');
+            const selection = window.getSelection();
+            const selectedText = selection?.toString().trim() || '';
+
+            console.log(selectedText, 'HERE');
+            if (!selectedText) return;
+
+            selectedTargetWordText = selectedText;
+            // FIXME: Need to process it. If two subtitles units are copied, There is no "\n" char
+            // where the \n or a whitespace really belogns. so it's: "if on separate subtitle, insert ' ' before join"
             navigator.clipboard.writeText(selectedText);
         } catch (error) {
             console.error('Error in copySelectedSubtitle:', error);
@@ -371,6 +416,19 @@
 
     export function restoreUpdates() {
         //
+    }
+
+    async function resetAllHotkeys() {
+        const hotkeysforreset = {
+            screenshot: 'Not set',
+            audioClip: 'Not set',
+            copySubtitle: 'Not set',
+            copyWord: 'Not set',
+        };
+
+        if (window.electronAPI?.saveHotkeys) {
+            await window.electronAPI.saveHotkeys(hotkeysforreset);
+        }
     }
 </script>
 
@@ -405,11 +463,12 @@
             {showOptions}
             {toggleOptions}
             exampleSentenceField={selectedSubtitleText}
+            targetWordField={selectedTargetWordText}
         />
     </div>
 </div>
 <div class="options-overlay" class:visible={showOptions}>
-    <HotkeyConfig {showOptions} {toggleOptions} />
+    <HotkeyConfig {showOptions} {toggleOptions} {updateMainPageHotkeys} />
 </div>
 
 <!-- {#if showOptions}

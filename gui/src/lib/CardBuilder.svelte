@@ -1,7 +1,8 @@
 <!-- CardBuilder.svelte -->
 <script lang="ts">
     // Props - data passed in from parent
-    let { exampleSentenceField, showOptions, toggleOptions } = $props();
+    let { exampleSentenceField, targetWordField, showOptions, toggleOptions } =
+        $props();
 
     // Local state
     let selectedLanguage = $state('en');
@@ -29,7 +30,6 @@
         }
     }
 
-    let wordField = '';
     let nativeLangTranslation = '';
 
     let startTime = '8:06';
@@ -82,7 +82,7 @@
             <input
                 id="word-field"
                 type="text"
-                bind:value={wordField}
+                bind:value={targetWordField}
                 placeholder="Target word"
             />
 
