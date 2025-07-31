@@ -73,16 +73,34 @@
         console.log(`Playing audio from ${startTime} to ${endTime}`);
         // Add your audio playback logic here
     }
+
+    // Function to handle backspace deletion
+    function handleImageFieldKeydown(event: KeyboardEvent) {
+        if (event.key === 'Backspace') {
+            // Clear the image
+            screenshotDataUrl = null;
+            event.preventDefault(); // Prevent default backspace behavior
+        }
+    }
+
+    // Function to handle focus - ensures the field is focusable
+    function handleImageFieldFocus(
+        event: FocusEvent & { currentTarget: EventTarget & HTMLDivElement }
+    ) {
+        console.log('Image field focused');
+    }
 </script>
 
 <div class="control-panel">
     <div class="panel-header flex-row">
         <div><h2 class="header-text">Card Builder</h2></div>
         <div>
+            // TODO: make a reminder of the set hotkeys top right, right here.
             <button>img</button>
         </div>
         <!-- // todo: make it responsive -->
         <div>
+            // TODO: make a reminder of the set hotkeys top right, right here.
             <button>audio</button>
         </div>
         <div>
@@ -159,18 +177,27 @@
     </div>
     <div class="control-section">
         <h3>Image</h3>
+        <!-- container div with an image that is dynamically set -->
+        <!-- the image is about the size of the Anki thumbnail -->
         <div class="image-target-container">
-            <!-- container div with a border -->
-            <div class="image-target">
-                <!-- container div with an image that is dynamically set -->
-                <!-- the image is about the size of the Anki thumbnail -->
-                <!-- TODO: the image should be shrunk behind the scenes to save space in Anki -->
-                <img
-                    class="take-full-container"
-                    src={screenshotDataUrl}
-                    class:hidden={!screenshotDataUrl}
-                    alt="MPV screenshot for Anki flashcard"
-                />
+            <div
+                class="image-target-editable"
+                contenteditable="true"
+                tabindex="0"
+                onkeydown={handleImageFieldKeydown}
+                onfocus={handleImageFieldFocus}
+                role="textbox"
+                aria-label="Image field - press backspace to delete image"
+            >
+                {#if screenshotDataUrl}
+                    <img
+                        class="take-full-container"
+                        src={screenshotDataUrl}
+                        alt="MPV screenshot for Anki flashcard"
+                    />
+                {:else}
+                    <div class="image-placeholder">No image</div>
+                {/if}
             </div>
         </div>
     </div>
@@ -241,19 +268,77 @@
         width: 400px;
         border: 4px solid grey;
         border-radius: 8px;
+        display: block;
     }
 
-    .image-target img {
-        max-height: calc(170px - 16px); /* Container height minus all borders */
-        max-width: calc(400px - 16px); /* Container width minus all borders */
-        background-color: #eeeeee;
-        border-radius: 8px;
-        border: 4px solid red;
-    }
-
-    .take-full-container {
+    .image-target-editable {
         height: 100%;
         width: 100%;
+        background-color: #eeeeee;
+        border-radius: 4px;
+        border: 2px solid #ccc;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        outline: none; /* Remove default focus outline */
+        cursor: text; /* Show text cursor when hovering */
+        position: relative;
+    }
+
+    /* Focus state - like Anki's blue border */
+    .image-target-editable:focus {
+        border-color: #80bdff;
+        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
+    }
+
+    .image-target-editable img {
+        max-height: calc(100% - 8px); /* Account for border and padding */
+        max-width: calc(100% - 8px);
+        height: auto;
+        width: auto;
+        object-fit: contain;
+        display: block;
+    }
+
+    .image-placeholder {
+        color: #999;
+        font-style: italic;
+        user-select: none; /* Prevent text selection */
+        pointer-events: none; /* Make it non-interactive */
+    }
+
+    /* Hide the placeholder when there's an image */
+    .image-target-editable:has(img) .image-placeholder {
+        display: none;
+    }
+
+    /* Optional: Show a cursor even when image is present */
+    .image-target-editable::after {
+        content: '';
+        position: absolute;
+        right: 4px;
+        top: 75%;
+        width: 1px;
+        height: 40px;
+        background-color: #000;
+        opacity: 0;
+        animation: blink 1s infinite;
+        transform: translateY(-50%);
+    }
+
+    .image-target-editable:focus::after {
+        opacity: 1;
+    }
+
+    @keyframes blink {
+        0%,
+        50% {
+            opacity: 1;
+        }
+        51%,
+        100% {
+            opacity: 0;
+        }
     }
 
     .control-panel {
@@ -299,7 +384,7 @@
         vertical-align: top;
     }
 
-    .image-target {
+    /* .image-target {
         display: inline-block;
         border: 1px solid #ccc;
         border-radius: 4px;
@@ -310,15 +395,13 @@
 
     .image-target img {
         display: block;
-        /* max-width: 200px;
-        max-height: 300px; */
         height: 100%;
         width: 100%;
         width: auto;
         height: auto;
         object-fit: contain;
         cursor: pointer;
-    }
+    } */
 
     /* Hidden state */
     .hidden {
@@ -326,10 +409,10 @@
     }
 
     /* Optional: Add hover effect for better UX */
-    .image-target:hover {
+    /* .image-target:hover {
         border-color: #999;
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-    }
+    } */
 
     .input-group {
         margin-bottom: 15px;
