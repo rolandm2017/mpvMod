@@ -53,7 +53,9 @@ export class SegmentMountingTracker {
 
         // Store positions and elements
         db.setHeight(timecodeAsSeconds, y);
-        console.log('SEGMENT ELEMENT set key: ', timecode);
+        if (db.subtitleHeights.size === 1) {
+            console.log('SEGMENT ELEMENT set key: ', timecode);
+        }
         this.segmentElements.set(timecode, element);
 
         // Check completion

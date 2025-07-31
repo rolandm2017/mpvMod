@@ -26,10 +26,8 @@ export const load: PageServerLoad = async () => {
 
     if (fs.existsSync(SRT_FILE_PATH)) {
         const content = fs.readFileSync(SRT_FILE_PATH, 'utf-8');
-        const blocks: string[] = content
-            .trim()
-            .split(/\n\s*\n/)
-            .slice(0, 4);
+        const blocks: string[] = content.trim().split(/\n\s*\n/);
+        // .slice(0, 4);
 
         segments = parseSrtFileIntoSegments(blocks);
     }

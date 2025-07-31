@@ -59,8 +59,16 @@
 <style>
     /* for when the subtitle is, well, highlighted */
     .subtitle-segment.highlighted {
-        background-color: #ffeb3b;
-        border-left: 4px solid #ff9800;
+        /* background-color: #ffeb3b; */
+        background-color: #404040;
+        border-left: 4px solid #0077cc;
+        /* or whatever highlight style you want */
+    }
+
+    .subtitle-segment.highlighted:hover {
+        /* background-color: #ffeb3b; */
+        background-color: #4c4c5a;
+        border-left: 4px solid #0098ff;
         /* or whatever highlight style you want */
     }
 
