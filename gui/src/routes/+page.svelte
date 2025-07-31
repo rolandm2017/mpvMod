@@ -95,12 +95,6 @@
                 const now = Date.now();
                 const enabledUpdates = failCount < 3;
                 if (now - lastScrollTime > 2000 && enabledUpdates) {
-                    const noPointInUpdatingPage = showOptions === true;
-                    if (noPointInUpdatingPage) {
-                        // do nothing. the subtitle container isn't showing.
-                        console.log('Skipping update because on options page');
-                        return;
-                    }
                     try {
                         // Throttle to every 500ms
                         highlightPlayerPositionSegment(playerPosition);
@@ -259,7 +253,39 @@
 
 <svelte:window on:keydown={handleKeyDown} />
 
-{#if showOptions}
+<!-- Option 1: CSS toggle (keeps everything mounted) -->
+<div class="main-content" class:hidden={showOptions}>
+    <!-- 424 components stay alive -->
+    <div class="container">
+        <div class="subtitle-panel">
+            <div class="subtitle-header">Subtitles</div>
+            <div
+                class="subtitle-content"
+                data-testid="scroll-container"
+                bind:this={scrollContainer}
+            >
+                {#if data.segments.length > 0}
+                    {#each data.segments as segment}
+                        <SubtitleSegment
+                            index={segment.index}
+                            timecode={segment.timecode}
+                            text={segment.text}
+                            emitTopOfContainer={storeSegmentPosition}
+                        />
+                    {/each}
+                {:else}
+                    <div class="loading">No subtitles found</div>
+                {/if}
+            </div>
+        </div>
+        <CardBuilder {showOptions} {toggleOptions} />
+    </div>
+</div>
+<div class="options-overlay" class:visible={showOptions}>
+    <HotkeyConfig {showOptions} {toggleOptions} />
+</div>
+
+<!-- {#if showOptions}
     <HotkeyConfig {showOptions} {toggleOptions} />
 {:else}
     <div class="container">
@@ -286,7 +312,7 @@
         </div>
         <CardBuilder {showOptions} {toggleOptions} />
     </div>
-{/if}
+{/if} -->
 
 <style>
     .container {
@@ -333,6 +359,10 @@
         right: 0;
         bottom: 0;
         visibility: hidden;
+    }
+
+    .options-overlay.visible {
+        visibility: visible;
     }
 
     .subtitle-content::-webkit-scrollbar {
