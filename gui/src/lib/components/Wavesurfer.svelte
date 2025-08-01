@@ -46,6 +46,11 @@
     let regionStart = $state(5);
     let regionEnd = $state(7);
 
+    // Case: Region is playing, usre clicks "play main". Result: REgion is paused, ticker goes to start
+    // Case: Region is paused, user clicks "play main". result: region still paused, ticket goes tos tart
+    // Case: Main is playing, User clicks "Play region". Main is paused, Region plays from start
+    // Case: Main is paused, user clicks "Play region". Main is still paused, region plays from start.
+
     onMount(() => {
         console.log(mp3.slice(0, 30), 'mp3 mp3 227ru');
 
@@ -210,23 +215,13 @@
     }
 
     function nudgeStart(direction: number) {
-        // let [minutes, seconds] = regionStart.split(':').map(Number);
-        // let totalSeconds = minutes * 60 + seconds;
-        // totalSeconds += direction;
-        // if (totalSeconds < 0) totalSeconds = 0;
-        // let newMinutes = Math.floor(totalSeconds / 60);
-        // let newSeconds = totalSeconds % 60;
-        // regionStart = `${newMinutes}:${newSeconds.toString().padStart(2, '0')}`;
+        // to nudge earlier, call w/ a negative number
+        regionStart += direction;
     }
 
     function nudgeEnd(direction: number) {
-        // let [minutes, seconds] = endTime.split(':').map(Number);
-        // let totalSeconds = minutes * 60 + seconds;
-        // totalSeconds += direction;
-        // if (totalSeconds < 0) totalSeconds = 0;
-        // let newMinutes = Math.floor(totalSeconds / 60);
-        // let newSeconds = totalSeconds % 60;
-        // endTime = `${newMinutes}:${newSeconds.toString().padStart(2, '0')}`;
+        // to nudge earlier, call w/ a negative number
+        regionEnd += direction;
     }
 
     // SO we're gonna:
