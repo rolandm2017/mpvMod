@@ -3,15 +3,6 @@
     import WaveSurfer from 'wavesurfer.js';
     import RegionsPlugin from 'wavesurfer.js/dist/plugins/regions.js';
 
-    let container: HTMLDivElement;
-    let wavesurfer: WaveSurfer | null = null;
-
-    // mp3 is a dataUrl formed in the Electron main.js
-    const { mp3 } = $props();
-
-    // Track playing state
-    let isPlaying = $state(false);
-
     /**
      * 1. Avoid re-initializing wavesurfer on every prop change
      * "Don't re-run your WaveSurfer setup logic (WaveSurfer.create(...)) every time a Svelte prop or state variable changes."
@@ -26,8 +17,36 @@
      * 3. Use Svelte's $: reactivity sparingly — don't tie it to waveform rendering
      */
 
+    // TODO: 1. Get the duration of the clip showing. How long is the full clip, un-cut, outside of the little boundary box?
+    // TODO: 2. Display the start, end of the bounding box. the Regions markers
+    // TODO: 3. User clicks "Make card," the mp3 is snipped.
+    // TODO: Maybe a tickbox to let user prevent accidentally moving the boundaries?
+    // TODO: 4. Let user click btn to play the Regions area.
+    // FIXME: The first time the page loads, you must click Play Audio twice to make it play
+
+    let container: HTMLDivElement;
+    let wavesurfer: WaveSurfer | null = null;
+
+    // mp3 is a dataUrl formed in the Electron main.js
+    const { mp3 } = $props();
+
+    let currentAudioFile: HTMLAudioElement | null = $state(null);
+
+    // Track playing state
+    let isPlaying = $state(false);
+
+    // let fullFileStartTime = $state('0:00');
+    // let fullFileEndTime = $state('0:00');
+    let fullFileStartTime = $state(0);
+    let fullFileEndTime = $state(0);
+
+    let fullFileEndTimeDisplayString = $state('');
+
+    let regionStart = $state(0);
+    let regionEnd = $state(0);
+
     onMount(() => {
-        console.log(mp3, 'mp3 mp3 227ru');
+        console.log(mp3.slice(0, 30), 'mp3 mp3 227ru');
 
         const regionsPlugin = RegionsPlugin.create() as any;
 
@@ -68,73 +87,70 @@
     });
 
     $effect(() => {
-        if (wavesurfer && mp3) {
-            console.log('Loading mp3: ', mp3);
-            wavesurfer.load(mp3);
-        } else {
-            console.log(wavesurfer, mp3, 'Nothing');
+        if (mp3 && currentAudioFile === null) {
+            console.log(mp3.slice(0, 30), '89ru');
+            currentAudioFile = new Audio(mp3);
+
+            currentAudioFile.addEventListener('loadedmetadata', () => {
+                const audioDurationInSec = currentAudioFile!.duration;
+                console.log(currentAudioFile, audioDurationInSec, '95ru');
+                fullFileEndTime = audioDurationInSec;
+                fullFileEndTimeDisplayString =
+                    convertToTimeString(audioDurationInSec);
+            });
         }
     });
 
-    let startTime = $state('8:06');
-    let endTime = $state('8:13');
+    function convertToTimeString(duration: number) {
+        const minutes = Math.floor(duration / 60);
+        const seconds = Math.floor(duration % 60);
+        console.log(duration, minutes, seconds, '104ru');
+        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
+
+    $effect(() => {
+        if (wavesurfer && mp3) {
+            console.log('Loading mp3 : ', mp3.slice(0, 40));
+            wavesurfer.load(mp3);
+        } else {
+            console.log(wavesurfer, mp3.slice(0, 40), 'Nothing');
+        }
+    });
 
     function nudgeStart(direction: number) {
-        let [minutes, seconds] = startTime.split(':').map(Number);
-        let totalSeconds = minutes * 60 + seconds;
-        totalSeconds += direction;
-
-        if (totalSeconds < 0) totalSeconds = 0;
-
-        let newMinutes = Math.floor(totalSeconds / 60);
-        let newSeconds = totalSeconds % 60;
-        startTime = `${newMinutes}:${newSeconds.toString().padStart(2, '0')}`;
+        // let [minutes, seconds] = regionStart.split(':').map(Number);
+        // let totalSeconds = minutes * 60 + seconds;
+        // totalSeconds += direction;
+        // if (totalSeconds < 0) totalSeconds = 0;
+        // let newMinutes = Math.floor(totalSeconds / 60);
+        // let newSeconds = totalSeconds % 60;
+        // regionStart = `${newMinutes}:${newSeconds.toString().padStart(2, '0')}`;
     }
 
     function nudgeEnd(direction: number) {
-        let [minutes, seconds] = endTime.split(':').map(Number);
-        let totalSeconds = minutes * 60 + seconds;
-        totalSeconds += direction;
-
-        if (totalSeconds < 0) totalSeconds = 0;
-
-        let newMinutes = Math.floor(totalSeconds / 60);
-        let newSeconds = totalSeconds % 60;
-        endTime = `${newMinutes}:${newSeconds.toString().padStart(2, '0')}`;
+        // let [minutes, seconds] = endTime.split(':').map(Number);
+        // let totalSeconds = minutes * 60 + seconds;
+        // totalSeconds += direction;
+        // if (totalSeconds < 0) totalSeconds = 0;
+        // let newMinutes = Math.floor(totalSeconds / 60);
+        // let newSeconds = totalSeconds % 60;
+        // endTime = `${newMinutes}:${newSeconds.toString().padStart(2, '0')}`;
     }
 
     function togglePlayPause() {
+        console.log(!wavesurfer, isPlaying, '107ru');
         if (!wavesurfer) return;
-
         if (isPlaying) {
             wavesurfer.pause();
         } else {
-            // Convert start time to seconds for seeking
-            let [minutes, seconds] = startTime.split(':').map(Number);
-            let startSeconds = minutes * 60 + seconds;
-
-            // Seek to start time and play
-            wavesurfer.seekTo(startSeconds / wavesurfer.getDuration());
-            wavesurfer.play();
-
-            // Optional: Stop at end time
-            let [endMinutes, endSecs] = endTime.split(':').map(Number);
-            let endSeconds = endMinutes * 60 + endSecs;
-
-            // Set up a timer to pause at end time
-            const checkTime = () => {
-                if (wavesurfer && wavesurfer.getCurrentTime() >= endSeconds) {
-                    wavesurfer.pause();
-                } else if (isPlaying) {
-                    requestAnimationFrame(checkTime);
-                }
-            };
-
-            if (endSeconds > startSeconds) {
-                requestAnimationFrame(checkTime);
-            }
         }
     }
+
+    // SO we're gonna:
+    //      - store everything as seconds. 2 min -> 120 seconds. 2:05 -> 125 seconds
+    //      - convert seconds -> mm:ss for display purposes
+    //  - very few clips will exceed 30 seconds anyweays
+    // TODO: make the clip show the actual length of the mp3. just the default mp3
 </script>
 
 <div bind:this={container} class="w-full"></div>
@@ -145,7 +161,7 @@
         </div>
         <div class="time-display">
             <button class="nudge-btn" onclick={() => nudgeStart(-1)}>←</button>
-            <span class="time-value">{startTime}</span>
+            <span class="time-value">0:00</span>
             <button class="nudge-btn" onclick={() => nudgeStart(1)}>→</button>
         </div>
     </div>
@@ -156,7 +172,7 @@
         </div>
         <div class="time-display">
             <button class="nudge-btn" onclick={() => nudgeEnd(-1)}>←</button>
-            <span class="time-value">{endTime}</span>
+            <span class="time-value">{fullFileEndTimeDisplayString}</span>
             <button class="nudge-btn" onclick={() => nudgeEnd(1)}>→</button>
         </div>
     </div>
