@@ -34,6 +34,7 @@
 
     // Track playing state
     let isPlaying = $state(false);
+    let playbackPosition = $state(0);
 
     // let fullFileStartTime = $state('0:00');
     // let fullFileEndTime = $state('0:00');
@@ -92,7 +93,9 @@
             currentAudioFile = new Audio(mp3);
 
             currentAudioFile.addEventListener('loadedmetadata', () => {
-                const audioDurationInSec = currentAudioFile!.duration;
+                if (!currentAudioFile)
+                    throw new Error('Somehow currentAudioFile is null');
+                const audioDurationInSec = currentAudioFile.duration;
                 console.log(currentAudioFile, audioDurationInSec, '95ru');
                 fullFileEndTime = audioDurationInSec;
                 fullFileEndTimeDisplayString =
@@ -117,6 +120,39 @@
         }
     });
 
+    function togglePlayPause() {
+        console.log(!wavesurfer, isPlaying, '107ru');
+        if (!wavesurfer) return;
+
+        if (isPlaying) {
+            playbackPosition = wavesurfer.getCurrentTime();
+            wavesurfer.pause();
+        } else {
+            // Resume from stored position (or region start if at beginning)
+            const startFrom =
+                playbackPosition > regionStart ? playbackPosition : regionStart;
+            wavesurfer.seekTo(startFrom / fullFileEndTime);
+            wavesurfer.play();
+
+            // Set up auto-stop at region end
+            const checkTime = () => {
+                if (wavesurfer && wavesurfer.getCurrentTime() >= regionEnd) {
+                    wavesurfer.pause();
+                    playbackPosition = regionEnd;
+                } else if (isPlaying) {
+                    if (!wavesurfer)
+                        throw new Error('Wavesurfer was null in checkTime');
+                    playbackPosition = wavesurfer.getCurrentTime(); // Update position continuously
+                    requestAnimationFrame(checkTime);
+                }
+            };
+
+            if (regionEnd > regionStart) {
+                requestAnimationFrame(checkTime);
+            }
+        }
+    }
+
     function nudgeStart(direction: number) {
         // let [minutes, seconds] = regionStart.split(':').map(Number);
         // let totalSeconds = minutes * 60 + seconds;
@@ -135,15 +171,6 @@
         // let newMinutes = Math.floor(totalSeconds / 60);
         // let newSeconds = totalSeconds % 60;
         // endTime = `${newMinutes}:${newSeconds.toString().padStart(2, '0')}`;
-    }
-
-    function togglePlayPause() {
-        console.log(!wavesurfer, isPlaying, '107ru');
-        if (!wavesurfer) return;
-        if (isPlaying) {
-            wavesurfer.pause();
-        } else {
-        }
     }
 
     // SO we're gonna:
