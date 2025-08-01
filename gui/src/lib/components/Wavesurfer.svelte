@@ -2,6 +2,7 @@
     import { onMount, onDestroy } from 'svelte';
     import WaveSurfer from 'wavesurfer.js';
     import RegionsPlugin from 'wavesurfer.js/dist/plugins/regions.js';
+    import type { Region } from 'wavesurfer.js/dist/plugins/regions.js';
 
     /**
      * 1. Avoid re-initializing wavesurfer on every prop change
@@ -26,6 +27,7 @@
 
     let container: HTMLDivElement;
     let wavesurfer: WaveSurfer | null = null;
+    let regionDisplay: Region | null = null;
 
     // mp3 is a dataUrl formed in the Electron main.js
     const { mp3 } = $props();
@@ -79,7 +81,7 @@
 
         // Add regions after initialization
         wavesurfer.on('ready', () => {
-            regionsPlugin.addRegion({
+            regionDisplay = regionsPlugin.addRegion({
                 start: regionStart,
                 end: regionEnd,
                 color: 'rgba(0, 0, 255, 0.1)',
@@ -91,6 +93,15 @@
             wavesurfer?.destroy();
         };
     });
+
+    function updateRegion(newStart: number, newEnd: number) {
+        if (regionDisplay) {
+            regionDisplay.setOptions({
+                start: newStart,
+                end: newEnd,
+            });
+        }
+    }
 
     $effect(() => {
         if (mp3 && currentAudioFile === null) {
@@ -215,13 +226,27 @@
     }
 
     function nudgeStart(direction: number) {
+        console.log('Nudge Start: ', direction);
         // to nudge earlier, call w/ a negative number
+        const endResult = regionStart + direction;
+        const yieldsNegativeDuration = endResult >= regionEnd;
+        if (yieldsNegativeDuration) {
+            return;
+        }
         regionStart += direction;
+        updateRegion(regionStart, regionEnd);
     }
 
     function nudgeEnd(direction: number) {
+        console.log('Nudge End: ', direction);
         // to nudge earlier, call w/ a negative number
+        const endResult = regionEnd + direction;
+        const yieldsNegativeDuration = endResult <= regionStart;
+        if (yieldsNegativeDuration) {
+            return;
+        }
         regionEnd += direction;
+        updateRegion(regionStart, regionEnd);
     }
 
     // SO we're gonna:
