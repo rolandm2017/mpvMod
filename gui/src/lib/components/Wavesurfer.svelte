@@ -140,7 +140,9 @@
 <div bind:this={container} class="w-full"></div>
 <div class="time-row flex-row push-items-top sml-space-below">
     <div class="time-group half-container-fill">
-        <h4 class="push-items-top">Start Time</h4>
+        <div class="adjust-label-container center-container">
+            <h4 class="push-items-top">Start Time</h4>
+        </div>
         <div class="time-display">
             <button class="nudge-btn" onclick={() => nudgeStart(-1)}>←</button>
             <span class="time-value">{startTime}</span>
@@ -149,7 +151,9 @@
     </div>
 
     <div class="time-group half-container-fill">
-        <h4 class="push-items-top">End Time</h4>
+        <div class="adjust-label-container center-container">
+            <h4 class="push-items-top">End Time</h4>
+        </div>
         <div class="time-display">
             <button class="nudge-btn" onclick={() => nudgeEnd(-1)}>←</button>
             <span class="time-value">{endTime}</span>
@@ -165,6 +169,14 @@
 <style>
     h4 {
         font-weight: 400;
+        margin: 16px 0px 4px 0px;
+    }
+    .adjust-label-container {
+        height: 30px;
+    }
+    .center-container {
+        display: flex;
+        align-items: center;
     }
     .half-container-fill {
         width: 50%;
@@ -199,5 +211,9 @@
 
     .play-btn:hover {
         background-color: #45a049;
+    }
+
+    .flex-row {
+        display: flex;
     }
 </style>

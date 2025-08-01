@@ -2,6 +2,8 @@
 gui/node_modules
 node_modules
 
+.mpv2
+
 __pycache__
 
 .vscode
