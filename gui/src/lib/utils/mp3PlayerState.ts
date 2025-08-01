@@ -1,3 +1,5 @@
+import WaveSurfer from 'wavesurfer.js';
+
 interface PlaybackContext {
     isPlaying: boolean;
     currentTime: number;
@@ -18,13 +20,15 @@ interface PlayerState {
 // Core state management for MP3 player with region selection
 
 class MP3PlayerState {
+    private surfer: WaveSurfer;
     private audio: HTMLAudioElement;
     private duration: number = 0;
     private main: PlaybackContext;
     private region: PlaybackContext;
     private activeContext: ActiveContext = null;
 
-    constructor(audioElement: HTMLAudioElement) {
+    constructor(audioElement: HTMLAudioElement, surfer: WaveSurfer) {
+        this.surfer = surfer;
         this.audio = audioElement;
         this.duration = audioElement.duration;
 
@@ -80,7 +84,7 @@ class MP3PlayerState {
     pauseMain() {
         if (!this.main.isPlaying) return;
 
-        this.audio.pause();
+        this.surfer.pause();
         this.main.isPlaying = false;
         this.main.currentTime = this.audio.currentTime;
         this.activeContext = null;
@@ -92,8 +96,9 @@ class MP3PlayerState {
 
         if (this.region.isPlaying) return; // Already playing
 
-        this.audio.currentTime = this.region.currentTime;
-        this.audio.play();
+        this.surfer.currentTime = this.region.currentTime;
+        // todo: make be, this.waveshaper.play()
+        this.surfer.play();
         this.region.isPlaying = true;
         this.activeContext = 'region';
     }
@@ -101,9 +106,10 @@ class MP3PlayerState {
     pauseRegion() {
         if (!this.region.isPlaying) return;
 
-        this.audio.pause();
+        // todo: make be, this.waveshaper.pause()
+        this.surfer.pause();
         this.region.isPlaying = false;
-        this.region.currentTime = this.audio.currentTime;
+        this.region.currentTime = this.surfer.getCurrentTime();
         this.activeContext = null;
     }
 
@@ -118,7 +124,8 @@ class MP3PlayerState {
 
     // Handle audio timeupdate events
     handleTimeUpdate() {
-        const currentTime = this.audio.currentTime;
+        // FIXME: Instead it's, "take current time as argument, from outside"
+        const currentTime = this.surfer.getCurrentTime();
 
         if (this.activeContext === 'main') {
             this.main.currentTime = currentTime;
