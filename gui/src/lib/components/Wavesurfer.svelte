@@ -44,7 +44,7 @@
     let fullFileEndTimeDisplayString = $state('');
 
     let regionStart = $state(5);
-    let regionEnd = $state(10);
+    let regionEnd = $state(7);
 
     onMount(() => {
         console.log(mp3.slice(0, 30), 'mp3 mp3 227ru');
@@ -156,46 +156,57 @@
         }
     }
 
-    let regionPosition = $state(0);
+    let regionPosition = $state(0); // Position within the region (0 = region start)
+    let isRegionPlaying = $state(false); // Separate state for region playback
 
-    // TODO: Get the region times into state vars.
-    // TODO: Then test playPause in Region
+    function resetRegionPlayback() {
+        regionPosition = 0;
+    }
 
     function playPauseInRegion() {
-        // FIXME: it's broken: the pause button restarts at start of region.
-        // FIXME: it's broken: get to end of region, frozen, cant do anything
         if (!wavesurfer) return;
 
-        // Calculate actual playback position (region start + offset)
-        const playbackIsAtRegionEnd = playbackPosition === regionEnd;
-        if (playbackIsAtRegionEnd) {
-            // reset everything to start
-            // playbackPosition = regionStart
-            // wavesurfer.seekTo(playbackPosition/fullFileEndTime)
+        const markerIsAtEndOfRegion =
+            regionPosition === regionEnd - regionStart;
+        console.log(regionPosition, regionEnd, markerIsAtEndOfRegion, '175ru');
+        if (markerIsAtEndOfRegion) {
+            // reset
+            resetRegionPlayback();
         }
-        const actualPosition = regionStart + regionPosition;
-        console.log(actualPosition, '169ru');
 
-        // Seek to position and play
-        wavesurfer.seekTo(actualPosition / fullFileEndTime);
-        wavesurfer.play();
-
-        // Monitor playback within region bounds
-        const checkTime = () => {
-            if (!wavesurfer)
-                throw new Error('Wavesurfer was null in checkTime');
+        if (isRegionPlaying) {
+            // Pause and store current position within region
             const currentTime = wavesurfer.getCurrentTime();
+            regionPosition = currentTime - regionStart; // Store offset from region start
+            wavesurfer.pause();
+            isRegionPlaying = false;
+        } else {
+            // Play from stored region position
+            const actualPosition = regionStart + regionPosition;
+            wavesurfer.seekTo(actualPosition / fullFileEndTime);
+            wavesurfer.play();
+            isRegionPlaying = true;
 
-            if (currentTime >= regionEnd) {
-                wavesurfer.pause();
-                regionPosition = regionEnd - regionStart; // At end of region
-            } else if (isPlaying) {
-                regionPosition = currentTime - regionStart; // Update region position
-                requestAnimationFrame(checkTime);
-            }
-        };
+            // Monitor playback within region bounds
+            const checkTime = () => {
+                if (!isRegionPlaying) return; // Stop monitoring if paused
+                if (!wavesurfer)
+                    throw new Error('Wavesurfer was null in checkTime');
 
-        requestAnimationFrame(checkTime);
+                const currentTime = wavesurfer.getCurrentTime();
+
+                if (currentTime >= regionEnd) {
+                    wavesurfer.pause();
+                    regionPosition = regionEnd - regionStart; // At end of region
+                    isRegionPlaying = false;
+                } else {
+                    regionPosition = currentTime - regionStart; // Update region position
+                    requestAnimationFrame(checkTime);
+                }
+            };
+
+            requestAnimationFrame(checkTime);
+        }
     }
 
     function nudgeStart(direction: number) {
@@ -253,6 +264,8 @@
     </div>
 </div>
 
+<!-- // TODO: separate these play btns , if region playing, only region changes, -->
+<!-- // if main plays, only main changes, Region deosn't change -->
 <div>
     <button class="play-btn sml-space-below" onclick={togglePlayPause}>
         {isPlaying ? '⏸️ Pause' : '▶️ Play Audio'}
