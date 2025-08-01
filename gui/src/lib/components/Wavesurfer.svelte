@@ -43,8 +43,8 @@
 
     let fullFileEndTimeDisplayString = $state('');
 
-    let regionStart = $state(0);
-    let regionEnd = $state(0);
+    let regionStart = $state(5);
+    let regionEnd = $state(10);
 
     onMount(() => {
         console.log(mp3.slice(0, 30), 'mp3 mp3 227ru');
@@ -75,8 +75,8 @@
         // Add regions after initialization
         wavesurfer.on('ready', () => {
             regionsPlugin.addRegion({
-                start: 5,
-                end: 10,
+                start: regionStart,
+                end: regionEnd,
                 color: 'rgba(0, 0, 255, 0.1)',
             });
             regionsPlugin.enableDragSelection();
@@ -96,7 +96,7 @@
                 if (!currentAudioFile)
                     throw new Error('Somehow currentAudioFile is null');
                 const audioDurationInSec = currentAudioFile.duration;
-                console.log(currentAudioFile, audioDurationInSec, '95ru');
+                console.log(audioDurationInSec, '95ru');
                 fullFileEndTime = audioDurationInSec;
                 fullFileEndTimeDisplayString =
                     convertToTimeString(audioDurationInSec);
@@ -136,7 +136,10 @@
 
             // Set up auto-stop at region end
             const checkTime = () => {
-                if (wavesurfer && wavesurfer.getCurrentTime() >= regionEnd) {
+                // stop
+                const timeExceedsEndOfClippingRegion =
+                    wavesurfer && wavesurfer.getCurrentTime() >= regionEnd;
+                if (wavesurfer && timeExceedsEndOfClippingRegion) {
                     wavesurfer.pause();
                     playbackPosition = regionEnd;
                 } else if (isPlaying) {
@@ -151,6 +154,48 @@
                 requestAnimationFrame(checkTime);
             }
         }
+    }
+
+    let regionPosition = $state(0);
+
+    // TODO: Get the region times into state vars.
+    // TODO: Then test playPause in Region
+
+    function playPauseInRegion() {
+        // FIXME: it's broken: the pause button restarts at start of region.
+        // FIXME: it's broken: get to end of region, frozen, cant do anything
+        if (!wavesurfer) return;
+
+        // Calculate actual playback position (region start + offset)
+        const playbackIsAtRegionEnd = playbackPosition === regionEnd;
+        if (playbackIsAtRegionEnd) {
+            // reset everything to start
+            // playbackPosition = regionStart
+            // wavesurfer.seekTo(playbackPosition/fullFileEndTime)
+        }
+        const actualPosition = regionStart + regionPosition;
+        console.log(actualPosition, '169ru');
+
+        // Seek to position and play
+        wavesurfer.seekTo(actualPosition / fullFileEndTime);
+        wavesurfer.play();
+
+        // Monitor playback within region bounds
+        const checkTime = () => {
+            if (!wavesurfer)
+                throw new Error('Wavesurfer was null in checkTime');
+            const currentTime = wavesurfer.getCurrentTime();
+
+            if (currentTime >= regionEnd) {
+                wavesurfer.pause();
+                regionPosition = regionEnd - regionStart; // At end of region
+            } else if (isPlaying) {
+                regionPosition = currentTime - regionStart; // Update region position
+                requestAnimationFrame(checkTime);
+            }
+        };
+
+        requestAnimationFrame(checkTime);
     }
 
     function nudgeStart(direction: number) {
@@ -177,10 +222,13 @@
     //      - store everything as seconds. 2 min -> 120 seconds. 2:05 -> 125 seconds
     //      - convert seconds -> mm:ss for display purposes
     //  - very few clips will exceed 30 seconds anyweays
-    // TODO: make the clip show the actual length of the mp3. just the default mp3
+    // TODO: Make the UI show the clipping region start, end
 </script>
 
 <div bind:this={container} class="w-full"></div>
+<div class="push-items-right">
+    <span>Length: {convertToTimeString(fullFileEndTime)}</span>
+</div>
 <div class="time-row flex-row push-items-top sml-space-below">
     <div class="time-group half-container-fill">
         <div class="adjust-label-container center-container">
@@ -205,9 +253,14 @@
     </div>
 </div>
 
-<button class="play-btn sml-space-below" onclick={togglePlayPause}>
-    {isPlaying ? '⏸️ Pause' : '▶️ Play Audio'}
-</button>
+<div>
+    <button class="play-btn sml-space-below" onclick={togglePlayPause}>
+        {isPlaying ? '⏸️ Pause' : '▶️ Play Audio'}
+    </button>
+    <button class="play-btn sml-space-below" onclick={playPauseInRegion}>
+        {isPlaying ? '⏸️ Pause' : '▶️ Play Region'}
+    </button>
+</div>
 
 <style>
     h4 {
@@ -227,6 +280,11 @@
 
     .push-items-top {
         margin-top: 0;
+    }
+
+    .push-items-right {
+        display: flex;
+        justify-content: flex-end;
     }
 
     .sml-space-below {
