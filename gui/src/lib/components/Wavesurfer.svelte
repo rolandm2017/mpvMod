@@ -1,5 +1,6 @@
 <script lang="ts">
-    import { onMount, onDestroy } from 'svelte';
+    import { MP3PlayerState } from '$lib/utils/mp3PlayerState';
+    import { onMount, onDestroy } from 'svelte'; //
     import WaveSurfer from 'wavesurfer.js';
     import RegionsPlugin from 'wavesurfer.js/dist/plugins/regions.js';
     import type { Region } from 'wavesurfer.js/dist/plugins/regions.js';
@@ -38,6 +39,8 @@
     let isPlaying = $state(false);
     let playbackPosition = $state(0);
 
+    let stateTracker: MP3PlayerState | null = $state(null);
+
     // let fullFileStartTime = $state('0:00');
     // let fullFileEndTime = $state('0:00');
     let fullFileStartTime = $state(0);
@@ -63,7 +66,7 @@
             waveColor: '#999',
             progressColor: '#555',
             height: 100,
-            plugins: [regionsPlugin],
+            plugins: [regionsPlugin]
         });
 
         // Track play/pause events
@@ -77,6 +80,7 @@
 
         wavesurfer.on('finish', () => {
             isPlaying = false;
+            stateTracker?.handleEnded();
         });
 
         // Add regions after initialization
@@ -84,7 +88,7 @@
             regionDisplay = regionsPlugin.addRegion({
                 start: regionStart,
                 end: regionEnd,
-                color: 'rgba(0, 0, 255, 0.1)',
+                color: 'rgba(0, 0, 255, 0.1)'
             });
             regionsPlugin.enableDragSelection();
         });
@@ -98,25 +102,37 @@
         if (regionDisplay) {
             regionDisplay.setOptions({
                 start: newStart,
-                end: newEnd,
+                end: newEnd
             });
         }
     }
 
+    //d fsdfds
+    let previousMp3 = $state(null);
+
     $effect(() => {
-        if (mp3 && currentAudioFile === null) {
+        if (mp3 && mp3 !== previousMp3) {
+            if (currentAudioFile) {
+                // cleanup old one
+                currentAudioFile.src = '';
+                currentAudioFile = null;
+            }
+            // TODO: How does this effect know to fire when "Mp3" becoems a new MP3?
             console.log(mp3.slice(0, 30), '89ru');
             currentAudioFile = new Audio(mp3);
+            // TODO: How does the mp3 player get ahold of the new audio file?
 
             currentAudioFile.addEventListener('loadedmetadata', () => {
-                if (!currentAudioFile)
-                    throw new Error('Somehow currentAudioFile is null');
+                if (!wavesurfer) throw new Error('Surfer was null in $effect');
+                if (!currentAudioFile) throw new Error('Somehow currentAudioFile is null');
                 const audioDurationInSec = currentAudioFile.duration;
+                stateTracker = new MP3PlayerState(audioDurationInSec, wavesurfer);
                 console.log(audioDurationInSec, '95ru');
                 fullFileEndTime = audioDurationInSec;
-                fullFileEndTimeDisplayString =
-                    convertToTimeString(audioDurationInSec);
+                fullFileEndTimeDisplayString = convertToTimeString(audioDurationInSec);
             });
+
+            previousMp3 = mp3;
         }
     });
 
@@ -128,6 +144,7 @@
     }
 
     $effect(() => {
+        // FIXME: Does this work? when mp3 changes from first_mp3.mp3 to second_mp3.mpe, does it update?
         if (wavesurfer && mp3) {
             console.log('Loading mp3 : ', mp3.slice(0, 40));
             wavesurfer.load(mp3);
@@ -145,8 +162,7 @@
             wavesurfer.pause();
         } else {
             // Resume from stored position (or region start if at beginning)
-            const startFrom =
-                playbackPosition > regionStart ? playbackPosition : regionStart;
+            const startFrom = playbackPosition > regionStart ? playbackPosition : regionStart;
             wavesurfer.seekTo(startFrom / fullFileEndTime);
             wavesurfer.play();
 
@@ -159,9 +175,10 @@
                     wavesurfer.pause();
                     playbackPosition = regionEnd;
                 } else if (isPlaying) {
-                    if (!wavesurfer)
-                        throw new Error('Wavesurfer was null in checkTime');
+                    if (!wavesurfer) throw new Error('Wavesurfer was null in checkTime');
+                    if (!stateTracker) throw new Error('Null state tracker');
                     playbackPosition = wavesurfer.getCurrentTime(); // Update position continuously
+                    stateTracker.handleTimeUpdate(playbackPosition);
                     requestAnimationFrame(checkTime);
                 }
             };
@@ -182,8 +199,7 @@
     function playPauseInRegion() {
         if (!wavesurfer) return;
 
-        const markerIsAtEndOfRegion =
-            regionPosition === regionEnd - regionStart;
+        const markerIsAtEndOfRegion = regionPosition === regionEnd - regionStart;
         console.log(regionPosition, regionEnd, markerIsAtEndOfRegion, '175ru');
         if (markerIsAtEndOfRegion) {
             // reset
@@ -194,6 +210,7 @@
             // Pause and store current position within region
             const currentTime = wavesurfer.getCurrentTime();
             regionPosition = currentTime - regionStart; // Store offset from region start
+
             wavesurfer.pause();
             isRegionPlaying = false;
         } else {
@@ -206,8 +223,8 @@
             // Monitor playback within region bounds
             const checkTime = () => {
                 if (!isRegionPlaying) return; // Stop monitoring if paused
-                if (!wavesurfer)
-                    throw new Error('Wavesurfer was null in checkTime');
+                if (!wavesurfer) throw new Error('Wavesurfer was null in checkTime');
+                if (!stateTracker) throw new Error('Null state tracker');
 
                 const currentTime = wavesurfer.getCurrentTime();
 
@@ -217,6 +234,7 @@
                     isRegionPlaying = false;
                 } else {
                     regionPosition = currentTime - regionStart; // Update region position
+                    stateTracker.handleTimeUpdate(regionPosition);
                     requestAnimationFrame(checkTime);
                 }
             };

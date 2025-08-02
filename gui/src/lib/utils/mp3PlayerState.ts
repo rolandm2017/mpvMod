@@ -1,12 +1,13 @@
 import WaveSurfer from 'wavesurfer.js';
 
 interface PlaybackContext {
-    isPlaying: boolean;
+    isPlaying: boolean; //
     currentTime: number;
     startTime: number;
     endTime: number;
 }
 
+// fdsfds
 type ActiveContext = 'main' | 'region' | null;
 
 interface PlayerState {
@@ -19,39 +20,30 @@ interface PlayerState {
 
 // Core state management for MP3 player with region selection
 
-class MP3PlayerState {
+export class MP3PlayerState {
     private surfer: WaveSurfer;
-    private audio: HTMLAudioElement;
     private duration: number = 0;
     private main: PlaybackContext;
     private region: PlaybackContext;
     private activeContext: ActiveContext = null;
 
-    constructor(audioElement: HTMLAudioElement, surfer: WaveSurfer) {
+    constructor(duration: number, surfer: WaveSurfer) {
         this.surfer = surfer;
-        this.audio = audioElement;
-        this.duration = audioElement.duration;
-
-        // Listen for time updates
-        this.audio.addEventListener('timeupdate', () =>
-            this.handleTimeUpdate()
-        );
-        this.audio.addEventListener('ended', () => this.handleEnded());
-        this.duration = 0;
+        this.duration = duration;
 
         // Two separate playback contexts
         this.main = {
             isPlaying: false,
             currentTime: 0,
             startTime: 0,
-            endTime: this.duration, // will be set to duration
+            endTime: this.duration // will be set to duration
         };
 
         this.region = {
             isPlaying: false,
             currentTime: 0,
             startTime: 0, // left bracket position
-            endTime: 0, // right bracket position
+            endTime: 0 // right bracket position
         };
 
         this.activeContext = null; // 'main' or 'region' - only one can play at a time
@@ -68,15 +60,15 @@ class MP3PlayerState {
     playMain() {
         // If region is playing, inherit its current position
         if (this.activeContext === 'region') {
-            this.main.currentTime = this.audio.currentTime;
+            this.main.currentTime = this.surfer.getCurrentTime();
         }
 
         this.pauseRegion(); // Stop region if playing
 
         if (this.main.isPlaying) return; // Already playing
 
-        this.audio.currentTime = this.main.currentTime;
-        this.audio.play();
+        this.surfer.seekTo(this.main.currentTime / this.duration);
+        this.surfer.play();
         this.main.isPlaying = true;
         this.activeContext = 'main';
     }
@@ -86,7 +78,7 @@ class MP3PlayerState {
 
         this.surfer.pause();
         this.main.isPlaying = false;
-        this.main.currentTime = this.audio.currentTime;
+        this.main.currentTime = this.surfer.getCurrentTime();
         this.activeContext = null;
     }
 
@@ -96,7 +88,7 @@ class MP3PlayerState {
 
         if (this.region.isPlaying) return; // Already playing
 
-        this.surfer.currentTime = this.region.currentTime;
+        this.surfer.seekTo(this.region.currentTime / this.duration);
         // todo: make be, this.waveshaper.play()
         this.surfer.play();
         this.region.isPlaying = true;
@@ -123,9 +115,8 @@ class MP3PlayerState {
     }
 
     // Handle audio timeupdate events
-    handleTimeUpdate() {
+    handleTimeUpdate(currentTime: number) {
         // FIXME: Instead it's, "take current time as argument, from outside"
-        const currentTime = this.surfer.getCurrentTime();
 
         if (this.activeContext === 'main') {
             this.main.currentTime = currentTime;
@@ -147,6 +138,9 @@ class MP3PlayerState {
 
     // Handle audio ended event
     handleEnded() {
+        /**
+         * It's the "ran out of audio data" event, not a manual pause or stop
+         */
         if (this.activeContext === 'main') {
             this.main.isPlaying = false;
             this.main.currentTime = 0; // Reset to beginning
@@ -165,21 +159,20 @@ class MP3PlayerState {
             return this.region.currentTime;
         } else {
             // When paused, show the respective context's saved position
-            return this.main.isPlaying === false &&
-                this.region.isPlaying === false
+            return this.main.isPlaying === false && this.region.isPlaying === false
                 ? this.main.currentTime
-                : this.audio.currentTime;
+                : this.surfer.getCurrentTime();
         }
     }
 
     // Get state for UI updates
-    getState() {
+    getState(): PlayerState {
         return {
             main: { ...this.main },
             region: { ...this.region },
             activeContext: this.activeContext,
             currentTime: this.getCurrentTime(),
-            duration: this.duration,
+            duration: this.duration
         };
     }
 }
