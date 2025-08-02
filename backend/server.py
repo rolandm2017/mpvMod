@@ -239,7 +239,6 @@ class MPVWebSocketServer:
                             "file_path": str(clip_path)
                         })
                     else:
-                        print(result, "237ru")
                         self.broadcast_message("command_response", f"❌ FFmpeg error: {result.stderr}", {
                             "command": "end_audio_clip",
                             "success": False,

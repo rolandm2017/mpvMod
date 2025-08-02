@@ -58,10 +58,15 @@ export class MP3PlayerState {
 
     // Main playback controls
     playMain() {
-        // If region is playing, inherit its current position
-        if (this.activeContext === 'region') {
+        // Only inherit if main hasn't established its own position
+        if (this.activeContext === 'region' && this.main.currentTime === 0) {
             this.main.currentTime = this.surfer.getCurrentTime();
         }
+
+        // // If region is playing, inherit its current position
+        // if (this.activeContext === 'region') {
+        //     this.main.currentTime = this.surfer.getCurrentTime();
+        // }
 
         this.pauseRegion(); // Stop region if playing
 

@@ -87,7 +87,6 @@
         activeHotkey = hotkeyName;
 
         keyListener = (e: KeyboardEvent) => {
-            console.log('THIS HPAP:ENED 91ru');
             e.preventDefault();
             e.stopPropagation();
 

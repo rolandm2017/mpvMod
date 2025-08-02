@@ -1,9 +1,10 @@
 <script lang="ts">
-    import { MP3PlayerState } from '$lib/utils/mp3PlayerState';
     import { onMount, onDestroy } from 'svelte'; //
     import WaveSurfer from 'wavesurfer.js';
     import RegionsPlugin from 'wavesurfer.js/dist/plugins/regions.js';
     import type { Region } from 'wavesurfer.js/dist/plugins/regions.js';
+
+    import { MP3PlayerState } from '$lib/utils/mp3PlayerState';
 
     /**
      * 1. Avoid re-initializing wavesurfer on every prop change
@@ -57,8 +58,6 @@
     // Case: Main is paused, user clicks "Play region". Main is still paused, region plays from start.
 
     onMount(() => {
-        console.log(mp3.slice(0, 30), 'mp3 mp3 227ru');
-
         const regionsPlugin = RegionsPlugin.create() as any;
 
         wavesurfer = WaveSurfer.create({
@@ -72,6 +71,12 @@
         // Track play/pause events
         wavesurfer.on('play', () => {
             isPlaying = true;
+            if (wavesurfer) {
+                console.log('Current time:', wavesurfer.getCurrentTime());
+                console.log('Duration:', wavesurfer.getDuration());
+            } else {
+                throw new Error('Impossible to get here error');
+            }
         });
 
         wavesurfer.on('pause', () => {
@@ -109,7 +114,6 @@
                 currentAudioFile = null;
             }
             // TODO: How does this effect know to fire when "Mp3" becoems a new MP3?
-            console.log(mp3.slice(0, 30), '89ru');
             currentAudioFile = new Audio(mp3);
             // TODO: How does the mp3 player get ahold of the new audio file?
 
@@ -118,7 +122,6 @@
                 if (!currentAudioFile) throw new Error('Somehow currentAudioFile is null');
                 const audioDurationInSec = currentAudioFile.duration;
                 stateTracker = new MP3PlayerState(audioDurationInSec, wavesurfer);
-                console.log(audioDurationInSec, '95ru');
                 fullFileEndTime = audioDurationInSec;
                 fullFileEndTimeDisplayString = convertToTimeString(audioDurationInSec);
             });
@@ -130,7 +133,6 @@
     function convertToTimeString(duration: number) {
         const minutes = Math.floor(duration / 60);
         const seconds = Math.floor(duration % 60);
-        console.log(duration, minutes, seconds, '104ru');
         return `${minutes}:${seconds.toString().padStart(2, '0')}`;
     }
 
@@ -145,7 +147,6 @@
     });
 
     function togglePlayPause() {
-        console.log(!wavesurfer, isPlaying, '107ru');
         if (!wavesurfer) return;
 
         if (isPlaying) {
@@ -190,7 +191,6 @@
         if (!wavesurfer) return;
 
         const markerIsAtEndOfRegion = regionPosition === regionEnd - regionStart;
-        console.log(regionPosition, regionEnd, markerIsAtEndOfRegion, '175ru');
         if (markerIsAtEndOfRegion) {
             // reset
             resetRegionPlayback();

@@ -191,7 +191,7 @@ describe('Page Structure', () => {
                                 visibleTexts.push($el.text().trim());
                             }
                         });
-                        console.log(visibleTexts, '190ru');
+                        console.log(visibleTexts, '190;
                     });
 
                     cy.get(

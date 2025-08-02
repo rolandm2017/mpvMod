@@ -44,8 +44,7 @@ function createWindow() {
     console.log('Target monitor index:', targetMonitor);
     console.log('Target display bounds:', targetDisplay.bounds);
 
-    const { width: screenWidth, height: screenHeight } =
-        primaryDisplay.workAreaSize;
+    const { width: screenWidth, height: screenHeight } = primaryDisplay.workAreaSize;
 
     const windowWidth = 1400;
     const windowHeight = 1000;
@@ -58,8 +57,8 @@ function createWindow() {
         webPreferences: {
             nodeIntegration: false,
             contextIsolation: true,
-            preload: path.join(__dirname, 'preload.js'),
-        },
+            preload: path.join(__dirname, 'preload.js')
+        }
     });
 
     if (isDev) {
@@ -97,48 +96,26 @@ function connectMPV() {
                     mainWindow.webContents.send('mpv-state', message);
                 } else if (message.type === 'status') {
                     mainWindow.webContents.send('mpv-state', message);
-                } else if (
-                    message.type === 'command_response' &&
-                    message.command === 'take_screenshot'
-                ) {
-                    console.log(message, '90ru');
+                } else if (message.type === 'command_response' && message.command === 'take_screenshot') {
                     if (message.success && message.file_path) {
                         // Now you have the file_path from your Python server
-                        const fullScreenshotPath = path.join(
-                            BACKEND_DIR,
-                            message.file_path
-                        );
+                        const fullScreenshotPath = path.join(BACKEND_DIR, message.file_path);
 
                         // Convert immediately:
-                        loadImageAsDataURL(fullScreenshotPath).then(
-                            (dataURL) => {
-                                // Send to renderer via your preferred method
-                                mainWindow.webContents.send(
-                                    'screenshot-ready',
-                                    dataURL
-                                );
-                            }
-                        );
+                        loadImageAsDataURL(fullScreenshotPath).then((dataURL) => {
+                            // Send to renderer via your preferred method
+                            mainWindow.webContents.send('screenshot-ready', dataURL);
+                        });
                     }
-                } else if (
-                    message.type === 'command_response' &&
-                    message.command === 'end_audio_clip'
-                ) {
-                    console.log(message, '126ru');
+                } else if (message.type === 'command_response' && message.command === 'end_audio_clip') {
                     if (message.success && message.file_path) {
                         // Now you have the file_path from your Python server
-                        const fullMp3Path = path.join(
-                            BACKEND_DIR,
-                            message.file_path
-                        );
+                        const fullMp3Path = path.join(BACKEND_DIR, message.file_path);
 
                         // Convert immediately:
                         loadAudioAsDataURL(fullMp3Path)
                             .then((dataURL) => {
-                                mainWindow.webContents.send(
-                                    'audio-ready',
-                                    dataURL
-                                );
+                                mainWindow.webContents.send('audio-ready', dataURL);
                             })
                             .catch((error) => {
                                 console.error('Failed to load audio:', error);
@@ -238,10 +215,7 @@ ipcMain.handle('request-default-audio', async () => {
 async function loadDefaultSilenceAudio() {
     try {
         const defaultAudioPath = path.join(__dirname, DEFAULT_SILENCE_CLIP);
-        console.log(
-            'Attempting to load default silence audio from:',
-            defaultAudioPath
-        );
+        console.log('Attempting to load default silence audio from:', defaultAudioPath);
 
         // Check if file exists first
         try {
@@ -260,32 +234,20 @@ async function loadDefaultSilenceAudio() {
                 const audioDataURL = await loadAudioAsDataURL(altPath);
 
                 if (mainWindow && !mainWindow.isDestroyed()) {
-                    mainWindow.webContents.send(
-                        'default-audio-ready',
-                        audioDataURL
-                    );
-                    console.log(
-                        'Default silence audio sent to renderer from alt path'
-                    );
+                    mainWindow.webContents.send('default-audio-ready', audioDataURL);
+                    console.log('Default silence audio sent to renderer from alt path');
                 }
                 return;
             } catch (altAccessError) {
-                console.error(
-                    'File not found at alternative path either:',
-                    altPath
-                );
-                throw new Error(
-                    `File not found at ${defaultAudioPath} or ${altPath}`
-                );
+                console.error('File not found at alternative path either:', altPath);
+                throw new Error(`File not found at ${defaultAudioPath} or ${altPath}`);
             }
         }
 
         const audioDataURL = await loadAudioAsDataURL(defaultAudioPath);
 
         if (mainWindow && !mainWindow.isDestroyed()) {
-            console.log(
-                'Sending default audio via IPC channel: default-audio-ready'
-            );
+            console.log('Sending default audio via IPC channel: default-audio-ready');
             console.log('Audio data URL length:', audioDataURL.length);
             mainWindow.webContents.send('default-audio-ready', audioDataURL);
             console.log('Default silence audio sent to renderer');

@@ -99,7 +99,7 @@ export class SegmentMountingTracker {
     }
 
     inspectElements() {
-        console.log([...this.segmentElements.keys()], '89ru');
+        console.log([...this.segmentElements.keys()]);
     }
 }
 

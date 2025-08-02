@@ -214,7 +214,7 @@
 
         // Handle completion
         if (result.isComplete) {
-            console.log(result.isComplete, '12382193213ru');
+            console.log(result.isComplete, '12382193213;
             // highlightAll();
             // console.log('All segments mounted:', mountingTracker.getStats());
 
@@ -258,7 +258,6 @@
 
         const hotkeyString = parts.join(' + ');
 
-        // console.log('THIS IS: ', hotkeyString, '227ru');
         // console.log('WHATS IN HERE', registeredHotkeys);
 
         // Check if this matches a registered hotkey, i.e.

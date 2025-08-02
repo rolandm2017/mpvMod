@@ -37,7 +37,6 @@ function highlightAll(db: SubtitleDatabase, mountingTracker: SegmentMountingTrac
     console.log('Highllighting all!');
     const triedToUse = [];
     for (const subtitle of db.subtitles) {
-        console.log(subtitle.timecode, 'HERE , 23432984324 137ru');
         const el = mountingTracker.getElement(subtitle.timecode);
         triedToUse.push(subtitle.timecode);
         if (el) {
@@ -62,6 +61,5 @@ function highlightAll(db: SubtitleDatabase, mountingTracker: SegmentMountingTrac
     mountingTracker.inspectElements();
 
     // FOUND ELEMENTS IS ZERO
-    console.log(foundElements.length, 'IS IT DONE? 148ru');
     console.log('Tried to use: ', triedToUse);
 }
