@@ -53,13 +53,7 @@ class MPVWebSocketServer:
             # Store current file path for clipping
             try:
                 self.current_file_path = self.player.filename
-                print(self.current_file_path, "Stored for clippping")
-                print(self.current_file_path, "Stored for clippping")
-                print(self.current_file_path, "Stored for clippping")
-                print(self.current_file_path, "Stored for clippping")
-                print(self.current_file_path, "Stored for clippping")
-                print(self.current_file_path, "Stored for clippping")
-                print(self.current_file_path, "Stored for clippping")
+                print(self.current_file_path, "Stored for clipping")
             except:
                 self.current_file_path = None
             

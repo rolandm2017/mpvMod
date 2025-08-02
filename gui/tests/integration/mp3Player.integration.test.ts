@@ -4,7 +4,7 @@
 import { render, fireEvent } from '@testing-library/svelte';
 import { describe, it, expect, beforeEach, vi } from 'vitest';
 
-import WaveSurferPlayer from '../src/lib/components/Wavesurfer.svelte';
+import WaveSurferPlayer from '../../src/lib/components/Wavesurfer.svelte';
 
 import { MP3PlayerState } from '$lib/utils/mp3PlayerState';
 

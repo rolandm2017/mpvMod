@@ -30,6 +30,17 @@ describe('MP3PlayerState', () => {
       expect(state.region.endTime).toBe(20);
       expect(state.region.currentTime).toBe(10); // resets to start
     });
+
+	it('handles multiple boundary changes', () => {
+      player.setRegion(10, 20);
+      player.setRegion(3, 13);
+      player.setRegion(20, 23);
+      const state = player.getState();
+      
+      expect(state.region.startTime).toBe(20);
+      expect(state.region.endTime).toBe(23);
+      expect(state.region.currentTime).toBe(20);
+    });
   });
 
   describe('Main Playback', () => {
