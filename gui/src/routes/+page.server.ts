@@ -2,10 +2,7 @@ import fs from 'fs';
 import path from 'path';
 import type { PageServerLoad } from './$types';
 import type { SubtitleTiming, TimecodeString } from '$lib/types';
-import {
-    parseSrtFileIntoSegments,
-    prebuildLookupArrays,
-} from '$lib/utils/parsing';
+import { parseSrtFileIntoSegments, prebuildLookupArrays } from '$lib/utils/parsing';
 
 export type ParsedSegmentObj = {
     index: number;
@@ -33,13 +30,12 @@ export const load: PageServerLoad = async () => {
     }
 
     // Pre-build lookup arrays for the client
-    const { subtitleTimingToTimecodesMap, subtitleCuePointsInSec, timecodes } =
-        prebuildLookupArrays(segments);
+    const { subtitleTimingToTimecodesMap, subtitleCuePointsInSec, timecodes } = prebuildLookupArrays(segments);
 
     return {
         segments,
         subtitleTimingToTimecodesMap,
         subtitleCuePointsInSec, // is in order already
-        timecodes, // is in order already
+        timecodes // is in order already
     };
 };

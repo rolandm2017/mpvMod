@@ -1,3 +1,3 @@
 export const SUBTITLES = {
-    TOTAL_COUNT: 434,
+    TOTAL_COUNT: 434
 };

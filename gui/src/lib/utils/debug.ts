@@ -1,5 +1,6 @@
 import type { SegmentMountingTracker } from './mountingTracker';
 import type { SubtitleDatabase } from './subtitleDatabase';
+//dsfasdf
 
 function debugHighlightStyles(el: any) {
     console.log('=== DEBUGGING ELEMENT STYLES ===');
@@ -28,10 +29,7 @@ function debugHighlightStyles(el: any) {
     console.log('Element visible:', rect.width > 0 && rect.height > 0);
 }
 
-function highlightAll(
-    db: SubtitleDatabase,
-    mountingTracker: SegmentMountingTracker
-) {
+function highlightAll(db: SubtitleDatabase, mountingTracker: SegmentMountingTracker) {
     const foundElements = [];
     // made as a sanity check
     console.log('Highllighting all!');
@@ -55,10 +53,7 @@ function highlightAll(
                 // debugHighlightStyles(el);
             }
 
-            console.log(
-                'does el have highlighted',
-                el.classList.contains('highlighted')
-            );
+            console.log('does el have highlighted', el.classList.contains('highlighted'));
         } else {
             console.log('No el found', el, subtitle.timecode);
             throw new Error('No el found error');

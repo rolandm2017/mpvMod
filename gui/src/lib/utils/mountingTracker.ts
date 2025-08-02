@@ -40,10 +40,7 @@ export class SegmentMountingTracker {
         // Debug logging to catch duplicates
         if (this.mountedSegments.has(timecode)) {
             console.warn(`Duplicate timecode detected: ${timecode}`);
-            this.duplicateTimecodes.set(
-                timecode,
-                (this.duplicateTimecodes.get(timecode) || 1) + 1
-            );
+            this.duplicateTimecodes.set(timecode, (this.duplicateTimecodes.get(timecode) || 1) + 1);
         }
 
         const timecodeAsSeconds = parseTimecodeToSeconds(timecode);
@@ -59,8 +56,7 @@ export class SegmentMountingTracker {
         this.segmentElements.set(timecode, element);
 
         // Check completion
-        const completedMounting =
-            this.mountedSegments.size === this.expectedCount;
+        const completedMounting = this.mountedSegments.size === this.expectedCount;
 
         if (completedMounting && !this.allSegmentsMounted) {
             this.allSegmentsMounted = true;
@@ -68,7 +64,7 @@ export class SegmentMountingTracker {
         }
 
         return {
-            isComplete: completedMounting,
+            isComplete: completedMounting
         };
     }
 
@@ -86,7 +82,7 @@ export class SegmentMountingTracker {
             expectedCount: this.expectedCount,
             duplicates: Object.fromEntries(this.duplicateTimecodes),
             allMounted: this.allSegmentsMounted,
-            mountedTimecodes: Array.from(this.mountedSegments).sort(),
+            mountedTimecodes: Array.from(this.mountedSegments).sort()
         };
     }
 
@@ -108,9 +104,7 @@ export class SegmentMountingTracker {
 }
 
 // Pure validation function - easily testable
-export function validateTimecodes(
-    segments: Array<{ timecode: string; text: string }>
-) {
+export function validateTimecodes(segments: Array<{ timecode: string; text: string }>) {
     const timecodeFrequency = new Map<string, number>();
     const issues: string[] = [];
 
@@ -119,9 +113,7 @@ export function validateTimecodes(
         timecodeFrequency.set(segment.timecode, count + 1);
 
         if (count > 0) {
-            issues.push(
-                `Duplicate timecode "${segment.timecode}" found at index ${index}`
-            );
+            issues.push(`Duplicate timecode "${segment.timecode}" found at index ${index}`);
         }
 
         if (!segment.timecode || segment.timecode.trim() === '') {
@@ -136,6 +128,6 @@ export function validateTimecodes(
             .filter(([, count]) => count > 1)
             .map(([timecode, count]) => ({ timecode, count })),
         totalSegments: segments.length,
-        uniqueTimecodes: timecodeFrequency.size,
+        uniqueTimecodes: timecodeFrequency.size
     };
 }

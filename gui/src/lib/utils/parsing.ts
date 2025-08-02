@@ -14,9 +14,7 @@ export function parseSrtFileIntoSegments(blocks: string[]) {
                         .slice(2)
                         .join('\n')
                         .replace(/<[^>]*>/g, ''),
-                    startTimeSeconds: parseTimecodeToSeconds(
-                        timecode.split(' --> ')[0]
-                    ), // Parse start time
+                    startTimeSeconds: parseTimecodeToSeconds(timecode.split(' --> ')[0]) // Parse start time
                 };
             }
         })
@@ -25,13 +23,12 @@ export function parseSrtFileIntoSegments(blocks: string[]) {
 }
 
 export function prebuildLookupArrays(segments: ParsedSegmentObj[]) {
-    const subtitleTimingToTimecodesMap: Map<SubtitleTiming, TimecodeString> =
-        new Map(segments.map((s) => [s.startTimeSeconds, s.timecode]));
+    const subtitleTimingToTimecodesMap: Map<SubtitleTiming, TimecodeString> = new Map(
+        segments.map((s) => [s.startTimeSeconds, s.timecode])
+    );
 
     // Don't call this a timestamp!
-    const subtitleCuePointsInSec: SubtitleTiming[] = segments.map(
-        (s) => s.startTimeSeconds
-    );
+    const subtitleCuePointsInSec: SubtitleTiming[] = segments.map((s) => s.startTimeSeconds);
     const timecodes: TimecodeString[] = segments.map((s) => s.timecode);
 
     return { subtitleTimingToTimecodesMap, subtitleCuePointsInSec, timecodes };

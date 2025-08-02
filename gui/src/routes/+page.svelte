@@ -6,20 +6,12 @@
     import SubtitleSegment from '$lib/SubtitleSegment.svelte';
 
     import { parseTimecodeToSeconds } from '$lib/utils/parsing.js';
-    import {
-        Finder,
-        scrollToClosestSubtitle,
-        scrollToLocation,
-    } from '$lib/utils/subtitleScroll.js';
+    import { Finder, scrollToClosestSubtitle, scrollToLocation } from '$lib/utils/subtitleScroll.js';
     import { Subtitle, SubtitleDatabase } from '$lib/utils/subtitleDatabase.js';
     import type { PlayerPosition, TimecodeString } from '$lib/types.js';
     import { SegmentMountingTracker } from '$lib/utils/mountingTracker.js';
     import HotkeyConfig from '$lib/HotkeyConfig.svelte';
-    import type {
-        CommandResponse,
-        HotkeyRegister,
-        MPVStateData,
-    } from '$lib/interfaces.js';
+    import type { CommandResponse, HotkeyRegister, MPVStateData } from '$lib/interfaces.js';
 
     let { data } = $props();
 
@@ -47,7 +39,7 @@
         screenshot: 'loading',
         audioClip: 'loading',
         copySubtitle: 'loading',
-        copyWord: 'loading',
+        copyWord: 'loading'
     });
 
     let failCount = 0;
@@ -112,10 +104,7 @@
             console.log('electronAPI is available, setting up listeners...');
 
             window.electronAPI.onDefaultAudio((audioDataURL) => {
-                console.log(
-                    'Default silence audio received:',
-                    audioDataURL?.substring(0, 50) + '...'
-                );
+                console.log('Default silence audio received:', audioDataURL?.substring(0, 50) + '...');
                 mp3DataUrl = audioDataURL;
             });
 
@@ -149,11 +138,7 @@
                     try {
                         // Throttle to every 500ms
                         highlightPlayerPositionSegment(playerPosition);
-                        scrollToClosestSubtitle(
-                            playerPosition,
-                            db,
-                            scrollContainer
-                        );
+                        scrollToClosestSubtitle(playerPosition, db, scrollContainer);
 
                         lastScrollTime = now;
                     } catch (e) {
@@ -167,17 +152,11 @@
             });
             // Handle screenshot data separately
             window.electronAPI.onScreenshotReady((dataURL: string) => {
-                console.log(
-                    'in the +page.svelte screenshot api:',
-                    dataURL.substring(0, 50) + '...'
-                );
+                console.log('in the +page.svelte screenshot api:', dataURL.substring(0, 50) + '...');
                 screenshotDataUrl = dataURL; // Store the data URL
             });
             window.electronAPI.onAudioReady((dataURL: string) => {
-                console.log(
-                    'in the +page.svelte screenshot api:',
-                    dataURL.substring(0, 50) + '...'
-                );
+                console.log('in the +page.svelte screenshot api:', dataURL.substring(0, 50) + '...');
                 mp3DataUrl = dataURL; // Store the data URL
             });
         } else {
@@ -185,19 +164,13 @@
         }
     });
 
-    function isCommandResponse(
-        data: MPVStateData
-    ): data is MPVStateData & CommandResponse {
+    function isCommandResponse(data: MPVStateData): data is MPVStateData & CommandResponse {
         return data.type === 'command_response' && 'command' in data;
     }
 
     function highlightPlayerPositionSegment(playerPosition: number) {
-        const indexToHighlight = Finder.findSubtitleIndexAtPlayerTime(
-            playerPosition,
-            db.subtitleCuePointsInSec
-        );
-        const timecodeStringOfTargetEl =
-            db.subtitles[indexToHighlight].timecode;
+        const indexToHighlight = Finder.findSubtitleIndexAtPlayerTime(playerPosition, db.subtitleCuePointsInSec);
+        const timecodeStringOfTargetEl = db.subtitles[indexToHighlight].timecode;
         // FIXME: timecode's are not found. the timePositions are never loaded
         // FIXME: the problem is i'm doing "get" for a precise value, when I want fuzzy matching
 
@@ -227,11 +200,7 @@
 
     let callcount = 0;
 
-    export function storeSegmentPosition(
-        timecode: TimecodeString,
-        y: number,
-        element: HTMLDivElement
-    ) {
+    export function storeSegmentPosition(timecode: TimecodeString, y: number, element: HTMLDivElement) {
         if (!mountingTracker) {
             console.error('mountingTracker not initialized');
             return;
@@ -241,12 +210,7 @@
 
         window.callcount = callcount;
 
-        const result = mountingTracker.storeSegmentPosition(
-            timecode,
-            y,
-            element,
-            db
-        );
+        const result = mountingTracker.storeSegmentPosition(timecode, y, element, db);
 
         // Handle completion
         if (result.isComplete) {
@@ -273,7 +237,7 @@
             screenshot: config.screenshot || 'loading',
             audioClip: config.audioClip || 'loading',
             copySubtitle: config.copySubtitle || 'loading',
-            copyWord: config.copyWord || 'loading',
+            copyWord: config.copyWord || 'loading'
         };
         registeredHotkeys = update;
     }
@@ -299,9 +263,7 @@
 
         // Check if this matches a registered hotkey, i.e.
         // the q, " ['Ctrl + Shift + S', 'F5', 'Ctrl + C', 'Ctrl + X'] contains "Ctrl + X" ?""
-        const action = Object.entries(registeredHotkeys).find(
-            ([k, v]) => v === hotkeyString
-        )?.[0];
+        const action = Object.entries(registeredHotkeys).find(([k, v]) => v === hotkeyString)?.[0];
         if (action) {
             e.preventDefault();
             executeAction(action);
@@ -437,7 +399,7 @@
             screenshot: 'Not set',
             audioClip: 'Not set',
             copySubtitle: 'Not set',
-            copyWord: 'Not set',
+            copyWord: 'Not set'
         };
 
         if (window.electronAPI?.saveHotkeys) {
@@ -454,11 +416,7 @@
     <div class="container">
         <div class="subtitle-panel">
             <div class="subtitle-header">Subtitles</div>
-            <div
-                class="subtitle-content"
-                data-testid="scroll-container"
-                bind:this={scrollContainer}
-            >
+            <div class="subtitle-content" data-testid="scroll-container" bind:this={scrollContainer}>
                 {#if data.segments.length > 0}
                     {#each data.segments as segment}
                         <SubtitleSegment
@@ -520,8 +478,7 @@
     .container {
         display: flex;
         height: 100vh;
-        font-family:
-            -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
     }
 
     .subtitle-panel {

@@ -1,8 +1,4 @@
-import type {
-    PlayerPosition,
-    SubtitleTiming,
-    TimecodeString,
-} from '$lib/types';
+import type { PlayerPosition, SubtitleTiming, TimecodeString } from '$lib/types';
 import { SubtitleHeights } from './subtitleHeights';
 import { Finder } from './subtitleScroll';
 
@@ -53,9 +49,7 @@ export class SubtitleDatabase {
     // 		- Subtitle -> Player position
 
     getHeightFromTimecode(timecode: TimecodeString) {
-        const timecodeAsSeconds = parseTimecodeToSeconds(
-            timecode.split(' --> ')[0]
-        );
+        const timecodeAsSeconds = parseTimecodeToSeconds(timecode.split(' --> ')[0]);
         return this.subtitleHeights.getHeightInternal(timecodeAsSeconds);
     }
 
@@ -71,10 +65,7 @@ export class SubtitleDatabase {
     }
 
     getTimecodeForPlayerPosition(playerPosition: PlayerPosition) {
-        const index = Finder.findSubtitleIndexAtPlayerTime(
-            playerPosition,
-            this.subtitleCuePointsInSec
-        );
+        const index = Finder.findSubtitleIndexAtPlayerTime(playerPosition, this.subtitleCuePointsInSec);
         return this.timecodes[index];
     }
 
@@ -95,11 +86,7 @@ export class Subtitle {
     timecodeInSeconds: SubtitleTiming;
     height: number = 0;
 
-    constructor(
-        text: string,
-        timecode: TimecodeString,
-        timecodeInSeconds: SubtitleTiming
-    ) {
+    constructor(text: string, timecode: TimecodeString, timecodeInSeconds: SubtitleTiming) {
         this.text = text;
         this.timecode = timecode;
         this.timecodeInSeconds = timecodeInSeconds;

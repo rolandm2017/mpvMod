@@ -11,7 +11,7 @@
         screenshot: 'Not set',
         audioClip: 'Not set',
         copySubtitle: 'Not set',
-        copyWord: 'Not set',
+        copyWord: 'Not set'
     });
 
     // FIXME: Should NOT be able to bind the same key twice!
@@ -28,25 +28,23 @@
         {
             name: 'copyWord',
             title: 'Copy Target Word',
-            description: 'Copy selected word/phrase to Target word field',
+            description: 'Copy selected word/phrase to Target word field'
         },
         {
             name: 'copySubtitle',
             title: 'Copy Selected Subtitle',
-            description:
-                'Copy selected text from subtitles to Example sentence field',
+            description: 'Copy selected text from subtitles to Example sentence field'
         },
         {
             name: 'screenshot',
             title: 'Take Screenshot',
-            description: 'Capture current MPV frame to Image field',
+            description: 'Capture current MPV frame to Image field'
         },
         {
             name: 'audioClip',
             title: 'Start/Stop Audio Clip',
-            description:
-                'Record audio from current position to Sentence audio field',
-        },
+            description: 'Record audio from current position to Sentence audio field'
+        }
     ];
 
     // TODO-LATER: Add setup for automatic ChatGPT prompting based on sentence, word.
@@ -160,9 +158,7 @@
     <div class="flex-row">
         <div class="config-header">
             <h2>Hotkey Configuration</h2>
-            <p>
-                Click on a hotkey field and press your desired key combination
-            </p>
+            <p>Click on a hotkey field and press your desired key combination</p>
         </div>
         <div>
             <button onclick={() => toggleOptions()}>
@@ -188,9 +184,7 @@
     {#if activeHotkey}
         <div class="capture-overlay">
             <div class="capture-message">
-                Press your desired key combination for <strong
-                    >{activeHotkey}</strong
-                >
+                Press your desired key combination for <strong>{activeHotkey}</strong>
                 <br />
                 <small>Press Escape to cancel</small>
             </div>
@@ -203,8 +197,7 @@
         background: #2a2a2a;
         color: #e0e0e0;
         min-height: 100vh;
-        font-family:
-            -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
         position: relative;
     }
 

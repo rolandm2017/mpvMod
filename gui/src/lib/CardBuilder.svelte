@@ -3,14 +3,7 @@
     import Wavesurfer from './components/Wavesurfer.svelte';
 
     // Props - data passed in from parent
-    let {
-        exampleSentenceField,
-        targetWordField,
-        screenshotDataUrl,
-        mp3snippet,
-        showOptions,
-        toggleOptions,
-    } = $props();
+    let { exampleSentenceField, targetWordField, screenshotDataUrl, mp3snippet, showOptions, toggleOptions } = $props();
 
     // Watch for changes in screenshotDataUrl
     $effect(() => {
@@ -55,9 +48,7 @@
     }
 
     // Function to handle focus - ensures the field is focusable
-    function handleImageFieldFocus(
-        event: FocusEvent & { currentTarget: EventTarget & HTMLDivElement }
-    ) {
+    function handleImageFieldFocus(event: FocusEvent & { currentTarget: EventTarget & HTMLDivElement }) {
         console.log('Image field focused');
     }
 </script>
@@ -85,20 +76,10 @@
         <h3>Text fields</h3>
         <div class="input-group">
             <label for="video-url">Word</label>
-            <input
-                id="word-field"
-                type="text"
-                bind:value={targetWordField}
-                placeholder="Target word"
-            />
+            <input id="word-field" type="text" bind:value={targetWordField} placeholder="Target word" />
 
             <label for="video-url">Example sentence</label>
-            <input
-                id="example-sentence"
-                type="text"
-                bind:value={exampleSentenceField}
-                placeholder="Subtitle snippet"
-            />
+            <input id="example-sentence" type="text" bind:value={exampleSentenceField} placeholder="Subtitle snippet" />
 
             <label for="video-url">Native translation</label>
             <input
@@ -131,11 +112,7 @@
                 aria-label="Image field - press backspace to delete image"
             >
                 {#if screenshotDataUrl}
-                    <img
-                        class="take-full-container"
-                        src={screenshotDataUrl}
-                        alt="MPV screenshot for Anki flashcard"
-                    />
+                    <img class="take-full-container" src={screenshotDataUrl} alt="MPV screenshot for Anki flashcard" />
                 {:else}
                     <div class="image-placeholder">No image</div>
                 {/if}
@@ -147,16 +124,10 @@
         <h3>Finalize</h3>
 
         <div class="button-group">
-            <button class="success-btn" onclick={handleExportSubtitles}>
-                Export Card
-            </button>
-            <button class="danger-btn" onclick={handleClearSubtitles}>
-                Clear All
-            </button>
+            <button class="success-btn" onclick={handleExportSubtitles}> Export Card </button>
+            <button class="danger-btn" onclick={handleClearSubtitles}> Clear All </button>
             <!-- TODO: Show confirmation dialogue for "Clear all?" since it's destructive -->
-            <button class="secondary-btn" onclick={handleSearchSubtitles}>
-                Shutdown
-            </button>
+            <button class="secondary-btn" onclick={handleSearchSubtitles}> Shutdown </button>
         </div>
     </div>
 </div>

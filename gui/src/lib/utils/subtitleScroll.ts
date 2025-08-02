@@ -1,8 +1,4 @@
-import type {
-    PlayerPosition,
-    SubtitleTiming,
-    TimecodeString,
-} from '$lib/types';
+import type { PlayerPosition, SubtitleTiming, TimecodeString } from '$lib/types';
 import type { SubtitleDatabase } from './subtitleDatabase';
 import type { SubtitleHeights } from './subtitleHeights';
 
@@ -39,10 +35,7 @@ export class Finder {
         return result === -1 ? 0 : subtitleCuePointsArr[result];
     }
 
-    static findSubtitleIndexAtPlayerTime(
-        playerPosition: PlayerPosition,
-        cuePointsInSecArr: SubtitleTiming[]
-    ): number {
+    static findSubtitleIndexAtPlayerTime(playerPosition: PlayerPosition, cuePointsInSecArr: SubtitleTiming[]): number {
         /**
          * Used to take the position of a subtitle cue point in sec and find the most relevant subtitle.
          *
@@ -87,11 +80,10 @@ export function scrollToClosestSubtitle(
     // PLAYER POSITION -> ??? ->
     // ?? -> SubtitleTiming
     // SubtitleTiming -> Height
-    const corresponding: SubtitleTiming =
-        Finder.findPlayerTimeForSubtitleTiming(
-            playerPosition,
-            db.subtitleCuePointsInSec
-        );
+    const corresponding: SubtitleTiming = Finder.findPlayerTimeForSubtitleTiming(
+        playerPosition,
+        db.subtitleCuePointsInSec
+    );
     const heightForSub = db.getHeightFromPlayerPosition(corresponding) ?? 0;
 
     // WANT: viewport at position of related subtitle
@@ -99,12 +91,9 @@ export function scrollToClosestSubtitle(
     return heightForSub; // TODO: Try "corresponding", try storing parseTimecodeToSeconds(timecode)
 }
 
-export function scrollToLocation(
-    location: number,
-    scrollContainer: HTMLDivElement
-) {
+export function scrollToLocation(location: number, scrollContainer: HTMLDivElement) {
     scrollContainer.scrollTo({
         top: location,
-        behavior: 'auto', // "auto", or "smooth"
+        behavior: 'auto' // "auto", or "smooth"
     });
 }

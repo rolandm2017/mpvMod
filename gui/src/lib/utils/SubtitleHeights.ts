@@ -27,8 +27,7 @@ export class SubtitleHeights {
         const index = this.entries.findIndex(([t]) => t >= time);
 
         const newEntryWouldBeHighestValue = index === -1;
-        const preciseTimeAlreadyExists =
-            index !== -1 && this.entries[index][0] === time;
+        const preciseTimeAlreadyExists = index !== -1 && this.entries[index][0] === time;
         if (newEntryWouldBeHighestValue) {
             this.entries.push([time, height]);
         } else if (preciseTimeAlreadyExists) {
@@ -62,8 +61,7 @@ export class SubtitleHeights {
 
         // Interpolate between right and left
         if (right < 0) return this.entries[0][1]; // before first
-        if (left >= this.entries.length)
-            return this.entries[this.entries.length - 1][1]; // after last
+        if (left >= this.entries.length) return this.entries[this.entries.length - 1][1]; // after last
 
         const [t1, h1] = this.entries[right];
         const [t2, h2] = this.entries[left];

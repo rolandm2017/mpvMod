@@ -15,8 +15,8 @@
         description,
         value,
         isActive,
-        onCapture,
-        onClear,
+        onCapture, // hi
+        onClear
     }: Props = $props();
 </script>
 
@@ -35,13 +35,7 @@
             {isActive ? 'Press a key...' : value}
         </button>
         {#if value !== 'Not set'}
-            <button
-                class="clear-btn"
-                onclick={() => onClear(name)}
-                title="Clear hotkey"
-            >
-                ×
-            </button>
+            <button class="clear-btn" onclick={() => onClear(name)} title="Clear hotkey"> × </button>
         {:else}
             <div class="spacer-div"></div>
         {/if}

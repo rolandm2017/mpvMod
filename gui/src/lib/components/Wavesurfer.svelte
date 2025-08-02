@@ -169,8 +169,7 @@
             // Set up auto-stop at region end
             const checkTime = () => {
                 // stop
-                const timeExceedsEndOfClippingRegion =
-                    wavesurfer && wavesurfer.getCurrentTime() >= regionEnd;
+                const timeExceedsEndOfClippingRegion = wavesurfer && wavesurfer.getCurrentTime() >= regionEnd;
                 if (wavesurfer && timeExceedsEndOfClippingRegion) {
                     wavesurfer.pause();
                     playbackPosition = regionEnd;
