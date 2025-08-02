@@ -22,6 +22,7 @@ export class SubtitleHeights {
     setHeightInternal(time: SubtitleTiming, height: number) {
         /**
          *  Insert in sorted order or update existing
+         *      - "setHeightInternal" -> only use it inside of SubtitleDatabase
          * */
         // Find the index where the first entry's time is greater than OR EQUAL TO the input time
         const index = this.entries.findIndex(([t]) => t >= time);
@@ -42,6 +43,9 @@ export class SubtitleHeights {
     // Time = Timecode as seconds
 
     getHeightInternal(time: SubtitleTiming): number {
+        /**
+         * - "getHeightInternal" -> only use it inside of SubtitleDatabase
+         */
         if (this.entries.length === 0) return 0;
 
         // Binary search for insertion point
