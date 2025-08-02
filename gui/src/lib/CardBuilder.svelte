@@ -27,6 +27,7 @@
     }
 
     function handleSearchSubtitles() {
+        // TODO: What on earth is this for?
         // console.log('Searching for:', searchQuery);
         // Add your search logic here
     }
