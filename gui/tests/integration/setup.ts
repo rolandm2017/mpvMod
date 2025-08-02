@@ -9,6 +9,10 @@ vi.stubGlobal('app', {
     preloadData: () => {}
 });
 
+// Force client-side environment
+vi.stubGlobal('window', globalThis);
+vi.stubGlobal('document', globalThis.document);
+
 // Mock AudioContext class
 class MockAudioContext {
     state = 'running';
@@ -114,6 +118,7 @@ class MockAudio {
 vi.stubGlobal('Audio', MockAudio);
 
 // Mock Canvas API
+// @ts-ignore  // here, replace this line
 global.HTMLCanvasElement.prototype.getContext = function (contextType) {
     if (contextType === '2d') {
         return {
@@ -164,7 +169,9 @@ global.URL.revokeObjectURL = () => {};
 
 // Mock ResizeObserver
 global.ResizeObserver = class MockResizeObserver {
+    // @ts-ignore
     constructor(callback) {
+        // @ts-ignore
         this.callback = callback;
     }
 
@@ -174,8 +181,11 @@ global.ResizeObserver = class MockResizeObserver {
 };
 
 // Mock IntersectionObserver
+// @ts-ignore
 global.IntersectionObserver = class MockIntersectionObserver {
+    // @ts-ignore
     constructor(callback) {
+        // @ts-ignore
         this.callback = callback;
     }
 

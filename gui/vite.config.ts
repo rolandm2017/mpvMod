@@ -40,7 +40,8 @@ export default defineConfig({
                         hot: false,
                         compilerOptions: {
                             dev: false
-                        }
+                        },
+                        emitCss: false
                     })
                 ],
                 resolve: {
@@ -52,6 +53,7 @@ export default defineConfig({
                 define: {
                     'import.meta.env.SSR': false,
                     'import.meta.env.DEV': false,
+                    'import.meta.vitest': true,
                     global: 'globalThis'
                 }
             }
