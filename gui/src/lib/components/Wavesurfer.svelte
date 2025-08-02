@@ -32,7 +32,7 @@
     let regionDisplay: Region | null = null;
 
     // mp3 is a dataUrl formed in the Electron main.js
-    const { mp3 } = $props();
+    const { mp3, onPlayEvent = null, onPauseEvent = null } = $props();
 
     let currentAudioFile: HTMLAudioElement | null = $state(null);
 
@@ -72,8 +72,9 @@
         wavesurfer.on('play', () => {
             isPlaying = true;
             if (wavesurfer) {
+                console.log('▶️ play event: ');
                 console.log('Current time:', wavesurfer.getCurrentTime());
-                console.log('Duration:', wavesurfer.getDuration());
+                onPlayEvent?.(wavesurfer.getCurrentTime()); // Report to test
             } else {
                 throw new Error('Impossible to get here error');
             }
@@ -81,6 +82,13 @@
 
         wavesurfer.on('pause', () => {
             isPlaying = false;
+            if (wavesurfer) {
+                console.log('Pausing: ');
+                console.log('Current time:', wavesurfer.getCurrentTime());
+                onPauseEvent?.(wavesurfer.getCurrentTime()); // Report to test
+            } else {
+                throw new Error('Impossible to get here error');
+            }
         });
 
         wavesurfer.on('finish', () => {
