@@ -36,11 +36,17 @@
 
     let currentAudioFile: HTMLAudioElement | null = $state(null);
 
-    // Track playing state
-    let isPlaying = $state(false);
-    let playbackPosition = $state(0);
+    // "Manual" Track playing state
+    // let isPlaying = $state(false);
+    // let playbackPosition = $state(0);
+    // let regionPosition = $state(0); // Position within the region (0 = region start)
+    // let isRegionPlaying = $state(false); // Separate state for region playback
 
-    let stateTracker: MP3PlayerState | null = $state(null);
+    let stateTracker = $state<MP3PlayerState | null>(null);
+    // Derived from stateTracker
+    let currentState = $derived(stateTracker?.getState() ?? null);
+    let isPlaying = $derived(currentState?.main.isPlaying ?? false);
+    let isRegionPlaying = $derived(currentState?.region.isPlaying ?? false);
 
     // let fullFileStartTime = $state('0:00');
     // let fullFileEndTime = $state('0:00');
@@ -70,7 +76,6 @@
 
         // Track play/pause events
         wavesurfer.on('play', () => {
-            isPlaying = true;
             if (wavesurfer) {
                 console.log('▶️ play event: ');
                 console.log('Current time:', wavesurfer.getCurrentTime());
@@ -81,7 +86,6 @@
         });
 
         wavesurfer.on('pause', () => {
-            isPlaying = false;
             if (wavesurfer) {
                 console.log('Pausing: ');
                 console.log('Current time:', wavesurfer.getCurrentTime());
@@ -92,7 +96,6 @@
         });
 
         wavesurfer.on('finish', () => {
-            isPlaying = false;
             stateTracker?.handleEnded();
         });
 
@@ -155,103 +158,31 @@
     });
 
     function togglePlayPause() {
-        if (!wavesurfer) return;
-
-        if (isPlaying) {
-            playbackPosition = wavesurfer.getCurrentTime();
-            wavesurfer.pause();
+        if (!stateTracker) throw new Error('Null state tracker');
+        if (stateTracker.getState().main.isPlaying) {
+            stateTracker.pauseMain();
         } else {
-            // Resume from stored position (or region start if at beginning)
-            const startFrom = playbackPosition;
-            wavesurfer.seekTo(startFrom / fullFileEndTime);
-            wavesurfer.play();
-
-            // Set up auto-stop at region end
-            const checkTime = () => {
-                // stop
-                const timeExceedsEndOfClippingRegion = wavesurfer && wavesurfer.getCurrentTime() >= regionEnd;
-                if (wavesurfer && timeExceedsEndOfClippingRegion) {
-                    wavesurfer.pause();
-                    playbackPosition = regionEnd;
-                } else if (isPlaying) {
-                    if (!wavesurfer) throw new Error('Wavesurfer was null in checkTime');
-                    if (!stateTracker) throw new Error('Null state tracker');
-                    playbackPosition = wavesurfer.getCurrentTime(); // Update position continuously
-                    stateTracker.handleTimeUpdate(playbackPosition);
-                    requestAnimationFrame(checkTime);
-                }
-            };
-
-            if (regionEnd > regionStart) {
-                requestAnimationFrame(checkTime);
-            }
+            stateTracker.playMain();
         }
     }
 
-    let regionPosition = $state(0); // Position within the region (0 = region start)
-    let isRegionPlaying = $state(false); // Separate state for region playback
-
-    function resetRegionPlayback() {
-        regionPosition = 0;
-    }
+    // function resetRegionPlayback() {
+    //     regionPosition = 0;
+    // }
 
     function playPauseInRegion() {
-        if (!wavesurfer) return;
-
-        const markerIsAtEndOfRegion = regionPosition === regionEnd - regionStart;
-        if (markerIsAtEndOfRegion) {
-            // reset
-            resetRegionPlayback();
-        }
-
-        if (isRegionPlaying) {
-            // Pause and store current position within region
-            const currentTime = wavesurfer.getCurrentTime();
-            regionPosition = currentTime - regionStart; // Store offset from region start
-            playbackPosition = regionPosition + regionStart;
-
-            wavesurfer.pause();
-            isRegionPlaying = false;
+        if (!stateTracker) throw new Error('Null state tracker');
+        if (stateTracker.getState().region.isPlaying) {
+            stateTracker.pauseRegion();
         } else {
-            // Play from stored region position
-            const actualPosition = regionStart + regionPosition;
-            wavesurfer.seekTo(actualPosition / fullFileEndTime);
-            wavesurfer.play();
-            isRegionPlaying = true;
-
-            // Monitor playback within region bounds
-            const checkTime = () => {
-                if (!isRegionPlaying) return; // Stop monitoring if paused
-                if (!wavesurfer) throw new Error('Wavesurfer was null in checkTime');
-                if (!stateTracker) throw new Error('Null state tracker');
-
-                const currentTime = wavesurfer.getCurrentTime();
-
-                if (currentTime >= regionEnd) {
-                    wavesurfer.pause();
-                    regionPosition = regionEnd - regionStart; // At end of region
-                    isRegionPlaying = false;
-                } else {
-                    regionPosition = currentTime - regionStart; // Update region position
-                    stateTracker.handleTimeUpdate(regionPosition);
-                    requestAnimationFrame(checkTime);
-                }
-            };
-
-            requestAnimationFrame(checkTime);
+            stateTracker.playRegion();
         }
     }
 
     function nudgeStart(direction: number) {
-        console.log('Nudge Start: ', direction);
-        // to nudge earlier, call w/ a negative number
-        const endResult = regionStart + direction;
-        const yieldsNegativeDuration = endResult >= regionEnd;
-        if (yieldsNegativeDuration) {
-            return;
-        }
         regionStart += direction;
         updateRegion(regionStart, regionEnd);
+        stateTracker?.setRegion(regionStart, regionEnd); // ADD THIS
     }
 
     function nudgeEnd(direction: number) {
@@ -318,7 +249,7 @@
         {isPlaying ? '⏸️ Pause' : '▶️ Play Audio'}
     </button>
     <button class="play-btn sml-space-below" onclick={playPauseInRegion}>
-        {isPlaying ? '⏸️ Pause' : '▶️ Play Region'}
+        {isRegionPlaying ? '⏸️ Pause' : '▶️ Play Region'}
     </button>
 </div>
 
