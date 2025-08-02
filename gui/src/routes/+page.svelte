@@ -214,7 +214,6 @@
 
         // Handle completion
         if (result.isComplete) {
-            console.log(result.isComplete, '12382193213;
             // highlightAll();
             // console.log('All segments mounted:', mountingTracker.getStats());
 
