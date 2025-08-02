@@ -98,15 +98,6 @@
         };
     });
 
-    function updateRegion(newStart: number, newEnd: number) {
-        if (regionDisplay) {
-            regionDisplay.setOptions({
-                start: newStart,
-                end: newEnd
-            });
-        }
-    }
-
     //d fsdfds
     let previousMp3 = $state(null);
 
@@ -209,7 +200,7 @@
             // Pause and store current position within region
             const currentTime = wavesurfer.getCurrentTime();
             regionPosition = currentTime - regionStart; // Store offset from region start
-            playbackPosition = regionPosition + regionStart
+            playbackPosition = regionPosition + regionStart;
 
             wavesurfer.pause();
             isRegionPlaying = false;
@@ -267,6 +258,15 @@
         updateRegion(regionStart, regionEnd);
     }
 
+    function updateRegion(newStart: number, newEnd: number) {
+        if (regionDisplay) {
+            regionDisplay.setOptions({
+                start: newStart,
+                end: newEnd
+            });
+        }
+    }
+
     // SO we're gonna:
     //      - store everything as seconds. 2 min -> 120 seconds. 2:05 -> 125 seconds
     //      - convert seconds -> mm:ss for display purposes
@@ -275,6 +275,7 @@
 </script>
 
 <div bind:this={container} class="w-full"></div>
+
 <div class="push-items-right">
     <span>Length: {convertToTimeString(fullFileEndTime)}</span>
 </div>
