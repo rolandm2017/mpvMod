@@ -5,6 +5,7 @@ import path from 'path';
 
 // vite.config.js
 
+//FIXME: Should integration project use sveltekit? just "plugins: [sveltekit()]"
 export default defineConfig({
     plugins: [sveltekit()],
     resolve: {
@@ -45,6 +46,7 @@ export default defineConfig({
                     })
                 ],
                 resolve: {
+                    conditions: ['browser'], // ⭐ crucial!
                     alias: {
                         $lib: path.resolve('./src/lib'),
                         $app: path.resolve('./node_modules/@sveltejs/kit/src/runtime/app')
