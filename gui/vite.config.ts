@@ -20,7 +20,7 @@ export default defineConfig({
                     environment: 'node',
                     globals: true,
                     include: ['tests/**/*.{test,spec}.{js,ts}'],
-                    exclude: ['tests/integration/**']
+                    exclude: ['tests/integration/**', 'tests/components/**']
                 },
                 resolve: {
                     alias: {
@@ -28,6 +28,38 @@ export default defineConfig({
                     }
                 }
             },
+            {
+                test: {
+                    name: 'components',
+                    environment: 'jsdom',
+                    globals: true,
+                    include: ['tests/components/**/*.{test,spec}.{js,ts}'],
+                    setupFiles: ['./tests/components/setup.ts'] // reuse the same setup
+                },
+                plugins: [
+                    svelte({
+                        hot: false,
+                        compilerOptions: {
+                            dev: false
+                        },
+                        emitCss: false
+                    })
+                ],
+                resolve: {
+                    conditions: ['browser'],
+                    alias: {
+                        $lib: path.resolve('./src/lib'),
+                        $app: path.resolve('./node_modules/@sveltejs/kit/src/runtime/app')
+                    }
+                },
+                define: {
+                    'import.meta.env.SSR': false,
+                    'import.meta.env.DEV': false,
+                    'import.meta.vitest': true,
+                    global: 'globalThis'
+                }
+            },
+
             {
                 test: {
                     name: 'integration',

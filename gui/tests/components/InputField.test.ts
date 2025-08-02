@@ -6,19 +6,26 @@ describe('InputField', () => {
     it('accepts an id', () => {
         render(InputField, { props: { id: 'foo', label: 'sentence', value: undefined, placeholder: 'Sentence here' } });
 
-        const labelSegment = screen.getByRole('label');
-        expect(labelSegment).toHaveAttribute('id', 'foo');
+        const inputField = screen.getByRole('textbox');
+        expect(inputField).toHaveAttribute('id', 'foo');
     });
+
     it('has a label', () => {
         render(InputField, { props: { id: 'foo', label: 'sentence', value: undefined, placeholder: 'Sentence here' } });
 
-        const labelSegment = screen.getByRole('label');
-        expect(labelSegment).toHaveTextContent('sentence');
+        // Option 1: Find by text content
+        const labelElement = screen.getByText('sentence');
+        expect(labelElement).toBeInTheDocument();
+
+        // Option 2: Verify the input has the accessible name
+        const inputField = screen.getByLabelText('sentence');
+        expect(inputField).toBeInTheDocument();
     });
+
     it('contains the right text, right place', () => {
         render(InputField, { props: { id: 'foo', label: 'sentence', value: undefined, placeholder: 'Sentence here' } });
 
-        const inputFieldItself = screen.getByPlaceholderText('Sentence here');
-        expect(inputFieldItself).toHaveAttribute('id', 'foo');
+        const inputField = screen.getByPlaceholderText('Sentence here');
+        expect(inputField).toHaveAttribute('id', 'foo');
     });
 });
