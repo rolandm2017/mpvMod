@@ -2,6 +2,8 @@
 <script lang="ts">
     import Wavesurfer from './components/Wavesurfer.svelte';
 
+    import InputField from './components/InputField.svelte';
+
     // Props - data passed in from parent
     let { exampleSentenceField, targetWordField, screenshotDataUrl, mp3snippet, showOptions, toggleOptions } = $props();
 
@@ -75,16 +77,18 @@
     <div class="control-section">
         <h3>Text fields</h3>
         <div class="input-group">
-            <label for="video-url">Word</label>
-            <input id="word-field" type="text" bind:value={targetWordField} placeholder="Target word" />
+            <InputField id="word-field" label="Word" bind:value={targetWordField} placeholder="Target word" />
 
-            <label for="video-url">Example sentence</label>
-            <input id="example-sentence" type="text" bind:value={exampleSentenceField} placeholder="Subtitle snippet" />
+            <InputField
+                id="example-sentence"
+                label="Example sentence"
+                bind:value={exampleSentenceField}
+                placeholder="Subtitle snippet"
+            />
 
-            <label for="video-url">Native translation</label>
-            <input
+            <InputField
                 id="NL-translation"
-                type="text"
+                label="Native translation"
                 bind:value={nativeLangTranslation}
                 placeholder="Translated version"
             />
@@ -298,32 +302,6 @@
 
     .input-group {
         margin-bottom: 15px;
-    }
-
-    .input-group label {
-        display: block;
-        margin-bottom: 5px;
-        font-weight: 500;
-        color: #495057;
-        font-size: 0.9em;
-    }
-
-    .input-group input {
-        width: 100%;
-        padding: 10px 12px;
-        border: 1px solid #ced4da;
-        border-radius: 6px;
-        font-size: 14px;
-        background: white;
-        transition:
-            border-color 0.15s ease-in-out,
-            box-shadow 0.15s ease-in-out;
-    }
-
-    .input-group input:focus {
-        outline: none;
-        border-color: #80bdff;
-        box-shadow: 0 0 0 0.2rem rgba(0, 123, 255, 0.25);
     }
 
     .button-group {
