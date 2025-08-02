@@ -162,7 +162,7 @@
             wavesurfer.pause();
         } else {
             // Resume from stored position (or region start if at beginning)
-            const startFrom = playbackPosition > regionStart ? playbackPosition : regionStart;
+            const startFrom = playbackPosition;
             wavesurfer.seekTo(startFrom / fullFileEndTime);
             wavesurfer.play();
 
@@ -209,6 +209,7 @@
             // Pause and store current position within region
             const currentTime = wavesurfer.getCurrentTime();
             regionPosition = currentTime - regionStart; // Store offset from region start
+            playbackPosition = regionPosition + regionStart
 
             wavesurfer.pause();
             isRegionPlaying = false;
