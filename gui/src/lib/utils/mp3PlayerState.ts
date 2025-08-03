@@ -70,9 +70,9 @@ export class MP3PlayerState {
         // }
 
         // If region is playing, inherit its current position
-        // if (this.activeContext === 'region') {
-        //     this.main.currentTime = this.surfer.getCurrentTime();
-        // }
+        if (this.activeContext === "region") {
+            this.main.currentTime = this.surfer.getCurrentTime();
+        }
 
         this.pauseRegion(); // Stop region if playing
 
@@ -117,7 +117,7 @@ export class MP3PlayerState {
         this.region.isPlaying = false;
         const currentTime = this.surfer.getCurrentTime();
         this.region.currentTime = currentTime;
-        this.activeContext = null;
+        this.activeContext = "region"; // still
 
         // update main context
         this.main.startTime = currentTime;
