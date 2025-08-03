@@ -59,14 +59,14 @@ export class MP3PlayerState {
     // Main playback controls
     playMain() {
         // Only inherit if main hasn't established its own position
-        if (this.activeContext === 'region' && this.main.currentTime === 0) {
-            this.main.currentTime = this.surfer.getCurrentTime();
-        }
-
-        // // If region is playing, inherit its current position
-        // if (this.activeContext === 'region') {
+        // if (this.activeContext === 'region' && this.main.currentTime === 0) {
         //     this.main.currentTime = this.surfer.getCurrentTime();
         // }
+
+        // If region is playing, inherit its current position
+        if (this.activeContext === 'region') {
+            this.main.currentTime = this.surfer.getCurrentTime();
+        }
 
         this.pauseRegion(); // Stop region if playing
 
@@ -89,6 +89,7 @@ export class MP3PlayerState {
 
     // Region playback controls
     playRegion() {
+        console.log(this.region, 'THIS.region');
         this.pauseMain(); // Stop main if playing
 
         if (this.region.isPlaying) return; // Already playing
@@ -154,6 +155,10 @@ export class MP3PlayerState {
             this.region.currentTime = this.region.startTime; // Reset to region start
         }
         this.activeContext = null;
+    }
+
+    acknowledgeEvent(eventTime: number) {
+        // used to check that play/pause occurred as expected
     }
 
     // Get current playhead position for UI display

@@ -76,19 +76,23 @@
 
         // Track play/pause events
         wavesurfer.on('play', () => {
-            if (wavesurfer) {
+            if (wavesurfer && stateTracker) {
                 console.log('▶️ play event: ');
                 console.log('Current time:', wavesurfer.getCurrentTime());
-                onPlayEvent?.(wavesurfer.getCurrentTime()); // Report to test
+                const playEventTime = wavesurfer.getCurrentTime();
+                stateTracker.acknowledgeEvent(playEventTime);
+                onPlayEvent?.(playEventTime); // Report to test
             } else {
                 throw new Error('Impossible to get here error');
             }
         });
 
         wavesurfer.on('pause', () => {
-            if (wavesurfer) {
+            if (wavesurfer && stateTracker) {
                 console.log('Pausing: ');
                 console.log('Current time:', wavesurfer.getCurrentTime());
+                const pauseEventTime = wavesurfer.getCurrentTime();
+                stateTracker.acknowledgeEvent(pauseEventTime);
                 onPauseEvent?.(wavesurfer.getCurrentTime()); // Report to test
             } else {
                 throw new Error('Impossible to get here error');
@@ -101,6 +105,7 @@
 
         // Add regions after initialization
         wavesurfer.on('ready', () => {
+            stateTracker?.setRegion(regionStart, regionEnd);
             regionDisplay = regionsPlugin.addRegion({
                 start: regionStart,
                 end: regionEnd,
