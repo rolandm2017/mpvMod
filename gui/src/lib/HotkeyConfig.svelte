@@ -4,7 +4,7 @@
     import type { HotkeyRegister } from "./interfaces";
     import HotkeyItem from "./components/HotkeyItem.svelte";
 
-    let { showOptions, toggleOptions, updateMainPageHotkeys } = $props();
+    let { showOptions, toggleOptions, updateMainPageHotkeys, switchPageType } = $props();
 
     // Hotkey configuration state
     let hotkeys: HotkeyRegister = $state({
@@ -158,6 +158,9 @@
         <div class="config-header">
             <h2>Hotkey Configuration</h2>
             <p>Click on a hotkey field and press your desired key combination</p>
+        </div>
+        <div>
+            <button onclick={() => switchPageType()}> Field Mappings </button>
         </div>
         <div>
             <button onclick={() => toggleOptions()}>

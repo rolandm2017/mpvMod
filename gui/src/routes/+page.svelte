@@ -12,6 +12,7 @@
     import { SegmentMountingTracker } from "$lib/utils/mountingTracker.js";
     import HotkeyConfig from "$lib/HotkeyConfig.svelte";
     import type { CommandResponse, HotkeyRegister, MPVStateData } from "$lib/interfaces.js";
+    import FieldMappingConfig from "$lib/FieldMappingConfig.svelte";
 
     let { data } = $props();
 
@@ -19,6 +20,7 @@
     let scrollContainer: HTMLDivElement;
 
     let showOptions = $state(false);
+    let optionsPage: "hotkeyConfig" | "connectConfig" = $state("hotkeyConfig");
 
     let currentHighlightedElement: HTMLDivElement | null = null;
     let currentHighlightedTimecode = "";
@@ -231,6 +233,15 @@
         showOptions = !showOptions;
     }
 
+    function switchPageType() {
+        // switches them
+        if (optionsPage === "hotkeyConfig") {
+            optionsPage = "connectConfig";
+        } else {
+            optionsPage = "hotkeyConfig";
+        }
+    }
+
     function updateMainPageHotkeys(config: HotkeyRegister) {
         const update = {
             screenshot: config.screenshot || "loading",
@@ -408,7 +419,6 @@
 
 <svelte:window on:keydown={handleKeyDown} />
 
-<!-- Option 1: CSS toggle (keeps everything mounted) -->
 <div class="main-content" class:hidden={showOptions}>
     <!-- 424 components stay alive -->
     <div class="container">
@@ -440,7 +450,11 @@
     </div>
 </div>
 <div class="options-overlay" class:visible={showOptions}>
-    <HotkeyConfig {showOptions} {toggleOptions} {updateMainPageHotkeys} />
+    {#if optionsPage === "hotkeyConfig"}
+        <HotkeyConfig {showOptions} {toggleOptions} {updateMainPageHotkeys} {switchPageType} />
+    {:else}
+        <FieldMappingConfig {showOptions} {toggleOptions} {switchPageType} />
+    {/if}
 </div>
 
 <!-- {#if showOptions}
