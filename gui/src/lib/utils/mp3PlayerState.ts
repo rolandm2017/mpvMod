@@ -141,8 +141,8 @@ export class MP3PlayerState {
 
     // Handle audio timeupdate events
     handleTimeUpdate(currentTime: number) {
-        console.log("HANDLE TIME UPATE:", currentTime);
-        console.log("context:", this.activeContext);
+        // console.log("HANDLE TIME UPATE:", currentTime);
+        // console.log("context:", this.activeContext);
         // FIXME: Instead it's, "take current time as argument, from outside"
 
         if (this.activeContext === "main") {

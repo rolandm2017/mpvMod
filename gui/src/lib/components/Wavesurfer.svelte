@@ -37,7 +37,13 @@
 
     let stateTracker = $state<MP3PlayerState | null>(null);
     // Derived from stateTracker
-    let currentState = $derived(stateTracker?.getState() ?? null);
+    let reactivityTrigger = $state(0);
+    let currentState = $derived(
+        (() => {
+            reactivityTrigger; // Access the trigger to create dependency
+            return stateTracker ? stateTracker.getState() : null;
+        })()
+    );
     let isPlaying = $derived(currentState?.main.isPlaying ?? false);
     let isRegionPlaying = $derived(currentState?.region.isPlaying ?? false);
 
@@ -176,9 +182,13 @@
         if (!stateTracker) throw new Error("Null state tracker");
         if (stateTracker.getState().main.isPlaying) {
             stateTracker.pauseMain();
+            console.log(currentState?.main.isPlaying, "179ru");
         } else {
             stateTracker.playMain();
+            console.log(currentState?.main.isPlaying, "180ru");
         }
+        // Trigger reactivity
+        reactivityTrigger++;
     }
 
     // FIXME: Shift boundary right btn click, then play Region, Region autostops at prev. end of region.
@@ -187,9 +197,13 @@
         if (!stateTracker) throw new Error("Null state tracker");
         if (stateTracker.getState().region.isPlaying) {
             stateTracker.pauseRegion();
+            console.log(currentState?.region.isPlaying, "192ru");
         } else {
             stateTracker.playRegion();
+            console.log(currentState?.region.isPlaying, "195ru");
         }
+        // Trigger reactivity
+        reactivityTrigger++;
     }
 
     function nudgeStart(direction: number) {
@@ -229,10 +243,10 @@
 
 <!-- // TODO: Nudge by sec, 1/4 sec. Allow user to pick values -->
 <div class="push-items-right time-container">
-    <div class="time-half">
+    <div class="time-half-start">
         <span>Cursor: {doubleDecimalTimeString(cursorPosition)}</span>
     </div>
-    <div class="time-half">
+    <div class="time-half-end">
         <span>Length: {convertToTimeString(fullFileEndTime)}</span>
     </div>
 </div>
@@ -301,7 +315,13 @@
         width: 100%;
     }
 
-    .time-half {
+    .time-half-start {
+        width: 50%;
+        display: flex;
+        justify-content: flex-start;
+    }
+
+    .time-half-end {
         width: 50%;
         display: flex;
         justify-content: flex-end;
