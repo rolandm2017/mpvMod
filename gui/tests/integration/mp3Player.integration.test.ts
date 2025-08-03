@@ -50,6 +50,10 @@ describe('WaveSurferPlayer Integration', () => {
         await fireEvent.click(playButton);
         // Would need to mock wavesurfer events to test state changes
     });
+
+    describe('picks up playback fine after boundary region', () => {
+        //
+    });
 });
 
 // Test utilities for manual testing scenarios

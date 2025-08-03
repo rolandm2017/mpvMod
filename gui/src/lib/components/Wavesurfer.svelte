@@ -210,6 +210,9 @@
 
 <div bind:this={container} class="w-full"></div>
 
+<!-- // TODO: a cursor position timer, mm:ss.ms -->
+<!-- // TODO: A milliseconds thing on the time string. mm:ss.ms -->
+<!-- // TODO: Nudge by sec, 1/4 sec. Allow user to pick values -->
 <div class="push-items-right">
     <span>Length: {convertToTimeString(fullFileEndTime)}</span>
 </div>
@@ -220,7 +223,7 @@
         </div>
         <div class="time-display">
             <button class="nudge-btn" onclick={() => nudgeStart(-1)}>←</button>
-            <span class="time-value">0:00</span>
+            <span class="time-value">{convertToTimeString(regionStart)}</span>
             <button class="nudge-btn" onclick={() => nudgeStart(1)}>→</button>
         </div>
     </div>
@@ -231,7 +234,7 @@
         </div>
         <div class="time-display">
             <button class="nudge-btn" onclick={() => nudgeEnd(-1)}>←</button>
-            <span class="time-value">{fullFileEndTimeDisplayString}</span>
+            <span class="time-value">{convertToTimeString(regionEnd)}</span>
             <button class="nudge-btn" onclick={() => nudgeEnd(1)}>→</button>
         </div>
     </div>

@@ -20,12 +20,6 @@ interface PlayerState {
 
 // Core state management for MP3 player with region selection
 
-// TODO: Plan is to heavily mock Wavesurfer
-//      - Wavesurfer returns dummy times for play,pause,play,pause switches
-/// assume surfer isn/t broken.
-
-// FIXME: Surfer playback for region m ust stop at boundary of it.
-
 export class MP3PlayerState {
     private surfer: WaveSurfer;
     private duration: number = 0;
@@ -57,7 +51,7 @@ export class MP3PlayerState {
 
     // Set region boundaries (in seconds)
     setRegion(startTime: number, endTime: number): void {
-        // FIXME: I have playhead midway tyhru, I move boundary to the right, press Play, Playhead is set to start of zone.
+        // fixme: I move left bracket to the right past cursor, cursor stays where it is. Shoudl be, "is moved with it"
         this.region.startTime = startTime;
         this.region.endTime = endTime;
         const initCondition = this.region.currentTime === 0;
@@ -70,6 +64,11 @@ export class MP3PlayerState {
         const cursorIsPastNewEndTime = this.region.currentTime > endTime;
         if (cursorIsPastNewEndTime) {
             // "If cursor is past new End Time, Wavesurfer cursor is moved back"
+            this.surfer.seekTo(startTime / this.duration);
+            this.region.currentTime = startTime;
+        }
+        const startBracketIsAheadOfCursor = this.region.currentTime < startTime;
+        if (startBracketIsAheadOfCursor) {
             this.surfer.seekTo(startTime / this.duration);
             this.region.currentTime = startTime;
         }
