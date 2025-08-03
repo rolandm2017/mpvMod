@@ -1,17 +1,17 @@
 <!-- page.svelte, the main and only page -->
 <script lang="ts">
-    import { onMount, onDestroy, getContext } from 'svelte';
+    import { onMount, onDestroy, getContext } from "svelte";
 
-    import CardBuilder from '$lib/CardBuilder.svelte';
-    import SubtitleSegment from '$lib/SubtitleSegment.svelte';
+    import CardBuilder from "$lib/CardBuilder.svelte";
+    import SubtitleSegment from "$lib/SubtitleSegment.svelte";
 
-    import { parseTimecodeToSeconds } from '$lib/utils/parsing.js';
-    import { Finder, scrollToClosestSubtitle, scrollToLocation } from '$lib/utils/subtitleScroll.js';
-    import { Subtitle, SubtitleDatabase } from '$lib/utils/subtitleDatabase.js';
-    import type { PlayerPosition, TimecodeString } from '$lib/types.js';
-    import { SegmentMountingTracker } from '$lib/utils/mountingTracker.js';
-    import HotkeyConfig from '$lib/HotkeyConfig.svelte';
-    import type { CommandResponse, HotkeyRegister, MPVStateData } from '$lib/interfaces.js';
+    import { parseTimecodeToSeconds } from "$lib/utils/parsing.js";
+    import { Finder, scrollToClosestSubtitle, scrollToLocation } from "$lib/utils/subtitleScroll.js";
+    import { Subtitle, SubtitleDatabase } from "$lib/utils/subtitleDatabase.js";
+    import type { PlayerPosition, TimecodeString } from "$lib/types.js";
+    import { SegmentMountingTracker } from "$lib/utils/mountingTracker.js";
+    import HotkeyConfig from "$lib/HotkeyConfig.svelte";
+    import type { CommandResponse, HotkeyRegister, MPVStateData } from "$lib/interfaces.js";
 
     let { data } = $props();
 
@@ -21,14 +21,14 @@
     let showOptions = $state(false);
 
     let currentHighlightedElement: HTMLDivElement | null = null;
-    let currentHighlightedTimecode = '';
+    let currentHighlightedTimecode = "";
 
     let db: SubtitleDatabase;
     let mountingTracker: SegmentMountingTracker;
 
-    let content = '';
+    let content = "";
     let playerPosition = 0;
-    let formattedTime = '';
+    let formattedTime = "";
 
     let lastScrollTime = 0;
 
@@ -36,24 +36,24 @@
     let allSegmentsMounted = false;
 
     let registeredHotkeys: HotkeyRegister = $state({
-        screenshot: 'loading',
-        audioClip: 'loading',
-        copySubtitle: 'loading',
-        copyWord: 'loading'
+        screenshot: "loading",
+        audioClip: "loading",
+        copySubtitle: "loading",
+        copyWord: "loading"
     });
 
     let failCount = 0;
 
     let mpvState = {};
     // TODO: User edits the example sentence in the input, the reactive variable changes to house it.
-    let selectedSubtitleText = $state('');
+    let selectedSubtitleText = $state("");
     // TODO: User edits the target word in the input, the reactive variable changes to house it.
-    let selectedTargetWordText = $state('');
+    let selectedTargetWordText = $state("");
     // TODO: User puts in target word, it's validated as a real word in <target language>.
     // THEN, the word gets a "word audio" mp3 from a service.
-    let screenshotDataUrl = $state('');
-    let mp3DataUrl = $state('');
-    let audioClipPath = '';
+    let screenshotDataUrl = $state("");
+    let mp3DataUrl = $state("");
+    let audioClipPath = "";
     let isClipping = false;
 
     async function loadHotkeysIntoRegister() {
@@ -88,7 +88,7 @@
         mountingTracker = new SegmentMountingTracker(data.segments.length);
 
         // Expose for testing
-        if (typeof window !== 'undefined') {
+        if (typeof window !== "undefined") {
             window.allSegmentsMounted = false;
             window.testInteger = 99;
             window.tracker = mountingTracker;
@@ -101,24 +101,24 @@
         // console.log('electronAPI available:', !!window.electronAPI);
 
         if (window.electronAPI) {
-            console.log('electronAPI is available, setting up listeners...');
+            console.log("electronAPI is available, setting up listeners...");
 
             window.electronAPI.onDefaultAudio((audioDataURL) => {
-                console.log('Default silence audio received:', audioDataURL?.substring(0, 50) + '...');
+                console.log("Default silence audio received:", audioDataURL?.substring(0, 50) + "...");
                 mp3DataUrl = audioDataURL;
             });
 
             setTimeout(async () => {
-                console.log('Manually requesting default audio...');
+                console.log("Manually requesting default audio...");
                 try {
                     await window.electronAPI.requestDefaultAudio();
-                    console.log('Manual request completed');
+                    console.log("Manual request completed");
                 } catch (error) {
-                    console.error('Manual request failed:', error);
+                    console.error("Manual request failed:", error);
                 }
                 // 100 ms to ready all listeners
             }, 100);
-            console.log('Running onMPVstate');
+            console.log("Running onMPVstate");
             window.electronAPI.onMPVState((data) => {
                 // content :  "⏱️  0:13.6 / 22:35.7 (1.0%)"
                 // formatted_duration :  "22:35.7"
@@ -152,20 +152,20 @@
             });
             // Handle screenshot data separately
             window.electronAPI.onScreenshotReady((dataURL: string) => {
-                console.log('in the +page.svelte screenshot api:', dataURL.substring(0, 50) + '...');
+                console.log("in the +page.svelte screenshot api:", dataURL.substring(0, 50) + "...");
                 screenshotDataUrl = dataURL; // Store the data URL
             });
             window.electronAPI.onAudioReady((dataURL: string) => {
-                console.log('in the +page.svelte screenshot api:', dataURL.substring(0, 50) + '...');
+                console.log("in the +page.svelte screenshot api:", dataURL.substring(0, 50) + "...");
                 mp3DataUrl = dataURL; // Store the data URL
             });
         } else {
-            console.error('electronAPI not available');
+            console.error("electronAPI not available");
         }
     });
 
     function isCommandResponse(data: MPVStateData): data is MPVStateData & CommandResponse {
-        return data.type === 'command_response' && 'command' in data;
+        return data.type === "command_response" && "command" in data;
     }
 
     function highlightPlayerPositionSegment(playerPosition: number) {
@@ -177,7 +177,7 @@
         if (timecodeStringOfTargetEl) {
             highlightSegment(timecodeStringOfTargetEl);
         } else {
-            console.log(timecodeStringOfTargetEl, 'not found');
+            console.log(timecodeStringOfTargetEl, "not found");
         }
     }
 
@@ -187,12 +187,12 @@
          */
 
         if (currentHighlightedElement) {
-            currentHighlightedElement.classList.remove('highlighted');
+            currentHighlightedElement.classList.remove("highlighted");
         }
         const element = mountingTracker.getElement(timecode);
 
         if (element) {
-            element.classList.add('highlighted');
+            element.classList.add("highlighted");
             currentHighlightedElement = element;
             currentHighlightedTimecode = timecode;
         }
@@ -202,7 +202,7 @@
 
     export function storeSegmentPosition(timecode: TimecodeString, y: number, element: HTMLDivElement) {
         if (!mountingTracker) {
-            console.error('mountingTracker not initialized');
+            console.error("mountingTracker not initialized");
             return;
         }
 
@@ -220,7 +220,7 @@
             allSegmentsMounted = true;
             // console.log('All segments mounted, positions ready');
             // Expose to window for testing
-            if (typeof window !== 'undefined') {
+            if (typeof window !== "undefined") {
                 window.allSegmentsMounted = true;
             }
         }
@@ -233,10 +233,10 @@
 
     function updateMainPageHotkeys(config: HotkeyRegister) {
         const update = {
-            screenshot: config.screenshot || 'loading',
-            audioClip: config.audioClip || 'loading',
-            copySubtitle: config.copySubtitle || 'loading',
-            copyWord: config.copyWord || 'loading'
+            screenshot: config.screenshot || "loading",
+            audioClip: config.audioClip || "loading",
+            copySubtitle: config.copySubtitle || "loading",
+            copyWord: config.copyWord || "loading"
         };
         registeredHotkeys = update;
     }
@@ -244,18 +244,18 @@
     function handleKeyDown(e: KeyboardEvent) {
         // Build hotkey string
         const parts: string[] = [];
-        if (e.ctrlKey) parts.push('Ctrl');
-        if (e.shiftKey) parts.push('Shift');
-        if (e.altKey) parts.push('Alt');
-        if (e.metaKey) parts.push('Cmd');
+        if (e.ctrlKey) parts.push("Ctrl");
+        if (e.shiftKey) parts.push("Shift");
+        if (e.altKey) parts.push("Alt");
+        if (e.metaKey) parts.push("Cmd");
 
         let key = e.key;
-        if (key === ' ') key = 'Space';
+        if (key === " ") key = "Space";
         else if (key.length === 1) key = key.toUpperCase();
 
         parts.push(key);
 
-        const hotkeyString = parts.join(' + ');
+        const hotkeyString = parts.join(" + ");
 
         // console.log('WHATS IN HERE', registeredHotkeys);
 
@@ -273,12 +273,12 @@
     function executeAction(action: string) {
         // TODO: Convert to use websockets cmd
 
-        console.log('EXECUTING: ', action);
+        console.log("EXECUTING: ", action);
         switch (action) {
-            case 'screenshot':
+            case "screenshot":
                 window.electronAPI?.takeScreenshot();
                 break;
-            case 'audioClip':
+            case "audioClip":
                 // TODO:
                 if (currentlyRecording) {
                     window.electronAPI?.concludeAudioClip();
@@ -288,40 +288,40 @@
                     window.electronAPI?.startAudioClip();
                 }
                 break;
-            case 'copySubtitle':
+            case "copySubtitle":
                 copySelectedSubtitle();
                 break;
-            case 'copyWord':
+            case "copyWord":
                 copySelectedWord();
                 break;
         }
     }
 
     function handleCommandResponse(data: CommandResponse) {
-        console.log('Command response:', data);
+        console.log("Command response:", data);
 
         switch (data.command) {
-            case 'take_screenshot':
+            case "take_screenshot":
                 if (data.success && data.file_path) {
                     screenshotDataUrl = data.file_path;
 
-                    console.log('Screenshot saved:', screenshotDataUrl);
+                    console.log("Screenshot saved:", screenshotDataUrl);
                     // You could load this image in your UI now
                 }
                 break;
 
-            case 'start_audio_clip':
+            case "start_audio_clip":
                 if (data.success) {
                     isClipping = true;
-                    console.log('Started audio clipping');
+                    console.log("Started audio clipping");
                 }
                 break;
 
-            case 'end_audio_clip':
+            case "end_audio_clip":
                 isClipping = false;
                 if (data.success && data.file_path) {
                     audioClipPath = data.file_path;
-                    console.log('Audio clip saved:', audioClipPath);
+                    console.log("Audio clip saved:", audioClipPath);
                     // You could play this audio file now
                 }
                 break;
@@ -336,7 +336,7 @@
         try {
             // Get the currently selected text from the window
             const selection = window.getSelection();
-            const selectedText = selection?.toString().trim() || '';
+            const selectedText = selection?.toString().trim() || "";
 
             if (!selectedText) return;
 
@@ -345,7 +345,7 @@
             // where the \n or a whitespace really belogns. so it's: "if on separate subtitle, insert ' ' before join"
             navigator.clipboard.writeText(selectedText);
         } catch (error) {
-            console.error('Error in copySelectedSubtitle:', error);
+            console.error("Error in copySelectedSubtitle:", error);
         }
     }
 
@@ -356,16 +356,16 @@
         */
         try {
             // Get the currently selected text from the window
-            console.log('HER HEirhaewilohrfasdfdis');
-            console.log('HER HEirhaewilohrfasdfdis');
-            console.log('HER HEirhaewilohrfasdfdis');
-            console.log('HER HEirhaewilohrfasdfdis');
-            console.log('HER HEirhaewilohrfasdfdis');
-            console.log('HER HEirhaewilohrfasdfdis');
+            console.log("HER HEirhaewilohrfasdfdis");
+            console.log("HER HEirhaewilohrfasdfdis");
+            console.log("HER HEirhaewilohrfasdfdis");
+            console.log("HER HEirhaewilohrfasdfdis");
+            console.log("HER HEirhaewilohrfasdfdis");
+            console.log("HER HEirhaewilohrfasdfdis");
             const selection = window.getSelection();
-            const selectedText = selection?.toString().trim() || '';
+            const selectedText = selection?.toString().trim() || "";
 
-            console.log(selectedText, 'HERE');
+            console.log(selectedText, "HERE");
             if (!selectedText) return;
 
             selectedTargetWordText = selectedText;
@@ -373,7 +373,7 @@
             // where the \n or a whitespace really belogns. so it's: "if on separate subtitle, insert ' ' before join"
             navigator.clipboard.writeText(selectedText);
         } catch (error) {
-            console.error('Error in copySelectedSubtitle:', error);
+            console.error("Error in copySelectedSubtitle:", error);
         }
     }
 
@@ -394,10 +394,10 @@
 
     async function resetAllHotkeys() {
         const hotkeysforreset = {
-            screenshot: 'Not set',
-            audioClip: 'Not set',
-            copySubtitle: 'Not set',
-            copyWord: 'Not set'
+            screenshot: "Not set",
+            audioClip: "Not set",
+            copySubtitle: "Not set",
+            copyWord: "Not set"
         };
 
         if (window.electronAPI?.saveHotkeys) {
@@ -476,7 +476,7 @@
     .container {
         display: flex;
         height: 100vh;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
     }
 
     .subtitle-panel {

@@ -1,8 +1,8 @@
 // See https://svelte.dev/docs/kit/types#app.d.ts
 
-import type { ElectronAPI } from '$lib/interfaces';
-import type { SegmentMountingTracker } from '$lib/utils/mountingTracker';
-import type { SubtitleDatabase } from '$lib/utils/subtitleDatabase';
+import type { ElectronAPI } from "$lib/interfaces";
+import type { SegmentMountingTracker } from "$lib/utils/mountingTracker";
+import type { SubtitleDatabase } from "$lib/utils/subtitleDatabase";
 
 // for information about these interfaces
 declare global {

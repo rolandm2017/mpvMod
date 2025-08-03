@@ -1,6 +1,6 @@
-import type { PlayerPosition, SubtitleTiming, TimecodeString } from '$lib/types';
-import type { SubtitleDatabase } from './subtitleDatabase';
-import type { SubtitleHeights } from './subtitleHeights';
+import type { PlayerPosition, SubtitleTiming, TimecodeString } from "$lib/types";
+import type { SubtitleDatabase } from "./subtitleDatabase";
+import type { SubtitleHeights } from "./subtitleHeights";
 
 export class Finder {
     static findPlayerTimeForSubtitleTiming(
@@ -75,7 +75,7 @@ export function scrollToClosestSubtitle(
      */
     if (!scrollContainer) {
         // console.log(scrollContainer);
-        throw new Error('Scroll Container was null');
+        throw new Error("Scroll Container was null");
     }
     // PLAYER POSITION -> ??? ->
     // ?? -> SubtitleTiming
@@ -94,6 +94,6 @@ export function scrollToClosestSubtitle(
 export function scrollToLocation(location: number, scrollContainer: HTMLDivElement) {
     scrollContainer.scrollTo({
         top: location,
-        behavior: 'auto' // "auto", or "smooth"
+        behavior: "auto" // "auto", or "smooth"
     });
 }

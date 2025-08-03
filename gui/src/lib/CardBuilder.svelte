@@ -1,20 +1,20 @@
 <!-- CardBuilder.svelte -->
 <script lang="ts">
-    import Wavesurfer from './components/Wavesurfer.svelte';
+    import Wavesurfer from "./components/Wavesurfer.svelte";
 
-    import InputField from './components/InputField.svelte';
+    import InputField from "./components/InputField.svelte";
 
     // Props - data passed in from parent
     let { exampleSentenceField, targetWordField, screenshotDataUrl, mp3snippet, showOptions, toggleOptions } = $props();
 
     // Watch for changes in screenshotDataUrl
     $effect(() => {
-        console.log('screenshotDataUrl changed:', screenshotDataUrl.slice(20));
+        console.log("screenshotDataUrl changed:", screenshotDataUrl.slice(20));
     });
 
     // Local state
-    let selectedLanguage = $state('en');
-    let exportFormat = $state('srt');
+    let selectedLanguage = $state("en");
+    let exportFormat = $state("srt");
 
     // Event handlers
     function handleProcessVideo() {
@@ -22,7 +22,7 @@
     }
 
     function handleExportSubtitles() {
-        console.log('Exporting subtitles as:', exportFormat);
+        console.log("Exporting subtitles as:", exportFormat);
         // Add your export logic here
     }
 
@@ -33,17 +33,17 @@
     }
 
     function handleClearSubtitles() {
-        if (confirm('Are you sure you want to clear all subtitles?')) {
-            console.log('Clearing subtitles');
+        if (confirm("Are you sure you want to clear all subtitles?")) {
+            console.log("Clearing subtitles");
             // Add your clear logic here
         }
     }
 
-    let nativeLangTranslation = $state('');
+    let nativeLangTranslation = $state("");
 
     // Function to handle backspace deletion
     function handleImageFieldKeydown(event: KeyboardEvent) {
-        if (event.key === 'Backspace') {
+        if (event.key === "Backspace") {
             // Clear the image
             screenshotDataUrl = null;
             event.preventDefault(); // Prevent default backspace behavior
@@ -52,7 +52,7 @@
 
     // Function to handle focus - ensures the field is focusable
     function handleImageFieldFocus(event: FocusEvent & { currentTarget: EventTarget & HTMLDivElement }) {
-        console.log('Image field focused');
+        console.log("Image field focused");
     }
 </script>
 
@@ -70,7 +70,7 @@
         </div>
         <div>
             <button onclick={() => toggleOptions()}>
-                {showOptions ? 'Back' : 'Options'}
+                {showOptions ? "Back" : "Options"}
             </button>
         </div>
     </div>
@@ -206,7 +206,7 @@
 
     /* Optional: Show a cursor even when image is present */
     .image-target-editable::after {
-        content: '';
+        content: "";
         position: absolute;
         right: 4px;
         top: 75%;

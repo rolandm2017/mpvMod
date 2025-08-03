@@ -1,5 +1,5 @@
 <script lang="ts">
-    import { onMount } from 'svelte';
+    import { onMount } from "svelte";
 
     let { index, timecode, text, emitTopOfContainer } = $props();
 
@@ -33,7 +33,7 @@
         // Use a small delay to ensure element is fully rendered
         setTimeout(() => {
             const rect = el.getBoundingClientRect();
-            const containerRect = el.closest('.subtitle-content')?.getBoundingClientRect();
+            const containerRect = el.closest(".subtitle-content")?.getBoundingClientRect();
 
             if (containerRect) {
                 // Get position relative to the scroll container

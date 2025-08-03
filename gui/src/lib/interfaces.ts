@@ -40,24 +40,24 @@ export interface HotkeyRegister {
 }
 
 export interface TakeScreenshotResponse {
-    command: 'take_screenshot';
+    command: "take_screenshot";
     success: boolean;
     file_path: string;
 }
 
 export interface StartAudioClipResponse {
-    command: 'start_audio_clip';
+    command: "start_audio_clip";
     success: boolean;
 }
 
 export interface ConcludeAudioClipResponse {
-    command: 'end_audio_clip';
+    command: "end_audio_clip";
     success: true;
     file_path: string;
 }
 
 export interface ConcludeAudioClipError {
-    command: 'end_audio_clip';
+    command: "end_audio_clip";
     success: false;
     error: string;
 }

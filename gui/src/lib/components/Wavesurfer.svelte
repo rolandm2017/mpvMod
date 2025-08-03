@@ -1,10 +1,10 @@
 <script lang="ts">
-    import { onMount, onDestroy } from 'svelte'; //
-    import WaveSurfer from 'wavesurfer.js';
-    import RegionsPlugin from 'wavesurfer.js/dist/plugins/regions.js';
-    import type { Region } from 'wavesurfer.js/dist/plugins/regions.js';
+    import { onMount, onDestroy } from "svelte"; //
+    import WaveSurfer from "wavesurfer.js";
+    import RegionsPlugin from "wavesurfer.js/dist/plugins/regions.js";
+    import type { Region } from "wavesurfer.js/dist/plugins/regions.js";
 
-    import { MP3PlayerState } from '$lib/utils/mp3PlayerState';
+    import { MP3PlayerState } from "$lib/utils/mp3PlayerState";
 
     /**
      * 1. Avoid re-initializing wavesurfer on every prop change
@@ -53,7 +53,7 @@
     let fullFileStartTime = $state(0);
     let fullFileEndTime = $state(0);
 
-    let fullFileEndTimeDisplayString = $state('');
+    let fullFileEndTimeDisplayString = $state("");
 
     let regionStart = $state(5);
     let regionEnd = $state(7);
@@ -68,8 +68,8 @@
 
         wavesurfer = WaveSurfer.create({
             container,
-            waveColor: '#999',
-            progressColor: '#555',
+            waveColor: "#999",
+            progressColor: "#555",
             height: 100,
             plugins: [regionsPlugin]
         });
@@ -79,46 +79,46 @@
         // if it isn't, it's p ut back in there before play begins.
 
         // Track play/pause events
-        wavesurfer.on('play', () => {
+        wavesurfer.on("play", () => {
             if (wavesurfer && stateTracker) {
-                console.log('▶️ play event: ');
-                console.log('Current time:', wavesurfer.getCurrentTime());
+                console.log("▶️ play event: ");
+                console.log("Current time:", wavesurfer.getCurrentTime());
                 const playEventTime = wavesurfer.getCurrentTime();
                 stateTracker.acknowledgeEvent(playEventTime);
                 onPlayEvent?.(playEventTime); // Report to test
             } else {
-                throw new Error('Impossible to get here error');
+                throw new Error("Impossible to get here error");
             }
         });
 
-        wavesurfer.on('pause', () => {
+        wavesurfer.on("pause", () => {
             if (wavesurfer && stateTracker) {
-                console.log('Pausing: ');
-                console.log('Current time:', wavesurfer.getCurrentTime());
+                console.log("Pausing: ");
+                console.log("Current time:", wavesurfer.getCurrentTime());
                 const pauseEventTime = wavesurfer.getCurrentTime();
                 stateTracker.acknowledgeEvent(pauseEventTime);
                 onPauseEvent?.(wavesurfer.getCurrentTime()); // Report to test
             } else {
-                throw new Error('Impossible to get here error');
+                throw new Error("Impossible to get here error");
             }
         });
 
-        wavesurfer.on('finish', () => {
+        wavesurfer.on("finish", () => {
             stateTracker?.handleEnded();
         });
 
         // Add regions after initialization
-        wavesurfer.on('ready', () => {
+        wavesurfer.on("ready", () => {
             stateTracker?.setRegion(regionStart, regionEnd);
             regionDisplay = regionsPlugin.addRegion({
                 start: regionStart,
                 end: regionEnd,
-                color: 'rgba(0, 0, 255, 0.1)'
+                color: "rgba(0, 0, 255, 0.1)"
             });
             regionsPlugin.enableDragSelection();
         });
 
-        wavesurfer.on('timeupdate', () => {
+        wavesurfer.on("timeupdate", () => {
             if (stateTracker && wavesurfer) {
                 stateTracker.handleTimeUpdate(wavesurfer.getCurrentTime());
             }
@@ -136,16 +136,16 @@
         if (mp3 && mp3 !== previousMp3) {
             if (currentAudioFile) {
                 // cleanup old one
-                currentAudioFile.src = '';
+                currentAudioFile.src = "";
                 currentAudioFile = null;
             }
             // TODO: How does this effect know to fire when "Mp3" becoems a new MP3?
             currentAudioFile = new Audio(mp3);
             // TODO: How does the mp3 player get ahold of the new audio file?
 
-            currentAudioFile.addEventListener('loadedmetadata', () => {
-                if (!wavesurfer) throw new Error('Surfer was null in $effect');
-                if (!currentAudioFile) throw new Error('Somehow currentAudioFile is null');
+            currentAudioFile.addEventListener("loadedmetadata", () => {
+                if (!wavesurfer) throw new Error("Surfer was null in $effect");
+                if (!currentAudioFile) throw new Error("Somehow currentAudioFile is null");
                 const audioDurationInSec = currentAudioFile.duration;
                 stateTracker = new MP3PlayerState(audioDurationInSec, wavesurfer);
                 fullFileEndTime = audioDurationInSec;
@@ -159,21 +159,21 @@
     function convertToTimeString(duration: number) {
         const minutes = Math.floor(duration / 60);
         const seconds = Math.floor(duration % 60);
-        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+        return `${minutes}:${seconds.toString().padStart(2, "0")}`;
     }
 
     $effect(() => {
         // FIXME: Does this work? when mp3 changes from first_mp3.mp3 to second_mp3.mpe, does it update?
         if (wavesurfer && mp3) {
-            console.log('Loading mp3 : ', mp3.slice(0, 40));
+            console.log("Loading mp3 : ", mp3.slice(0, 40));
             wavesurfer.load(mp3);
         } else {
-            console.log(wavesurfer, mp3.slice(0, 40), 'Nothing');
+            console.log(wavesurfer, mp3.slice(0, 40), "Nothing");
         }
     });
 
     function togglePlayPause() {
-        if (!stateTracker) throw new Error('Null state tracker');
+        if (!stateTracker) throw new Error("Null state tracker");
         if (stateTracker.getState().main.isPlaying) {
             stateTracker.pauseMain();
         } else {
@@ -186,7 +186,7 @@
     // }
 
     function playPauseInRegion() {
-        if (!stateTracker) throw new Error('Null state tracker');
+        if (!stateTracker) throw new Error("Null state tracker");
         if (stateTracker.getState().region.isPlaying) {
             stateTracker.pauseRegion();
         } else {
@@ -201,7 +201,7 @@
     }
 
     function nudgeEnd(direction: number) {
-        console.log('Nudge End: ', direction);
+        console.log("Nudge End: ", direction);
         // to nudge earlier, call w/ a negative number
         const endResult = regionEnd + direction;
         const yieldsNegativeDuration = endResult <= regionStart;
@@ -262,10 +262,10 @@
 <!-- // if main plays, only main changes, Region deosn't change -->
 <div>
     <button class="play-btn sml-space-below" onclick={togglePlayPause}>
-        {isPlaying ? '⏸️ Pause' : '▶️ Play Audio'}
+        {isPlaying ? "⏸️ Pause" : "▶️ Play Audio"}
     </button>
     <button class="play-btn sml-space-below" onclick={playPauseInRegion}>
-        {isRegionPlaying ? '⏸️ Pause' : '▶️ Play Region'}
+        {isRegionPlaying ? "⏸️ Pause" : "▶️ Play Region"}
     </button>
 </div>
 

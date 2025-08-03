@@ -1,4 +1,4 @@
-import type { SubtitleTiming } from '$lib/types';
+import type { SubtitleTiming } from "$lib/types";
 
 export class SubtitleHeights {
     private entries: [SubtitleTiming, number][] = []; // [time, height]

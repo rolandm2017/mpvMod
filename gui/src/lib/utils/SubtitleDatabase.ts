@@ -1,8 +1,8 @@
-import type { PlayerPosition, SubtitleTiming, TimecodeString } from '$lib/types';
-import { SubtitleHeights } from './subtitleHeights';
-import { Finder } from './subtitleScroll';
+import type { PlayerPosition, SubtitleTiming, TimecodeString } from "$lib/types";
+import { SubtitleHeights } from "./subtitleHeights";
+import { Finder } from "./subtitleScroll";
 
-import { parseTimecodeToSeconds } from './parsing';
+import { parseTimecodeToSeconds } from "./parsing";
 
 export class SubtitleDatabase {
     /*
@@ -49,7 +49,7 @@ export class SubtitleDatabase {
     // 		- Subtitle -> Player position
 
     getHeightFromTimecode(timecode: TimecodeString) {
-        const timecodeAsSeconds = parseTimecodeToSeconds(timecode.split(' --> ')[0]);
+        const timecodeAsSeconds = parseTimecodeToSeconds(timecode.split(" --> ")[0]);
         return this.subtitleHeights.getHeightInternal(timecodeAsSeconds);
     }
 

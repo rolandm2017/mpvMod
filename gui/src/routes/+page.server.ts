@@ -1,8 +1,8 @@
-import fs from 'fs';
-import path from 'path';
-import type { PageServerLoad } from './$types';
-import type { SubtitleTiming, TimecodeString } from '$lib/types';
-import { parseSrtFileIntoSegments, prebuildLookupArrays } from '$lib/utils/parsing';
+import fs from "fs";
+import path from "path";
+import type { PageServerLoad } from "./$types";
+import type { SubtitleTiming, TimecodeString } from "$lib/types";
+import { parseSrtFileIntoSegments, prebuildLookupArrays } from "$lib/utils/parsing";
 
 export type ParsedSegmentObj = {
     index: number;
@@ -19,10 +19,10 @@ export const load: PageServerLoad = async () => {
     // that is closest to n but not exceeding n, and get the timecode from it"
     // https://claude.ai/chat/82b6c551-ecff-4e57-8de1-5d01a294c5ed
 
-    const SRT_FILE_PATH = path.resolve('sample.srt');
+    const SRT_FILE_PATH = path.resolve("sample.srt");
 
     if (fs.existsSync(SRT_FILE_PATH)) {
-        const content = fs.readFileSync(SRT_FILE_PATH, 'utf-8');
+        const content = fs.readFileSync(SRT_FILE_PATH, "utf-8");
         const blocks: string[] = content.trim().split(/\n\s*\n/);
         // .slice(0, 4);
 

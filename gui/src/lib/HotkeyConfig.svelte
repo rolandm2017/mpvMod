@@ -1,17 +1,17 @@
 <!-- hotkeyConfig.svelte -->
 <script lang="ts">
-    import { onMount, onDestroy } from 'svelte';
-    import type { HotkeyRegister } from './interfaces';
-    import HotkeyItem from './components/HotkeyItem.svelte';
+    import { onMount, onDestroy } from "svelte";
+    import type { HotkeyRegister } from "./interfaces";
+    import HotkeyItem from "./components/HotkeyItem.svelte";
 
     let { showOptions, toggleOptions, updateMainPageHotkeys } = $props();
 
     // Hotkey configuration state
     let hotkeys: HotkeyRegister = $state({
-        screenshot: 'Not set',
-        audioClip: 'Not set',
-        copySubtitle: 'Not set',
-        copyWord: 'Not set'
+        screenshot: "Not set",
+        audioClip: "Not set",
+        copySubtitle: "Not set",
+        copyWord: "Not set"
     });
 
     // FIXME: Should NOT be able to bind the same key twice!
@@ -26,24 +26,24 @@
     // Hotkey definitions for easier management
     const hotkeyDefinitions = [
         {
-            name: 'copyWord',
-            title: 'Copy Target Word',
-            description: 'Copy selected word/phrase to Target word field'
+            name: "copyWord",
+            title: "Copy Target Word",
+            description: "Copy selected word/phrase to Target word field"
         },
         {
-            name: 'copySubtitle',
-            title: 'Copy Selected Subtitle',
-            description: 'Copy selected text from subtitles to Example sentence field'
+            name: "copySubtitle",
+            title: "Copy Selected Subtitle",
+            description: "Copy selected text from subtitles to Example sentence field"
         },
         {
-            name: 'screenshot',
-            title: 'Take Screenshot',
-            description: 'Capture current MPV frame to Image field'
+            name: "screenshot",
+            title: "Take Screenshot",
+            description: "Capture current MPV frame to Image field"
         },
         {
-            name: 'audioClip',
-            title: 'Start/Stop Audio Clip',
-            description: 'Record audio from current position to Sentence audio field'
+            name: "audioClip",
+            title: "Start/Stop Audio Clip",
+            description: "Record audio from current position to Sentence audio field"
         }
     ];
 
@@ -57,7 +57,7 @@
 
     onDestroy(() => {
         if (keyListener) {
-            document.removeEventListener('keydown', keyListener);
+            document.removeEventListener("keydown", keyListener);
         }
     });
 
@@ -81,7 +81,7 @@
     function startHotkeyCapture(hotkeyName: string) {
         // Clear any existing listener
         if (keyListener) {
-            document.removeEventListener('keydown', keyListener);
+            document.removeEventListener("keydown", keyListener);
         }
 
         activeHotkey = hotkeyName;
@@ -92,33 +92,33 @@
 
             // Build hotkey string
             const parts: string[] = [];
-            if (e.ctrlKey) parts.push('Ctrl');
-            if (e.shiftKey) parts.push('Shift');
-            if (e.altKey) parts.push('Alt');
-            if (e.metaKey) parts.push('Cmd');
+            if (e.ctrlKey) parts.push("Ctrl");
+            if (e.shiftKey) parts.push("Shift");
+            if (e.altKey) parts.push("Alt");
+            if (e.metaKey) parts.push("Cmd");
 
             // Handle special keys
             let key = e.key;
-            console.log('KEY FOR HOTKEY: ', key);
-            if (key === ' ') key = 'Space';
-            else if (key === 'Escape') key = 'Esc';
+            console.log("KEY FOR HOTKEY: ", key);
+            if (key === " ") key = "Space";
+            else if (key === "Escape") key = "Esc";
             else if (key.length === 1) key = key.toUpperCase();
 
             // Don't capture modifier keys alone
-            if (['Control', 'Shift', 'Alt', 'Meta'].includes(key)) {
+            if (["Control", "Shift", "Alt", "Meta"].includes(key)) {
                 return;
             }
 
             parts.push(key);
-            const hotkeyString = parts.join(' + ');
+            const hotkeyString = parts.join(" + ");
 
             // Update the hotkey
-            console.log('FOO ', hotkeyString);
+            console.log("FOO ", hotkeyString);
             hotkeys[hotkeyName as keyof typeof hotkeys] = hotkeyString;
 
             // Clear capture state
             activeHotkey = null;
-            document.removeEventListener('keydown', keyListener!);
+            document.removeEventListener("keydown", keyListener!);
             keyListener = null;
 
             // Save the updated hotkeys
@@ -126,18 +126,18 @@
             updateMainPageHotkeys(hotkeys);
         };
 
-        document.addEventListener('keydown', keyListener);
+        document.addEventListener("keydown", keyListener);
     }
 
     function clearHotkey(hotkeyName: string) {
-        hotkeys[hotkeyName as keyof typeof hotkeys] = 'Not set';
+        hotkeys[hotkeyName as keyof typeof hotkeys] = "Not set";
         saveHotkeys();
         updateMainPageHotkeys(hotkeys);
     }
 
     function cancelCapture() {
         if (keyListener) {
-            document.removeEventListener('keydown', keyListener);
+            document.removeEventListener("keydown", keyListener);
             keyListener = null;
         }
         activeHotkey = null;
@@ -145,7 +145,7 @@
 
     // Handle escape key to cancel capture
     function handleKeyDown(e: KeyboardEvent) {
-        if (e.key === 'Escape' && activeHotkey) {
+        if (e.key === "Escape" && activeHotkey) {
             cancelCapture();
         }
     }
@@ -161,7 +161,7 @@
         </div>
         <div>
             <button onclick={() => toggleOptions()}>
-                {showOptions ? 'Back' : 'Options'}
+                {showOptions ? "Back" : "Options"}
             </button>
         </div>
     </div>
@@ -196,7 +196,7 @@
         background: #2a2a2a;
         color: #e0e0e0;
         min-height: 100vh;
-        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
         position: relative;
     }
 

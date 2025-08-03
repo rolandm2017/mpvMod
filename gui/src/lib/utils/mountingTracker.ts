@@ -1,6 +1,6 @@
-import type { TimecodeString } from '$lib/types';
-import { parseTimecodeToSeconds } from './parsing';
-import type { SubtitleDatabase } from './subtitleDatabase';
+import type { TimecodeString } from "$lib/types";
+import { parseTimecodeToSeconds } from "./parsing";
+import type { SubtitleDatabase } from "./subtitleDatabase";
 
 interface SubtitleComponentInterface {
     highlight(): void;
@@ -116,7 +116,7 @@ export function validateTimecodes(segments: Array<{ timecode: string; text: stri
             issues.push(`Duplicate timecode "${segment.timecode}" found at index ${index}`);
         }
 
-        if (!segment.timecode || segment.timecode.trim() === '') {
+        if (!segment.timecode || segment.timecode.trim() === "") {
             issues.push(`Empty timecode at index ${index}`);
         }
     });

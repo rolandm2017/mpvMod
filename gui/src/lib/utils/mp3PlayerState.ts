@@ -1,4 +1,4 @@
-import WaveSurfer from 'wavesurfer.js';
+import WaveSurfer from "wavesurfer.js";
 
 interface PlaybackContext {
     isPlaying: boolean; //
@@ -8,7 +8,7 @@ interface PlaybackContext {
 }
 
 // fdsfds
-type ActiveContext = 'main' | 'region' | null;
+type ActiveContext = "main" | "region" | null;
 
 interface PlayerState {
     main: PlaybackContext;
@@ -78,12 +78,12 @@ export class MP3PlayerState {
 
         if (this.main.isPlaying) return; // Already playing
 
-        console.log('seek to: ', this.main.currentTime, '81ru');
+        console.log("seek to: ", this.main.currentTime, "81ru");
 
         this.surfer.seekTo(this.main.currentTime / this.duration);
         this.surfer.play();
         this.main.isPlaying = true;
-        this.activeContext = 'main';
+        this.activeContext = "main";
     }
 
     pauseMain() {
@@ -97,7 +97,7 @@ export class MP3PlayerState {
 
     // Region playback controls
     playRegion() {
-        console.log(this.region, 'THIS.region');
+        console.log(this.region, "THIS.region");
         this.pauseMain(); // Stop main if playing
 
         if (this.region.isPlaying) return; // Already playing
@@ -107,7 +107,7 @@ export class MP3PlayerState {
 
         this.surfer.play();
         this.region.isPlaying = true;
-        this.activeContext = 'region';
+        this.activeContext = "region";
     }
 
     pauseRegion() {
@@ -125,27 +125,27 @@ export class MP3PlayerState {
 
     // Universal pause (pauses whatever is playing)
     pause() {
-        if (this.activeContext === 'main') {
+        if (this.activeContext === "main") {
             this.pauseMain();
-        } else if (this.activeContext === 'region') {
+        } else if (this.activeContext === "region") {
             this.pauseRegion();
         }
     }
 
     // Handle audio timeupdate events
     handleTimeUpdate(currentTime: number) {
-        console.log('HANDLE TIME UPATE:', currentTime);
-        console.log('context:', this.activeContext);
+        console.log("HANDLE TIME UPATE:", currentTime);
+        console.log("context:", this.activeContext);
         // FIXME: Instead it's, "take current time as argument, from outside"
 
-        if (this.activeContext === 'main') {
+        if (this.activeContext === "main") {
             this.main.currentTime = currentTime;
 
             // Check if we've reached the end
             if (currentTime >= this.main.endTime) {
                 this.pauseMain();
             }
-        } else if (this.activeContext === 'region') {
+        } else if (this.activeContext === "region") {
             this.region.currentTime = currentTime;
 
             // Check if we've gone past the region end
@@ -161,10 +161,10 @@ export class MP3PlayerState {
         /**
          * It's the "ran out of audio data" event, not a manual pause or stop
          */
-        if (this.activeContext === 'main') {
+        if (this.activeContext === "main") {
             this.main.isPlaying = false;
             this.main.currentTime = 0; // Reset to beginning
-        } else if (this.activeContext === 'region') {
+        } else if (this.activeContext === "region") {
             this.region.isPlaying = false;
             this.region.currentTime = this.region.startTime; // Reset to region start
         }
@@ -177,9 +177,9 @@ export class MP3PlayerState {
 
     // Get current playhead position for UI display
     getCurrentTime(): number {
-        if (this.activeContext === 'main') {
+        if (this.activeContext === "main") {
             return this.main.currentTime;
-        } else if (this.activeContext === 'region') {
+        } else if (this.activeContext === "region") {
             return this.region.currentTime;
         } else {
             // When paused, show the respective context's saved position

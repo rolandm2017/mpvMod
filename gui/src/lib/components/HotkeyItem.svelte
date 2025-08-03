@@ -29,12 +29,12 @@
         <button
             class="hotkey-input"
             class:active={isActive}
-            class:has-value={value !== 'Not set'}
+            class:has-value={value !== "Not set"}
             onclick={() => onCapture(name)}
         >
-            {isActive ? 'Press a key...' : value}
+            {isActive ? "Press a key..." : value}
         </button>
-        {#if value !== 'Not set'}
+        {#if value !== "Not set"}
             <button class="clear-btn" onclick={() => onClear(name)} title="Clear hotkey"> × </button>
         {:else}
             <div class="spacer-div"></div>
