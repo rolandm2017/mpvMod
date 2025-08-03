@@ -115,7 +115,17 @@
             if (stateTracker && wavesurfer) {
                 const currentTime = wavesurfer.getCurrentTime();
                 cursorPosition = currentTime;
+                const wasRegionPlaying = stateTracker.getState().region.isPlaying;
+
                 stateTracker.handleTimeUpdate(currentTime);
+
+                // Check if region stopped playing due to reaching end
+                const isRegionPlayingNow = stateTracker.getState().region.isPlaying;
+                const playbackReachedEndOfRegion = wasRegionPlaying && !isRegionPlayingNow;
+                if (playbackReachedEndOfRegion) {
+                    // to update the Play/Pause btns
+                    reactivityTrigger++; // Trigger Svelte reactivity
+                }
             }
         });
 
