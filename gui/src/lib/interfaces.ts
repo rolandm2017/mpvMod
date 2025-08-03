@@ -15,6 +15,9 @@ export interface ElectronAPI {
     // hotkeys
     getHotkeys: () => HotkeyRegister;
     saveHotkeys: (hotkeys: any) => void;
+    // field mappings
+    // getFieldMappings: () => FieldMappings;
+    // saveFieldMappings: (hotkeys: any) => void;
     // send cmds
     takeScreenshot: () => Promise<boolean>;
     startAudioClip: () => Promise<boolean>;
