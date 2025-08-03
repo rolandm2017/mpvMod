@@ -20,6 +20,12 @@ interface PlayerState {
 
 // Core state management for MP3 player with region selection
 
+// TODO: Plan is to heavily mock Wavesurfer
+//      - Wavesurfer returns dummy times for play,pause,play,pause switches
+/// assume surfer isn/t broken.
+
+// FIXME: Surfer playback for region m ust stop at boundary of it.
+
 export class MP3PlayerState {
     private surfer: WaveSurfer;
     private duration: number = 0;

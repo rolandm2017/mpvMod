@@ -74,6 +74,10 @@
             plugins: [regionsPlugin]
         });
 
+        // FIXME: User presses "play region" but playback is
+        // outside of boundary. Program checks, "is in playback rregion?"
+        // if it isn't, it's p ut back in there before play begins.
+
         // Track play/pause events
         wavesurfer.on('play', () => {
             if (wavesurfer && stateTracker) {
@@ -112,6 +116,12 @@
                 color: 'rgba(0, 0, 255, 0.1)'
             });
             regionsPlugin.enableDragSelection();
+        });
+
+        wavesurfer.on('timeupdate', () => {
+            if (stateTracker && wavesurfer) {
+                stateTracker.handleTimeUpdate(wavesurfer.getCurrentTime());
+            }
         });
 
         return () => {
@@ -204,6 +214,7 @@
 
     function updateRegion(newStart: number, newEnd: number) {
         if (regionDisplay) {
+            // TODO: Update the Mp3 state tracker
             regionDisplay.setOptions({
                 start: newStart,
                 end: newEnd
