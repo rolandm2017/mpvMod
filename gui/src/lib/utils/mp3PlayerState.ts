@@ -70,13 +70,15 @@ export class MP3PlayerState {
         // }
 
         // If region is playing, inherit its current position
-        if (this.activeContext === 'region') {
-            this.main.currentTime = this.surfer.getCurrentTime();
-        }
+        // if (this.activeContext === 'region') {
+        //     this.main.currentTime = this.surfer.getCurrentTime();
+        // }
 
         this.pauseRegion(); // Stop region if playing
 
         if (this.main.isPlaying) return; // Already playing
+
+        console.log('seek to: ', this.main.currentTime, '81ru');
 
         this.surfer.seekTo(this.main.currentTime / this.duration);
         this.surfer.play();
@@ -100,8 +102,9 @@ export class MP3PlayerState {
 
         if (this.region.isPlaying) return; // Already playing
 
+        this.main.startTime = this.region.currentTime;
         this.surfer.seekTo(this.region.currentTime / this.duration);
-        // todo: make be, this.waveshaper.play()
+
         this.surfer.play();
         this.region.isPlaying = true;
         this.activeContext = 'region';
@@ -110,11 +113,14 @@ export class MP3PlayerState {
     pauseRegion() {
         if (!this.region.isPlaying) return;
 
-        // todo: make be, this.waveshaper.pause()
         this.surfer.pause();
         this.region.isPlaying = false;
-        this.region.currentTime = this.surfer.getCurrentTime();
+        const currentTime = this.surfer.getCurrentTime();
+        this.region.currentTime = currentTime;
         this.activeContext = null;
+
+        // update main context
+        this.main.startTime = currentTime;
     }
 
     // Universal pause (pauses whatever is playing)
@@ -128,6 +134,8 @@ export class MP3PlayerState {
 
     // Handle audio timeupdate events
     handleTimeUpdate(currentTime: number) {
+        console.log('HANDLE TIME UPATE:', currentTime);
+        console.log('context:', this.activeContext);
         // FIXME: Instead it's, "take current time as argument, from outside"
 
         if (this.activeContext === 'main') {

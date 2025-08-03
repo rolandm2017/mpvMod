@@ -21,6 +21,10 @@ describe('MP3PlayerState', () => {
         player = new MP3PlayerState(30, mockWaveSurfer as any);
     });
 
+    describe('Context switch', () => {
+        //
+    });
+
     describe('Region Setting', () => {
         it('should set region boundaries correctly', () => {
             player.setRegion(10, 20);
