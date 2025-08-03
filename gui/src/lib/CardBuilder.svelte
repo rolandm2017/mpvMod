@@ -60,23 +60,27 @@
     <div class="panel-header flex-row">
         <div><h2 class="header-text">Card Builder</h2></div>
         <div>
-            <!-- // TODO: make a reminder of the set hotkeys top right, right here. -->
-            <button>img</button>
-        </div>
-        <!-- // todo: make it responsive -->
-        <div>
-            <!-- // TODO: make a reminder of the set hotkeys top right, right here. -->
-            <button>audio</button>
-        </div>
-        <div>
-            <button onclick={() => toggleOptions()}>
-                {showOptions ? "Back" : "Options"}
-            </button>
+            <div id="header-buttons">
+                <div>
+                    <!-- // TODO: make a reminder of the set hotkeys top right, right here. -->
+                    <button class="hotkey-reminder-btn header-btns">img</button>
+                </div>
+                <!-- // todo: make it responsive -->
+                <div>
+                    <!-- // TODO: make a reminder of the set hotkeys top right, right here. -->
+                    <button class="hotkey-reminder-btn header-btns">audio</button>
+                </div>
+                <div>
+                    <button id="options-btn" class="header-btns" onclick={() => toggleOptions()}>
+                        {showOptions ? "Back" : "Options"}
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
     <div class="control-section">
-        <h3>Text fields</h3>
+        <!-- <h3>Text fields</h3> -->
         <div class="input-group">
             <InputField id="word-field" label="Word" bind:value={targetWordField} placeholder="Target word" />
 
@@ -99,6 +103,9 @@
     <div class="control-section">
         <h3>Sentence Audio</h3>
         <div class="time-controls">
+            <!-- TODO: Make MP3 Editor TOGGLEABLE! -->
+            <!-- //TODO: Like it's MOSTLY hidden except play, pause, until you open the editor. -->
+            <!-- //TODO: The waveform, play/pause btn, etc take WAY too much space -->
             <Wavesurfer mp3={mp3snippet} />
         </div>
     </div>
@@ -117,6 +124,8 @@
                 aria-label="Image field - press backspace to delete image"
             >
                 {#if screenshotDataUrl}
+                    <!-- //TODO: Until img dropped here, IMG hitbox should be about 1/3 as tall. -->
+                    <!-- // FIXME: LIKE what do they need a large hitbox for? It's put in by the hotkey. -->
                     <img class="take-full-container" src={screenshotDataUrl} alt="MPV screenshot for Anki flashcard" />
                 {:else}
                     <div class="image-placeholder">No image</div>
@@ -126,7 +135,9 @@
     </div>
 
     <div class="control-section">
-        <h3>Finalize</h3>
+        <!-- <h3>Finalize</h3> -->
+        <!-- //TODO: do i need to say it's the finalize section? They know -->
+        <!-- // TODO: Make the buttons about 25% shorter -->
 
         <div class="button-group">
             <button class="success-btn" onclick={handleExportSubtitles}> Export Card </button>
@@ -148,11 +159,32 @@
         font-weight: 500;
         cursor: pointer;
         transition: all 0.15s ease-in-out;
-        min-width: 120px;
+        /* min-width: 120px; */
+    }
+
+    #options-btn {
+        background-color: #c0ddff;
+    }
+
+    #header-buttons {
+        display: flex;
+        justify-content: flex-end;
+        /* flex-direction: column; */
+    }
+
+    .hotkey-reminder-btn {
+        min-width: 50px;
+        background-color: #d0edaf;
+    }
+
+    .header-btns {
+        margin-top: 10px;
+        margin-right: 6px;
     }
 
     .flex-row {
         display: flex;
+        justify-content: space-between;
     }
 
     .image-target-container {
@@ -256,7 +288,7 @@
     }
 
     .control-section {
-        padding: 20px;
+        padding: 16px 20px;
         border-bottom: 1px solid #dee2e6;
     }
 
