@@ -35,6 +35,9 @@
 
     let currentAudioFile: HTMLAudioElement | null = $state(null);
 
+    let fullFileEndTime = $state(0);
+    let fullFileEndTimeDisplayString = $state("");
+
     let stateTracker = $state<MP3PlayerState | null>(null);
     // Derived from stateTracker
     let reactivityTrigger = $state(0);
@@ -47,9 +50,6 @@
     let isPlaying = $derived(currentState?.main.isPlaying ?? false);
     let isRegionPlaying = $derived(currentState?.region.isPlaying ?? false);
 
-    let fullFileEndTime = $state(0);
-
-    let fullFileEndTimeDisplayString = $state("");
     let cursorPosition = $state(0); // for the cursor string
 
     let regionStart = $state(5);
@@ -126,6 +126,16 @@
                     // to update the Play/Pause btns
                     reactivityTrigger++; // Trigger Svelte reactivity
                 }
+            }
+        });
+
+        wavesurfer.on("click", (relativeX) => {
+            if (wavesurfer && stateTracker) {
+                const clickedTime = relativeX * fullFileEndTime;
+                // Is clickedtime inside region or outside?
+                // if inside region, set both there.
+                // if outside region, only main time.
+                stateTracker.handleUserClick(clickedTime);
             }
         });
 

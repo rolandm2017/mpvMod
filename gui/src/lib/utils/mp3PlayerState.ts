@@ -98,8 +98,15 @@ export class MP3PlayerState {
 
         this.surfer.pause();
         this.main.isPlaying = false;
-        this.main.currentTime = this.surfer.getCurrentTime();
+        const currentTime = this.surfer.getCurrentTime();
+        this.main.currentTime = currentTime;
         this.activeContext = null;
+        // if time is in the region during pause,
+        // update region start time also
+        const pausedInRegion = currentTime > this.region.startTime && currentTime < this.region.endTime;
+        if (pausedInRegion) {
+            this.region.currentTime = currentTime;
+        }
     }
 
     // Region playback controls
@@ -144,6 +151,7 @@ export class MP3PlayerState {
         // console.log("HANDLE TIME UPATE:", currentTime);
         // console.log("context:", this.activeContext);
         // FIXME: Instead it's, "take current time as argument, from outside"
+        console.log(this.activeContext, "1477ru");
 
         if (this.activeContext === "main") {
             this.main.currentTime = currentTime;
@@ -160,6 +168,17 @@ export class MP3PlayerState {
                 this.pauseRegion();
                 this.region.currentTime = this.region.startTime; // Reset to region start
             }
+        }
+    }
+
+    handleUserClick(clickedTime: number) {
+        const clickedInMainArea = clickedTime < this.region.startTime || clickedTime > this.region.endTime;
+        if (clickedInMainArea) {
+            this.main.currentTime = clickedTime;
+        } else {
+            // update both because, user would expect that from both buttons
+            this.main.currentTime = clickedTime;
+            this.region.currentTime = clickedTime;
         }
     }
 
