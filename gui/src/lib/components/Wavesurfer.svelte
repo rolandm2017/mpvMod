@@ -44,6 +44,7 @@
     let fullFileEndTime = $state(0);
 
     let fullFileEndTimeDisplayString = $state("");
+    let cursorPosition = $state(0); // for the cursor string
 
     let regionStart = $state(5);
     let regionEnd = $state(7);
@@ -106,7 +107,9 @@
 
         wavesurfer.on("timeupdate", () => {
             if (stateTracker && wavesurfer) {
-                stateTracker.handleTimeUpdate(wavesurfer.getCurrentTime());
+                const currentTime = wavesurfer.getCurrentTime();
+                cursorPosition = currentTime;
+                stateTracker.handleTimeUpdate(currentTime);
             }
         });
 
@@ -143,6 +146,20 @@
         const minutes = Math.floor(duration / 60);
         const seconds = Math.floor(duration % 60);
         return `${minutes}:${seconds.toString().padStart(2, "0")}`;
+    }
+
+    function msTimeString(duration: number) {
+        const minutes = Math.floor(duration / 60);
+        const seconds = Math.floor(duration % 60);
+        const milliseconds = Math.floor((duration % 1) * 10);
+        return `${minutes}:${seconds.toString().padStart(2, "0")}.${milliseconds}`;
+    }
+
+    function doubleDecimalTimeString(duration: number) {
+        const minutes = Math.floor(duration / 60);
+        const seconds = Math.floor(duration % 60);
+        const milliseconds = Math.floor((duration % 1) * 100);
+        return `${minutes}:${seconds.toString().padStart(2, "0")}.${milliseconds.toString().padStart(2, "0")}`;
     }
 
     $effect(() => {
@@ -210,11 +227,14 @@
 
 <div bind:this={container} class="w-full"></div>
 
-<!-- // TODO: a cursor position timer, mm:ss.ms -->
-<!-- // TODO: A milliseconds thing on the time string. mm:ss.ms -->
 <!-- // TODO: Nudge by sec, 1/4 sec. Allow user to pick values -->
-<div class="push-items-right">
-    <span>Length: {convertToTimeString(fullFileEndTime)}</span>
+<div class="push-items-right time-container">
+    <div class="time-half">
+        <span>Cursor: {doubleDecimalTimeString(cursorPosition)}</span>
+    </div>
+    <div class="time-half">
+        <span>Length: {convertToTimeString(fullFileEndTime)}</span>
+    </div>
 </div>
 <div class="time-row flex-row push-items-top sml-space-below">
     <div class="time-group half-container-fill">
@@ -222,9 +242,9 @@
             <h4 class="push-items-top">Start Time</h4>
         </div>
         <div class="time-display">
-            <button class="nudge-btn" onclick={() => nudgeStart(-1)}>←</button>
-            <span class="time-value">{convertToTimeString(regionStart)}</span>
-            <button class="nudge-btn" onclick={() => nudgeStart(1)}>→</button>
+            <button class="nudge-btn" onclick={() => nudgeStart(-0.5)}>←</button>
+            <span class="time-value">{msTimeString(regionStart)}</span>
+            <button class="nudge-btn" onclick={() => nudgeStart(0.5)}>→</button>
         </div>
     </div>
 
@@ -233,9 +253,9 @@
             <h4 class="push-items-top">End Time</h4>
         </div>
         <div class="time-display">
-            <button class="nudge-btn" onclick={() => nudgeEnd(-1)}>←</button>
-            <span class="time-value">{convertToTimeString(regionEnd)}</span>
-            <button class="nudge-btn" onclick={() => nudgeEnd(1)}>→</button>
+            <button class="nudge-btn" onclick={() => nudgeEnd(-0.5)}>←</button>
+            <span class="time-value">{msTimeString(regionEnd)}</span>
+            <button class="nudge-btn" onclick={() => nudgeEnd(0.5)}>→</button>
         </div>
     </div>
 </div>
@@ -272,6 +292,17 @@
     }
 
     .push-items-right {
+        display: flex;
+        justify-content: flex-end;
+    }
+
+    .time-container {
+        display: flex;
+        width: 100%;
+    }
+
+    .time-half {
+        width: 50%;
         display: flex;
         justify-content: flex-end;
     }
