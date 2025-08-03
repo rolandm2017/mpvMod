@@ -57,18 +57,26 @@ export class MP3PlayerState {
 
     // Set region boundaries (in seconds)
     setRegion(startTime: number, endTime: number): void {
+        // FIXME: I have playhead midway tyhru, I move boundary to the right, press Play, Playhead is set to start of zone.
         this.region.startTime = startTime;
         this.region.endTime = endTime;
-        this.region.currentTime = startTime; // reset region playhead
+        const initCondition = this.region.currentTime === 0;
+        const cursorIsPastStart = this.region.currentTime > startTime + 1;
+        if (initCondition) {
+            this.region.currentTime = startTime;
+        } else if (cursorIsPastStart) {
+            this.region.currentTime = this.region.currentTime; // null change
+        }
+        const cursorIsPastNewEndTime = this.region.currentTime > endTime;
+        if (cursorIsPastNewEndTime) {
+            // "If cursor is past new End Time, Wavesurfer cursor is moved back"
+            this.surfer.seekTo(startTime / this.duration);
+            this.region.currentTime = startTime;
+        }
     }
 
     // Main playback controls
     playMain() {
-        // Only inherit if main hasn't established its own position
-        // if (this.activeContext === 'region' && this.main.currentTime === 0) {
-        //     this.main.currentTime = this.surfer.getCurrentTime();
-        // }
-
         // If region is playing, inherit its current position
         if (this.activeContext === "region") {
             this.main.currentTime = this.surfer.getCurrentTime();

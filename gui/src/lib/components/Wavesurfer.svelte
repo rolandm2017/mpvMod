@@ -24,7 +24,6 @@
     // TODO: 2. Display the start, end of the bounding box. the Regions markers
     // TODO: 3. User clicks "Make card," the mp3 is snipped.
     // TODO: Maybe a tickbox to let user prevent accidentally moving the boundaries?
-    // TODO: 4. Let user click btn to play the Regions area.
     // FIXME: The first time the page loads, you must click Play Audio twice to make it play
 
     let container: HTMLDivElement;
@@ -36,21 +35,12 @@
 
     let currentAudioFile: HTMLAudioElement | null = $state(null);
 
-    // "Manual" Track playing state
-    // let isPlaying = $state(false);
-    // let playbackPosition = $state(0);
-    // let regionPosition = $state(0); // Position within the region (0 = region start)
-    // let isRegionPlaying = $state(false); // Separate state for region playback
-
     let stateTracker = $state<MP3PlayerState | null>(null);
     // Derived from stateTracker
     let currentState = $derived(stateTracker?.getState() ?? null);
     let isPlaying = $derived(currentState?.main.isPlaying ?? false);
     let isRegionPlaying = $derived(currentState?.region.isPlaying ?? false);
 
-    // let fullFileStartTime = $state('0:00');
-    // let fullFileEndTime = $state('0:00');
-    let fullFileStartTime = $state(0);
     let fullFileEndTime = $state(0);
 
     let fullFileEndTimeDisplayString = $state("");
@@ -73,10 +63,6 @@
             height: 100,
             plugins: [regionsPlugin]
         });
-
-        // FIXME: User presses "play region" but playback is
-        // outside of boundary. Program checks, "is in playback rregion?"
-        // if it isn't, it's p ut back in there before play begins.
 
         // Track play/pause events
         wavesurfer.on("play", () => {
@@ -129,7 +115,6 @@
         };
     });
 
-    //d fsdfds
     let previousMp3 = $state(null);
 
     $effect(() => {
@@ -139,9 +124,7 @@
                 currentAudioFile.src = "";
                 currentAudioFile = null;
             }
-            // TODO: How does this effect know to fire when "Mp3" becoems a new MP3?
             currentAudioFile = new Audio(mp3);
-            // TODO: How does the mp3 player get ahold of the new audio file?
 
             currentAudioFile.addEventListener("loadedmetadata", () => {
                 if (!wavesurfer) throw new Error("Surfer was null in $effect");
@@ -181,9 +164,7 @@
         }
     }
 
-    // function resetRegionPlayback() {
-    //     regionPosition = 0;
-    // }
+    // FIXME: Shift boundary right btn click, then play Region, Region autostops at prev. end of region.
 
     function playPauseInRegion() {
         if (!stateTracker) throw new Error("Null state tracker");
@@ -209,24 +190,22 @@
             return;
         }
         regionEnd += direction;
+        console.log("HERE ", direction, regionStart, regionEnd);
         updateRegion(regionStart, regionEnd);
     }
 
     function updateRegion(newStart: number, newEnd: number) {
-        if (regionDisplay) {
+        console.log(regionDisplay, stateTracker, "198ru");
+        if (regionDisplay && stateTracker) {
             // TODO: Update the Mp3 state tracker
+            console.log("calling setRegion", newStart, newEnd);
+            stateTracker.setRegion(newStart, newEnd);
             regionDisplay.setOptions({
                 start: newStart,
                 end: newEnd
             });
         }
     }
-
-    // SO we're gonna:
-    //      - store everything as seconds. 2 min -> 120 seconds. 2:05 -> 125 seconds
-    //      - convert seconds -> mm:ss for display purposes
-    //  - very few clips will exceed 30 seconds anyweays
-    // TODO: Make the UI show the clipping region start, end
 </script>
 
 <div bind:this={container} class="w-full"></div>
