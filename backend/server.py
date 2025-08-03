@@ -498,7 +498,7 @@ class MPVWebSocketServer:
         finally:
             await self.unregister_client(websocket)
     
-    async def start_websocket_server(self, host="localhost", port=8765):
+    async def start_websocket_server(self, host="localhost", port=9001):
         """Start the WebSocket server"""
         self.server = await websockets.serve(self.handle_client, host, port)
         print(f"🌐 WebSocket server started on ws://{host}:{port}")
@@ -527,12 +527,12 @@ async def main():
     if len(sys.argv) < 2:
         print("Usage: python server.py <video_file_path> [host] [port]")
         print("Example: python server.py video.mp4")
-        print("Example: python server.py video.mp4 localhost 8765")
+        print("Example: python server.py video.mp4 localhost 9001")
         sys.exit(1)
     
     filepath = sys.argv[1]
     host = sys.argv[2] if len(sys.argv) > 2 else "localhost"
-    port = int(sys.argv[3]) if len(sys.argv) > 3 else 8765
+    port = int(sys.argv[3]) if len(sys.argv) > 3 else 9001
     
     server = MPVWebSocketServer(poll_interval=0.208)
     server.start_monitoring()

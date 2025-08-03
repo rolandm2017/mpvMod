@@ -26,6 +26,9 @@
     // TODO: Maybe a tickbox to let user prevent accidentally moving the boundaries?
     // FIXME: The first time the page loads, you must click Play Audio twice to make it play
 
+    // TODO: MUST  have FFmpeg make the clip, send it to the client, so client can
+    // send the clip to Anki
+
     let container: HTMLDivElement;
     let wavesurfer: WaveSurfer | null = null;
     let regionDisplay: Region | null = null;
