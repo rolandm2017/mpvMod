@@ -12,6 +12,7 @@
     import { SegmentMountingTracker } from "$lib/utils/mountingTracker.js";
     import HotkeyConfig from "$lib/HotkeyConfig.svelte";
     import type { CommandResponse, HotkeyRegister, MPVStateData } from "$lib/interfaces.js";
+    import FieldMappingConfig from "$lib/FieldMappingConfig.svelte";
 
     let { data } = $props();
 
@@ -234,6 +235,7 @@
 
     function switchPageType() {
         // switches them
+        console.log("switch page type", optionsPage);
         if (optionsPage === "hotkeyConfig") {
             optionsPage = "connectConfig";
         } else {
@@ -460,35 +462,6 @@
         />
     {/if}
 </div>
-
-<!-- {#if showOptions}
-    <HotkeyConfig {showOptions} {toggleOptions} />
-{:else}
-    <div class="container">
-        <div class="subtitle-panel">
-            <div class="subtitle-header">Subtitles</div>
-            <div
-                class="subtitle-content"
-                data-testid="scroll-container"
-                bind:this={scrollContainer}
-            >
-                {#if data.segments.length > 0}
-                    {#each data.segments as segment}
-                        <SubtitleSegment
-                            index={segment.index}
-                            timecode={segment.timecode}
-                            text={segment.text}
-                            emitTopOfContainer={storeSegmentPosition}
-                        />
-                    {/each}
-                {:else}
-                    <div class="loading">No subtitles found</div>
-                {/if}
-            </div>
-        </div>
-        <CardBuilder {showOptions} {toggleOptions} />
-    </div>
-{/if} -->
 
 <style>
     .container {

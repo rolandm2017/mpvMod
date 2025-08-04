@@ -20,7 +20,7 @@ export interface FieldMappingState {
     isDirty: boolean;
 }
 
-type StateAction =
+export type StateAction =
     | { type: "SET_FIELD_MAPPING"; fieldName: keyof FieldMappings; ankiField: string }
     | { type: "SET_SELECTED_DECK"; deck: string }
     | { type: "SET_SELECTED_NOTE_TYPE"; noteType: string }
@@ -32,8 +32,104 @@ type StateAction =
     | { type: "LOAD_STATE"; state: Partial<FieldMappingState> }
     | { type: "RESET_TO_DEFAULTS" };
 
-export class FieldMappingStateManager {
-    private state: FieldMappingState = $state({
+// Pure reducer function - easy to test
+export function fieldMappingReducer(state: FieldMappingState, action: StateAction): FieldMappingState {
+    switch (action.type) {
+        case "SET_FIELD_MAPPING":
+            return {
+                ...state,
+                fieldMappings: {
+                    ...state.fieldMappings,
+                    [action.fieldName]: action.ankiField
+                },
+                isDirty: true
+            };
+
+        case "SET_SELECTED_DECK":
+            return {
+                ...state,
+                selectedDeck: action.deck,
+                isDirty: true
+            };
+
+        case "SET_SELECTED_NOTE_TYPE":
+            return {
+                ...state,
+                selectedNoteType: action.noteType,
+                isDirty: true
+            };
+
+        case "SET_AVAILABLE_DECKS":
+            return {
+                ...state,
+                availableDecks: action.decks,
+                // Auto-select first deck if none selected and decks available
+                selectedDeck: !state.selectedDeck && action.decks.length > 0 ? action.decks[0] : state.selectedDeck,
+                isDirty: !state.selectedDeck && action.decks.length > 0 ? true : state.isDirty
+            };
+
+        case "SET_AVAILABLE_NOTE_TYPES":
+            return {
+                ...state,
+                availableNoteTypes: action.noteTypes,
+                // Auto-select first note type if none selected and types available
+                selectedNoteType:
+                    !state.selectedNoteType && action.noteTypes.length > 0
+                        ? action.noteTypes[0]
+                        : state.selectedNoteType,
+                isDirty: !state.selectedNoteType && action.noteTypes.length > 0 ? true : state.isDirty
+            };
+
+        case "SET_AVAILABLE_ANKI_FIELDS":
+            return {
+                ...state,
+                availableAnkiFields: action.fields
+            };
+
+        case "SET_LOADING":
+            return {
+                ...state,
+                isLoading: action.loading
+            };
+
+        case "MARK_SAVED":
+            return {
+                ...state,
+                lastSaved: new Date(),
+                isDirty: false
+            };
+
+        case "LOAD_STATE":
+            return {
+                ...state,
+                ...action.state,
+                isDirty: false,
+                lastSaved: new Date()
+            };
+
+        case "RESET_TO_DEFAULTS":
+            return {
+                ...state,
+                fieldMappings: {
+                    targetWord: "Front",
+                    exampleSentence: "Back",
+                    nativeTranslation: "Translation",
+                    sentenceAudio: "Audio",
+                    screenshot: "Image"
+                },
+                selectedDeck: "",
+                selectedNoteType: "",
+                isDirty: true
+            };
+
+        default:
+            return state;
+    }
+}
+
+// Initial state factory
+export function createInitialState(): FieldMappingState {
+    return {
         fieldMappings: {
             targetWord: "Front",
             exampleSentence: "Back",
@@ -59,225 +155,93 @@ export class FieldMappingStateManager {
         isLoading: false,
         lastSaved: null,
         isDirty: false
-    });
+    };
+}
 
+// Service class for side effects only
+export class FieldMappingService {
     private ankiClient: AnkiClient;
-    private onStateChange?: (state: FieldMappingState) => void;
 
-    constructor(ankiClient: AnkiClient, onStateChange?: (state: FieldMappingState) => void) {
+    constructor(ankiClient: AnkiClient) {
         this.ankiClient = ankiClient;
-        this.onStateChange = onStateChange;
     }
 
-    // Getter for reactive state access
-    get currentState(): FieldMappingState {
-        return this.state;
-    }
-
-    // State reducer
-    private reduce(action: StateAction): void {
-        const oldState = { ...this.state };
-
-        switch (action.type) {
-            case "SET_FIELD_MAPPING":
-                this.state.fieldMappings[action.fieldName] = action.ankiField;
-                this.state.isDirty = true;
-                break;
-
-            case "SET_SELECTED_DECK":
-                this.state.selectedDeck = action.deck;
-                this.state.isDirty = true;
-                break;
-
-            case "SET_SELECTED_NOTE_TYPE":
-                this.state.selectedNoteType = action.noteType;
-                this.state.isDirty = true;
-                break;
-
-            case "SET_AVAILABLE_DECKS":
-                this.state.availableDecks = action.decks;
-                // Auto-select first deck if none selected and decks available
-                if (!this.state.selectedDeck && action.decks.length > 0) {
-                    this.state.selectedDeck = action.decks[0];
-                    this.state.isDirty = true;
-                }
-                break;
-
-            case "SET_AVAILABLE_NOTE_TYPES":
-                this.state.availableNoteTypes = action.noteTypes;
-                // Auto-select first note type if none selected and types available
-                if (!this.state.selectedNoteType && action.noteTypes.length > 0) {
-                    this.state.selectedNoteType = action.noteTypes[0];
-                    this.state.isDirty = true;
-                }
-                break;
-
-            case "SET_AVAILABLE_ANKI_FIELDS":
-                this.state.availableAnkiFields = action.fields;
-                break;
-
-            case "SET_LOADING":
-                this.state.isLoading = action.loading;
-                break;
-
-            case "MARK_SAVED":
-                this.state.lastSaved = new Date();
-                this.state.isDirty = false;
-                break;
-
-            case "LOAD_STATE":
-                Object.assign(this.state, action.state);
-                this.state.isDirty = false;
-                this.state.lastSaved = new Date();
-                break;
-
-            case "RESET_TO_DEFAULTS":
-                this.state.fieldMappings = {
-                    targetWord: "Front",
-                    exampleSentence: "Back",
-                    nativeTranslation: "Translation",
-                    sentenceAudio: "Audio",
-                    screenshot: "Image"
-                };
-                this.state.selectedDeck = "";
-                this.state.selectedNoteType = "";
-                this.state.isDirty = true;
-                break;
-        }
-
-        // Auto-save if dirty (debounced)
-        if (this.state.isDirty && action.type !== "LOAD_STATE") {
-            this.debouncedSave();
-        }
-
-        // Notify listeners of state change
-        this.onStateChange?.(this.state);
-    }
-
-    // Public action dispatchers
-    dispatch(action: StateAction): void {
-        this.reduce(action);
-    }
-
-    updateFieldMapping(fieldName: keyof FieldMappings, ankiField: string): void {
-        this.dispatch({ type: "SET_FIELD_MAPPING", fieldName, ankiField });
-    }
-
-    setSelectedDeck(deck: string): void {
-        this.dispatch({ type: "SET_SELECTED_DECK", deck });
-    }
-
-    async setSelectedNoteType(noteType: string): Promise<void> {
-        this.dispatch({ type: "SET_SELECTED_NOTE_TYPE", noteType });
-
-        // Fetch fields for this note type
-        this.dispatch({ type: "SET_LOADING", loading: true });
-        try {
-            const fields = await this.ankiClient.getModelFields(noteType);
-            if (fields.success) {
-                this.dispatch({ type: "SET_AVAILABLE_ANKI_FIELDS", fields: fields.fields });
-            }
-        } catch (error) {
-            console.error("Failed to fetch note type fields:", error);
-        } finally {
-            this.dispatch({ type: "SET_LOADING", loading: false });
-        }
-    }
-
-    async loadFromStorage(): Promise<void> {
+    async loadFromStorage(): Promise<Partial<FieldMappingState> | null> {
         if (window.electronAPI?.getFieldMappings) {
             try {
                 const saved = await window.electronAPI.getFieldMappings();
                 if (saved) {
-                    this.dispatch({
-                        type: "LOAD_STATE",
-                        state: {
-                            fieldMappings: saved.fieldMappings,
-                            selectedDeck: saved.selectedDeck || "",
-                            selectedNoteType: saved.selectedNoteType || ""
-                        }
-                    });
+                    return {
+                        fieldMappings: saved.fieldMappings,
+                        selectedDeck: saved.selectedDeck || "",
+                        selectedNoteType: saved.selectedNoteType || ""
+                    };
                 }
             } catch (error) {
                 console.error("Failed to load field mappings:", error);
             }
         }
+        return null;
     }
 
-    async fetchAnkiData(): Promise<void> {
-        this.dispatch({ type: "SET_LOADING", loading: true });
-
+    async saveToStorage(state: FieldMappingState): Promise<void> {
         try {
-            // Fetch decks and note types in parallel
+            if (window.electronAPI?.saveFieldMappings) {
+                await window.electronAPI.saveFieldMappings({
+                    selectedDeck: state.selectedDeck,
+                    selectedNoteType: state.selectedNoteType,
+                    fieldMappings: { ...state.fieldMappings }
+                });
+            }
+        } catch (error) {
+            console.error("Failed to save field mappings:", error);
+            throw error;
+        }
+    }
+
+    async fetchAnkiData(): Promise<{
+        decks?: string[];
+        noteTypes?: string[];
+        fields?: string[];
+    }> {
+        try {
             const [decksResult, noteTypesResult] = await Promise.all([
                 this.ankiClient.getDeckNames(),
                 this.ankiClient.getNoteTypes()
             ]);
 
+            const result: any = {};
+
             if (decksResult.success) {
-                this.dispatch({ type: "SET_AVAILABLE_DECKS", decks: decksResult.decks });
+                result.decks = decksResult.decks;
             }
 
             if (noteTypesResult.success) {
-                this.dispatch({ type: "SET_AVAILABLE_NOTE_TYPES", noteTypes: noteTypesResult.noteTypes });
+                result.noteTypes = noteTypesResult.noteTypes;
             }
 
-            // If we have a selected note type, fetch its fields
-            if (this.state.selectedNoteType) {
-                const fieldsResult = await this.ankiClient.getModelFields(this.state.selectedNoteType);
-                if (fieldsResult.success) {
-                    this.dispatch({ type: "SET_AVAILABLE_ANKI_FIELDS", fields: fieldsResult.fields });
-                }
-            }
+            return result;
         } catch (error) {
             console.error("Failed to fetch Anki data:", error);
-        } finally {
-            this.dispatch({ type: "SET_LOADING", loading: false });
+            throw error;
         }
     }
 
-    resetToDefaults(): void {
-        if (confirm("Reset all settings to defaults?")) {
-            this.dispatch({ type: "RESET_TO_DEFAULTS" });
-        }
-    }
-
-    // Debounced save to prevent excessive saves
-    private saveTimeout: ReturnType<typeof setTimeout> | null = null;
-    private debouncedSave(): void {
-        if (this.saveTimeout) {
-            clearTimeout(this.saveTimeout);
-        }
-
-        this.saveTimeout = setTimeout(() => {
-            this.saveToStorage();
-        }, 500); // 500ms debounce
-    }
-
-    private async saveToStorage(): Promise<void> {
-        if (!this.state.isDirty) return;
-
+    async fetchNoteTypeFields(noteType: string): Promise<string[] | null> {
         try {
-            if (window.electronAPI?.saveFieldMappings) {
-                await window.electronAPI.saveFieldMappings({
-                    selectedDeck: this.state.selectedDeck,
-                    selectedNoteType: this.state.selectedNoteType,
-                    fieldMappings: { ...this.state.fieldMappings }
-                });
-                this.dispatch({ type: "MARK_SAVED" });
-                console.log("Field mappings saved automatically");
-            }
+            const fieldsResult = await this.ankiClient.getModelFields(noteType);
+            return fieldsResult.success ? fieldsResult.fields : null;
         } catch (error) {
-            console.error("Failed to save field mappings:", error);
+            console.error("Failed to fetch note type fields:", error);
+            return null;
         }
     }
 
-    // Get serializable state for parent components
-    getExportableState() {
+    getExportableState(state: FieldMappingState) {
         return {
-            fieldMappings: this.state.fieldMappings,
-            selectedDeck: this.state.selectedDeck,
-            selectedNoteType: this.state.selectedNoteType
+            fieldMappings: state.fieldMappings,
+            selectedDeck: state.selectedDeck,
+            selectedNoteType: state.selectedNoteType
         };
     }
 }

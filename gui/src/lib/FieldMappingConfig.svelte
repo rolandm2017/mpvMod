@@ -1,47 +1,33 @@
-<!-- FieldMappingConfig.svelte -->
+<!-- FieldMappingConfig -->
 <script lang="ts">
     import { onMount } from "svelte";
     import FieldMappingItem from "./components/FieldMappingItem.svelte";
-
     import { AnkiClient } from "$lib/api/ankiClient";
-    import type { SelectedDeckInfo } from "./interfaces";
-
-    const ankiClient = new AnkiClient();
+    import {
+        fieldMappingReducer,
+        createInitialState,
+        FieldMappingService,
+        type StateAction,
+        type FieldMappings
+    } from "./utils/reducer";
 
     let { showOptions, toggleOptions, switchPageType, updateFieldMappings } = $props();
 
-    // Field mapping state - maps CardBuilder fields to Anki fields
-    let fieldMappings = $state({
-        targetWord: "Front",
-        exampleSentence: "Back",
-        nativeTranslation: "Translation",
-        sentenceAudio: "Audio",
-        screenshot: "Image"
-    });
+    // Svelte state lives here
+    let state = $state(createInitialState());
 
-    const placeholderUntilLoading = [
-        "Front",
-        "Back",
-        "Translation",
-        "Audio",
-        "Image",
-        "Source", // "which video file?"
-        "Notes",
-        "Definition",
-        "Example"
-    ];
+    // Service for side effects
+    const service = new FieldMappingService(new AnkiClient());
 
-    // Available Anki data
-    let availableDecks = $state<string[]>([]);
-    let availableNoteTypes = $state<string[]>([]);
-    let availableAnkiFields = $state(placeholderUntilLoading);
-
-    // Selected deck and note type
-    let selectedDeck = $state("");
-    let selectedNoteType = $state("");
+    // Debounced save
+    let saveTimeout: ReturnType<typeof setTimeout> | null = null;
 
     // Card Builder field definitions
-    const cardBuilderFields = [
+    const cardBuilderFields: Array<{
+        name: keyof FieldMappings;
+        title: string;
+        description: string;
+    }> = [
         {
             name: "targetWord",
             title: "Target Word",
@@ -69,151 +55,136 @@
         }
     ];
 
-    // Load saved mappings on mount
+    // Dispatch function
+    function dispatch(action: StateAction) {
+        const newState = fieldMappingReducer(state, action);
+        state = newState;
+
+        // Auto-save if dirty (but not on initial load)
+        if (newState.isDirty && action.type !== "LOAD_STATE") {
+            debouncedSave();
+        }
+
+        // Notify parent of changes
+        updateFieldMappings(service.getExportableState(newState));
+    }
+
+    // Debounced save to prevent excessive saves
+    function debouncedSave() {
+        if (saveTimeout) {
+            clearTimeout(saveTimeout);
+        }
+
+        saveTimeout = setTimeout(async () => {
+            try {
+                await service.saveToStorage(state);
+                dispatch({ type: "MARK_SAVED" });
+                console.log("Field mappings saved automatically");
+            } catch (error) {
+                console.error("Failed to save field mappings:", error);
+            }
+        }, 500); // 500ms debounce
+    }
+
+    // Initialize on mount
     onMount(async () => {
-        // TODO: IF a deck and note type came from the store,
-        // preserve those choices as dthe default option
-        await loadFieldMappings();
-        await fetchAnkiData();
+        try {
+            // Load saved state first
+            const savedState = await service.loadFromStorage();
+            if (savedState) {
+                dispatch({ type: "LOAD_STATE", state: savedState });
+            }
+
+            // Then fetch fresh Anki data
+            await refreshAnkiData();
+        } catch (error) {
+            console.error("Failed to initialize:", error);
+        }
     });
 
-    async function loadFieldMappings() {
-        // Load from electron store
-        if (window.electronAPI?.getFieldMappings) {
-            const saved: SelectedDeckInfo = await window.electronAPI.getFieldMappings();
-            if (saved) {
-                fieldMappings = { ...saved.fieldMappings };
-                selectedDeck = saved.selectedDeck || "";
-                selectedNoteType = saved.selectedNoteType || "";
+    // Action handlers
+    async function refreshAnkiData() {
+        dispatch({ type: "SET_LOADING", loading: true });
+
+        try {
+            const ankiData = await service.fetchAnkiData();
+
+            if (ankiData.decks) {
+                dispatch({ type: "SET_AVAILABLE_DECKS", decks: ankiData.decks });
             }
+
+            if (ankiData.noteTypes) {
+                dispatch({ type: "SET_AVAILABLE_NOTE_TYPES", noteTypes: ankiData.noteTypes });
+            }
+
+            // If we have a selected note type, fetch its fields
+            if (state.selectedNoteType) {
+                const fields = await service.fetchNoteTypeFields(state.selectedNoteType);
+                if (fields) {
+                    dispatch({ type: "SET_AVAILABLE_ANKI_FIELDS", fields });
+                }
+            }
+        } catch (error) {
+            console.error("Failed to fetch Anki data:", error);
+        } finally {
+            dispatch({ type: "SET_LOADING", loading: false });
         }
     }
 
-    async function saveFieldMappings() {
-        if (window.electronAPI?.saveFieldMappings) {
-            console.log("SAVING: ", selectedDeck);
-            console.log(selectedNoteType, "98ru");
-            await window.electronAPI.saveFieldMappings({
-                selectedDeck,
-                selectedNoteType,
-                fieldMappings: { ...fieldMappings }
-            });
-        }
-        // Update parent component so Main UI knows what format to send the data in
-        updateFieldMappings({
-            fieldMappings,
-            selectedDeck,
-            selectedNoteType
-        });
-    }
-
-    async function fetchAnkiData() {
-        // Fetch available decks, note types, and fields from Anki Connect
-        const decks = await ankiClient.getDeckNames();
-        if (decks.success) {
-            availableDecks = decks.decks;
-        } else {
-            console.error(decks);
-        }
-        const noteTypes = await ankiClient.getNoteTypes();
-        if (noteTypes.success) {
-            availableNoteTypes = noteTypes.noteTypes;
-        } else {
-            console.error(noteTypes);
-        }
+    function handleUpdateSelectedDeck(event: Event) {
+        const target = event.target as HTMLSelectElement;
+        dispatch({ type: "SET_SELECTED_DECK", deck: target.value });
     }
 
     async function handleNoteTypeChange(noteType: string) {
-        console.log("Selected note type:", noteType);
-        selectedNoteType = noteType;
-        const fields = await ankiClient.getModelFields(selectedNoteType);
-        if (fields.success) {
-            // fields.fields is a string array.
-            availableAnkiFields = fields.fields;
-            console.log(fields);
-            console.log("would be saved");
-        }
-        // TODO: OK so how to save the field mappings?
-        // TODO: Save just the latest field mapping. They accidentally swap, too bad, they re-assign mappings
+        dispatch({ type: "SET_SELECTED_NOTE_TYPE", noteType });
 
-        saveFieldMappings();
+        // Fetch fields for this note type
+        dispatch({ type: "SET_LOADING", loading: true });
+        try {
+            const fields = await service.fetchNoteTypeFields(noteType);
+            if (fields) {
+                dispatch({ type: "SET_AVAILABLE_ANKI_FIELDS", fields });
+            }
+        } catch (error) {
+            console.error("Failed to fetch note type fields:", error);
+        } finally {
+            dispatch({ type: "SET_LOADING", loading: false });
+        }
     }
 
     function updateMapping(fieldName: string, ankiField: string) {
-        console.log(fieldName, ankiField, "158ru");
-        fieldMappings[fieldName as keyof typeof fieldMappings] = ankiField;
-        console.log($state.snapshot(fieldMappings), "188ru");
-
-        saveFieldMappings();
+        dispatch({
+            type: "SET_FIELD_MAPPING",
+            fieldName: fieldName as keyof FieldMappings,
+            ankiField
+        });
     }
 
     function resetToDefaults() {
         if (confirm("Reset all settings to defaults?")) {
-            fieldMappings = {
-                targetWord: "Front",
-                exampleSentence: "Back",
-                nativeTranslation: "Translation",
-                sentenceAudio: "Audio",
-                screenshot: "Image"
-            };
-            selectedDeck = "";
-            selectedNoteType = "";
-            saveFieldMappings();
+            dispatch({ type: "RESET_TO_DEFAULTS" });
         }
     }
-
-    // TODO: ON change note type, fetch fields.
-
-    async function printDebugInfo() {
-        console.log("Deubg");
-        const decks = await ankiClient.getDeckNames();
-        if (decks.success) {
-            availableDecks = decks.decks;
-        } else {
-            console.error(decks);
-        }
-        console.log("RESULT");
-        console.log(decks);
-        // const deckNames: string[] = await fieldCheckerApi.getDeckNames();
-        // console.log(deckNames);
-        const noteTypes = await ankiClient.getNoteTypes();
-        if (noteTypes.success) {
-            availableNoteTypes = noteTypes.noteTypes;
-        } else {
-            console.error(noteTypes);
-        }
-        // TODO: Let user pick deck , note type
-
-        // TODO:" COnsole log all deck names. "
-        // TODO: Put all deck names into a dropdown. Let user select the Deck.
-        // TODO: Console log all note types.
-        // TODO: Let user put Note Type into a dropdown for the deck.
-        // TODO: Display fields possible to seelect for the Selected Note Type
-        // TODO: Put a save btn
-        // TODO: On store note type, update saved layout.
-        // TODO: Save a layout.
-    }
-
-    function debugAgain() {
-        console.log($state.snapshot(availableDecks), "188ru");
-        console.log($state.snapshot(availableNoteTypes), "189ru");
-    }
-    // FIXME: The page has just one state.
-    // FIXME: ANY state change, triggers updating the Electron store
-    // FIXME: it's no more, "this is spagheetii," now it all happens in one place, one object.
-    // FIXME:
 </script>
 
 <div class="field-mapping-config">
     <div class="flex-row">
-        <div class="config-header" onclick={() => debugAgain()}>
+        <div class="config-header">
             <h2>Field Mapping Configuration</h2>
             <p>Map Card Builder fields to your Anki note fields</p>
+            {#if state.isDirty}
+                <small class="dirty-indicator">● Unsaved changes</small>
+            {:else if state.lastSaved}
+                <small class="saved-indicator">✓ Saved {state.lastSaved.toLocaleTimeString()}</small>
+            {/if}
         </div>
         <div class="header-actions">
-            <button class="secondary-btn" onclick={() => printDebugInfo()}> Debug </button>
-            <button class="secondary-btn" onclick={() => switchPageType()}> Hotkeys </button>
-            <button class="secondary-btn" onclick={resetToDefaults}> Reset Defaults </button>
+            <button class="secondary-btn" onclick={refreshAnkiData} disabled={state.isLoading}>
+                {state.isLoading ? "Loading..." : "Refresh"}
+            </button>
+            <button class="secondary-btn" onclick={() => switchPageType()}>Hotkeys</button>
+            <button class="secondary-btn" onclick={resetToDefaults}>Reset Defaults</button>
             <button class="primary-btn" onclick={() => toggleOptions()}>
                 {showOptions ? "Back" : "Options"}
             </button>
@@ -230,17 +201,17 @@
                     <label for="deck-selector" class="config-label">Deck</label>
                     <select
                         id="deck-selector"
-                        bind:value={selectedDeck}
-                        onchange={(updatedDeck) => handleUpdateSelectedDeck(updatedDeck)}
+                        bind:value={state.selectedDeck}
+                        onchange={handleUpdateSelectedDeck}
                         class="config-select"
+                        disabled={state.isLoading}
                     >
-                        {#if availableDecks.length === 0}
-                            <option value="" disabled>Select Deck...</option>
+                        {#if state.availableDecks.length === 0}
+                            <option value="" disabled>
+                                {state.isLoading ? "Loading decks..." : "No decks found"}
+                            </option>
                         {:else}
-                            {#if !selectedDeck}
-                                {(selectedDeck = availableDecks[0])}
-                            {/if}
-                            {#each availableDecks as deck}
+                            {#each state.availableDecks as deck}
                                 <option value={deck}>{deck}</option>
                             {/each}
                         {/if}
@@ -251,18 +222,17 @@
                     <label for="note-type-selector" class="config-label">Note Type</label>
                     <select
                         id="note-type-selector"
-                        bind:value={selectedNoteType}
-                        onchange={() => handleNoteTypeChange(selectedNoteType)}
-                        onchange={(noteType) => handleNoteTypeChange(noteType)}
+                        bind:value={state.selectedNoteType}
+                        onchange={() => handleNoteTypeChange(state.selectedNoteType)}
                         class="config-select"
+                        disabled={state.isLoading}
                     >
-                        {#if availableNoteTypes.length === 0}
-                            <option value="" disabled>Select Note Type...</option>
+                        {#if state.availableNoteTypes.length === 0}
+                            <option value="" disabled>
+                                {state.isLoading ? "Loading note types..." : "No note types found"}
+                            </option>
                         {:else}
-                            {#if !selectedNoteType}
-                                {(selectedNoteType = availableNoteTypes[0])}
-                            {/if}
-                            {#each availableNoteTypes as noteType}
+                            {#each state.availableNoteTypes as noteType}
                                 <option value={noteType}>{noteType}</option>
                             {/each}
                         {/if}
@@ -273,14 +243,13 @@
 
         <!-- Field Mappings -->
         <div class="field-mappings-section">
-            <!-- // TODO: A little mouseover info icon, brings up a tooltip, "<span>"Send what to where?"</span>" -->
             <h3 class="section-title">Field Mappings</h3>
 
             {#each cardBuilderFields as field}
                 <FieldMappingItem
                     {field}
-                    {availableAnkiFields}
-                    currentValue={fieldMappings[field.name as keyof typeof fieldMappings]}
+                    availableAnkiFields={state.availableAnkiFields}
+                    currentValue={state.fieldMappings[field.name]}
                     onMappingChange={updateMapping}
                 />
             {/each}
@@ -291,8 +260,8 @@
         <div class="status-info">
             <p class="status-text">
                 <span class="status-indicator connected"></span>
-                Connected to Anki ({availableDecks.length} decks, {availableNoteTypes.length} note types, {availableAnkiFields.length}
-                fields available)
+                Connected to Anki ({state.availableDecks.length} decks, {state.availableNoteTypes.length} note types, {state
+                    .availableAnkiFields.length} fields available)
             </p>
         </div>
     </div>
@@ -320,9 +289,19 @@
     }
 
     .config-header p {
-        margin: 0;
+        margin: 0 0 4px 0;
         color: #aaa;
         font-size: 14px;
+    }
+
+    .dirty-indicator {
+        color: #ffc107;
+        font-weight: 500;
+    }
+
+    .saved-indicator {
+        color: #28a745;
+        font-weight: 500;
     }
 
     .flex-row {
@@ -396,7 +375,7 @@
         transition: border-color 0.2s ease;
     }
 
-    .config-select:hover {
+    .config-select:hover:not(:disabled) {
         border-color: #777;
     }
 
@@ -404,6 +383,11 @@
         outline: none;
         border-color: #0077cc;
         box-shadow: 0 0 0 3px rgba(0, 119, 204, 0.2);
+    }
+
+    .config-select:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
     }
 
     .config-footer {
@@ -438,11 +422,6 @@
         box-shadow: 0 0 6px rgba(40, 167, 69, 0.6);
     }
 
-    .status-indicator.disconnected {
-        background: #dc3545;
-        box-shadow: 0 0 6px rgba(220, 53, 69, 0.6);
-    }
-
     /* Button styles */
     button {
         padding: 10px 20px;
@@ -454,12 +433,17 @@
         transition: all 0.2s ease;
     }
 
+    button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
     .primary-btn {
         background: #0077cc;
         color: white;
     }
 
-    .primary-btn:hover {
+    .primary-btn:hover:not(:disabled) {
         background: #005fa3;
         transform: translateY(-1px);
     }
@@ -469,12 +453,12 @@
         color: white;
     }
 
-    .secondary-btn:hover {
+    .secondary-btn:hover:not(:disabled) {
         background: #545b62;
         transform: translateY(-1px);
     }
 
-    button:active {
+    button:active:not(:disabled) {
         transform: translateY(0);
     }
 
