@@ -29,6 +29,10 @@ class MPVHotkeyPusher:
         self.screenshot_dir = Path.cwd() / "screenshots"
         self.screenshot_dir.mkdir(exist_ok=True)
         
+        # Setup signal handlers immediately
+        signal.signal(signal.SIGINT, self.signal_handler)
+        signal.signal(signal.SIGTERM, self.signal_handler)
+        
         print("🔧 Initializing MPV...")
         
         try:
@@ -53,6 +57,7 @@ class MPVHotkeyPusher:
         print("   F7: Take screenshot")
         print("   F8: Get timestamp")
         print("   Q: Quit")
+        print("   Ctrl+C: Force quit")
 
     def push_screenshot_hotkey(self, *args):
         """Simulate pressing F7 - take screenshot"""
@@ -135,17 +140,19 @@ class MPVHotkeyPusher:
 
     def signal_handler(self, signum, frame):
         """Handle Ctrl+C gracefully"""
-        print(f"\n📡 Received signal {signum}, shutting down...")
+        print(f"\n📡 Received signal {signum} (Ctrl+C), shutting down NOW...")
         self.running = False
-        if hasattr(self, 'player'):
-            self.player.terminate()
-        sys.exit(0)
+        try:
+            if hasattr(self, 'player') and self.player:
+                self.player.terminate()
+                print("✅ MPV terminated")
+        except:
+            pass
+        print("👋 Goodbye!")
+        os._exit(0)  # Force exit
 
     def run(self, video_file=None, auto_mode=False):
         """Main execution loop"""
-        # Setup signal handlers
-        signal.signal(signal.SIGINT, self.signal_handler)
-        signal.signal(signal.SIGTERM, self.signal_handler)
         
         print("MPV Hotkey Pusher Tool")
         print("=" * 40)
@@ -153,6 +160,7 @@ class MPVHotkeyPusher:
         print("   F7: Take screenshot")
         print("   F8: Get timestamp")
         print("   Q: Quit")
+        print("   Ctrl+C: Force quit")
         
         if auto_mode:
             print("🤖 Auto mode enabled:")
@@ -186,23 +194,27 @@ class MPVHotkeyPusher:
             print("🚀 Auto-push threads started!")
         
         try:
-            # Wait for playback
-            self.player.wait_for_playback()
+            # Simple loop that can be interrupted
+            print("🎮 MPV is running... Press Ctrl+C to quit")
+            while self.running:
+                try:
+                    time.sleep(0.5)
+                except KeyboardInterrupt:
+                    print("\n⌨️  Ctrl+C pressed!")
+                    raise
             
         except KeyboardInterrupt:
-            print("\n⌨️  Ctrl+C detected - shutting down gracefully...")
-            self.running = False
+            print("\n⌨️  Keyboard interrupt - shutting down...")
         except Exception as e:
-            print(f"❌ Error during playback: {e}")
+            print(f"❌ Error: {e}")
         finally:
-            print("🛑 Cleaning up...")
+            print("🛑 Final cleanup...")
             self.running = False
             if hasattr(self, 'player') and self.player:
                 try:
                     self.player.terminate()
-                    print("✅ MPV terminated")
+                    print("✅ MPV cleaned up")
                 except:
-                    print("⚠️  MPV cleanup failed")
                     pass
 
 
