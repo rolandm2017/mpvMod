@@ -1,4 +1,7 @@
 // src/lib/anki-client.ts
+
+import type { GetDecksResponse, GetNoteTypesResponse } from "$lib/responses.interface";
+
 // Client that calls your SvelteKit API routes instead of AnkiConnect directly
 export class AnkiClient {
     private async apiCall<T>(endpoint: string, params?: URLSearchParams): Promise<T> {
@@ -23,12 +26,12 @@ export class AnkiClient {
         return await this.apiCall("/api/anki/connection");
     }
 
-    async getDeckNames(targetDeck?: string): Promise<string[]> {
+    async getDeckNames(targetDeck?: string): Promise<GetDecksResponse> {
         const params = targetDeck ? new URLSearchParams({ target: targetDeck }) : undefined;
         return await this.apiCall("/api/anki/decks", params);
     }
 
-    async getNoteTypes(targetNoteType?: string): Promise<string[]> {
+    async getNoteTypes(targetNoteType?: string): Promise<GetNoteTypesResponse> {
         const params = targetNoteType ? new URLSearchParams({ target: targetNoteType }) : undefined;
         return await this.apiCall("/api/anki/note-types", params);
     }

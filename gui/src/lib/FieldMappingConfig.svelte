@@ -6,7 +6,7 @@
 
     const ankiClient = new AnkiClient();
 
-    let { showOptions, toggleOptions, updateFieldMappings, switchPageType } = $props();
+    let { showOptions, toggleOptions, switchPageType } = $props();
 
     // Field mapping state - maps CardBuilder fields to Anki fields
     let fieldMappings = $state({
@@ -161,13 +161,21 @@
     async function printDebugInfo() {
         console.log("Deubg");
         const decks = await ankiClient.getDeckNames();
+        if (decks.success) {
+            availableDecks = decks.decks;
+        } else {
+            console.error(decks);
+        }
         console.log("RESULT");
         console.log(decks);
         // const deckNames: string[] = await fieldCheckerApi.getDeckNames();
         // console.log(deckNames);
-        availableDecks = decks;
-        const noteTypes: string[] = await ankiClient.getNoteTypes();
-        availableNoteTypes = noteTypes;
+        const noteTypes = await ankiClient.getNoteTypes();
+        if (noteTypes.success) {
+            availableNoteTypes = noteTypes.noteTypes;
+        } else {
+            console.error(noteTypes);
+        }
         // TODO: Let user pick deck , note type
 
         if (selectedNoteType) {
@@ -183,11 +191,16 @@
         // TODO: On store note type, update saved layout.
         // TODO: Save a layout.
     }
+
+    function debugAgain() {
+        console.log($state.snapshot(availableDecks), "188ru");
+        console.log($state.snapshot(availableNoteTypes), "189ru");
+    }
 </script>
 
 <div class="field-mapping-config">
     <div class="flex-row">
-        <div class="config-header">
+        <div class="config-header" onclick={() => debugAgain()}>
             <h2>Field Mapping Configuration</h2>
             <p>Map Card Builder fields to your Anki note fields</p>
         </div>
