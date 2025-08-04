@@ -1,6 +1,5 @@
 // cypress/e2e/basic-divs.cy.js
 import { SUBTITLES } from '../../src/lib/constants';
-import { SubtitleDatabase } from '../../src/lib/utils/subtitleDatabase';
 
 describe('Page Structure', () => {
     beforeEach(() => {

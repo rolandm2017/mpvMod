@@ -5,7 +5,6 @@
     import CardBuilder from "$lib/CardBuilder.svelte";
     import SubtitleSegment from "$lib/SubtitleSegment.svelte";
 
-    import { parseTimecodeToSeconds } from "$lib/utils/parsing.js";
     import { Finder, scrollToClosestSubtitle, scrollToLocation } from "$lib/utils/subtitleScroll.js";
     import { Subtitle, SubtitleDatabase } from "$lib/utils/subtitleDatabase.js";
     import type { PlayerPosition, TimecodeString } from "$lib/types.js";

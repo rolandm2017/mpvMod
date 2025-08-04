@@ -1,24 +1,19 @@
-import { describe, it, expect, vi } from 'vitest';
-import path from 'path';
-import fs from 'fs';
+import { describe, it, expect, vi } from "vitest";
+import path from "path";
+import fs from "fs";
 
-import {
-    parseSrtFileIntoSegments,
-    prebuildLookupArrays,
-} from '$lib/utils/parsing';
-import { SubtitleHeights } from '../src/lib/utils/subtitleHeights';
-import { SubtitleDatabase } from '../src/lib/utils/subtitleDatabase';
-import type { SubtitleTiming, TimecodeString } from '$lib/types';
-import type { ParsedSegmentObj } from '../src/routes/+page.server';
+import { parseSrtFileIntoSegments, prebuildLookupArrays } from "$lib/utils/parsing";
+import type { SubtitleTiming, TimecodeString } from "$lib/types";
+import type { ParsedSegmentObj } from "../src/routes/+page.server";
 
-import { SUBTITLES } from '$lib/constants';
+import { SUBTITLES } from "$lib/constants";
 
 function checkDuplicateTimecodes(segments: ParsedSegmentObj[]): boolean {
     const timecodes = segments.map((s) => s.timecode);
     const duplicates = timecodes.filter((tc, i) => timecodes.indexOf(tc) !== i);
 
     if (duplicates.length > 0) {
-        console.log('Duplicate timecodes found:', [...new Set(duplicates)]);
+        console.log("Duplicate timecodes found:", [...new Set(duplicates)]);
         return true;
     }
     return false;
@@ -32,28 +27,28 @@ function checkDuplicateSubtitleTimings(segments: ParsedSegmentObj[]): boolean {
     const duplicates = timings.filter((tc, i) => timings.indexOf(tc) !== i);
 
     if (duplicates.length > 0) {
-        console.log('Duplicate timings found:', [...new Set(duplicates)]);
+        console.log("Duplicate timings found:", [...new Set(duplicates)]);
         return true;
     }
     return false;
 }
 
-describe('SRT file qualities', () => {
-    const SRT_FILE_PATH = path.resolve('sample.srt');
-    const content = fs.readFileSync(SRT_FILE_PATH, 'utf-8');
+describe("SRT file qualities", () => {
+    const SRT_FILE_PATH = path.resolve("sample.srt");
+    const content = fs.readFileSync(SRT_FILE_PATH, "utf-8");
     const blocks: string[] = content.trim().split(/\n\s*\n/);
     const segments = parseSrtFileIntoSegments(blocks);
-    it('contains no duplicates', () => {
+    it("contains no duplicates", () => {
         expect(checkDuplicateTimecodes(segments)).toBe(false);
         expect(checkDuplicateSubtitleTimings(segments)).toBe(false);
     });
 });
 
-describe('PageServerLoad file loading', () => {
-    const SRT_FILE_PATH = path.resolve('sample.srt');
-    const content = fs.readFileSync(SRT_FILE_PATH, 'utf-8');
+describe("PageServerLoad file loading", () => {
+    const SRT_FILE_PATH = path.resolve("sample.srt");
+    const content = fs.readFileSync(SRT_FILE_PATH, "utf-8");
     const blocks: string[] = content.trim().split(/\n\s*\n/);
-    it('parses the dummy SRTs into SRT objects', () => {
+    it("parses the dummy SRTs into SRT objects", () => {
         const segments = parseSrtFileIntoSegments(blocks);
 
         expect(segments.length).toBe(SUBTITLES.TOTAL_COUNT);
@@ -67,15 +62,11 @@ describe('PageServerLoad file loading', () => {
         expect(times).toEqual([...times].sort((a, b) => a - b));
     });
 
-    it('prebuilds the lookup arrays', () => {
+    it("prebuilds the lookup arrays", () => {
         // so they can be ignored later
         const segments = parseSrtFileIntoSegments(blocks);
 
-        const {
-            subtitleTimingToTimecodesMap,
-            subtitleCuePointsInSec,
-            timecodes,
-        } = prebuildLookupArrays(segments);
+        const { subtitleTimingToTimecodesMap, subtitleCuePointsInSec, timecodes } = prebuildLookupArrays(segments);
 
         // every timecode is in the timecodes arr
         segments.forEach((s) => {
@@ -84,9 +75,7 @@ describe('PageServerLoad file loading', () => {
 
         // every SRT timing is mapped
         segments.forEach((s) => {
-            expect(
-                subtitleTimingToTimecodesMap.get(s.startTimeSeconds)
-            ).toBeDefined();
+            expect(subtitleTimingToTimecodesMap.get(s.startTimeSeconds)).toBeDefined();
         });
 
         // all the start times are in the cue points arr
