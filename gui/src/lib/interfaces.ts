@@ -15,6 +15,8 @@ export interface ElectronAPI {
     // hotkeys
     getHotkeys: () => HotkeyRegister;
     saveHotkeys: (hotkeys: any) => void;
+    // communicate hotkey to MPV
+    registerHotkey: (hotkeys: any) => void;
     // field mappings CRUD
     getFieldMappings: () => SelectedDeckInfo;
     saveFieldMappings: (mappings: any) => void;

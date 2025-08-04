@@ -29,6 +29,7 @@ class MPVWebSocketServer:
         self.clip_start_time = None
         self.current_file_path = None 
         self.original_file_path = None  
+        self.recording_audio = False
         
         # Create MPV instance
         self.player = mpv.MPV(
@@ -112,6 +113,7 @@ class MPVWebSocketServer:
     
     def get_filename(self):
         """Get current filename"""
+        # TODO: User loads new file, it's stored in memory so can be used later for screenshot, snip mp3
         try:
             if not self.player_active:
                 return "Player closed"
@@ -140,6 +142,38 @@ class MPVWebSocketServer:
         secs = seconds % 60
         return f"{minutes}:{secs:04.1f}"
     
+    def register_screenshot_hotkey(self, hotkey):
+        self.player.register_key_binding(hotkey, self.take_screenshot_from_mpv)
+    
+    def register_audio_clip_hotkey(self, hotkey):
+        self.player.register_key_binding(hotkey, self.toggle_audio_recording_from_mpv)
+        
+    def take_screenshot_from_mpv(self, *args):
+        # FIXME: MPV Hotkey fires Take Screenshot 2x, 2 sccreenshots are observed in Main
+        print(" 🌙 screenshot from MPV hotkey")
+        print(args)
+        screenshot_path = self.take_screenshot()
+
+        response = {
+            "command": "take_screenshot",
+            "success": screenshot_path is not None,
+            "file_path": screenshot_path
+        }
+        self.broadcast_message("command_response", 
+            f"📸 Screenshot saved: {Path(screenshot_path).name}" if screenshot_path else "❌ Screenshot failed",
+            response
+        )
+        
+    def toggle_audio_recording_from_mpv(self, *args):
+        print("Toggling audio record, allegedly")
+        if self.recording_audio:
+            print("157ru")
+            self.end_audio_clip()
+        else:
+            self.start_audio_clip()
+            print("160ru")
+        
+    
     def take_screenshot(self):
         """Take a screenshot of current frame"""
         try:
@@ -165,6 +199,8 @@ class MPVWebSocketServer:
         except Exception as e:
             self.broadcast_message("error", f"❌ Screenshot failed: {e}")
             return None
+        
+ 
     
     def start_audio_clip(self):
         """Mark the start time for audio clipping"""
@@ -277,6 +313,7 @@ class MPVWebSocketServer:
             command = command_data.get("command")
             
             if command == "take_screenshot":
+                print("screnehot from Main hotkey ✨")
                 screenshot_path = self.take_screenshot()
                 response = {
                     "command": "take_screenshot",
@@ -300,6 +337,14 @@ class MPVWebSocketServer:
             elif command == "end_audio_clip":
                 # The end_audio_clip method handles its own response via the ffmpeg thread
                 self.end_audio_clip()
+            
+            elif command == "register_hotkeys":
+                # TODO: if no hotkey registered, ask once every few sec, for five min
+                hotkeys = command_data.get("hotkeys")
+                # FIXME: Ok but how does the PY SERVER maintain state of hotkeys?
+                self.register_screenshot_hotkey(hotkeys["screenshot"])
+                self.register_audio_clip_hotkey(hotkeys["audioClip"])            
+                
                 
             elif command == "get_status":
                 status = {

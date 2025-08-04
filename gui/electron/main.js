@@ -199,12 +199,23 @@ ipcMain.handle("get-mpv-status", () => {
 
 // Existing hotkey handlers
 ipcMain.handle("get-hotkeys", () => {
-    return store.get("hotkeys", {});
+    const storedHotkeys = store.get("hotkeys", {});
+    sendMPVCommand({
+        // Must send them on startup to register them with
+        // the Python server, which lacks saved state
+        command: "register_hotkeys",
+        hotkeys: storedHotkeys
+    });
+    return storedHotkeys;
 });
 
 ipcMain.handle("save-hotkeys", (event, hotkeys) => {
     store.set("hotkeys", hotkeys);
     console.log("Setting", hotkeys);
+    sendMPVCommand({
+        command: "register_hotkeys",
+        hotkeys: hotkeys
+    });
 });
 
 // getFieldMappings: () => ipcRenderer.invoke("get-field-mappings"),

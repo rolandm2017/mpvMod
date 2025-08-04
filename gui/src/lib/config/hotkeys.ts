@@ -223,7 +223,6 @@ function formatAvailableHotkeys(hotkeys: HotkeyStructure): string {
 
 // Usage
 const formattedHotkeys = formatAvailableHotkeys(availableHotkeys);
-console.log(formattedHotkeys);
 
 // For displaying in HTML with monospace font
 function getHotkeyDisplayHTML(): string {
