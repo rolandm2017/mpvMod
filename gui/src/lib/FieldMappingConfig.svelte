@@ -6,7 +6,7 @@
 
     const ankiClient = new AnkiClient();
 
-    let { showOptions, toggleOptions, switchPageType } = $props();
+    let { showOptions, toggleOptions, updateFieldMappings, switchPageType } = $props();
 
     // Field mapping state - maps CardBuilder fields to Anki fields
     let fieldMappings = $state({
@@ -17,7 +17,9 @@
         screenshot: "Image"
     });
 
-    // Available Anki fields (these would typically be fetched from Anki Connect)
+    // Available Anki data
+    let availableDecks = $state<string[]>([]);
+    let availableNoteTypes = $state<string[]>([]);
     let availableAnkiFields = $state([
         "Front",
         "Back",
@@ -32,6 +34,10 @@
         "Reading",
         "Example"
     ]);
+
+    // Selected deck and note type
+    let selectedDeck = $state("");
+    let selectedNoteType = $state("");
 
     // Card Builder field definitions
     const cardBuilderFields = [
@@ -67,20 +73,20 @@
         }
     ];
 
-    let availableDecks: string[] = $state([]);
-
     // Load saved mappings on mount
     onMount(() => {
         loadFieldMappings();
-        // fetchAnkiFields();
+        // fetchAnkiData();
     });
 
     async function loadFieldMappings() {
-        // Load from electron store or localStorage
+        // Load from electron store
         // if (window.electronAPI?.getFieldMappings) {
         //     const saved = await window.electronAPI.getFieldMappings();
         //     if (saved) {
-        //         fieldMappings = { ...fieldMappings, ...saved };
+        //         fieldMappings = { ...fieldMappings, ...(saved.fieldMappings || saved) };
+        //         selectedDeck = saved.selectedDeck || "";
+        //         selectedNoteType = saved.selectedNoteType || "";
         //     }
         // }
     }
@@ -88,25 +94,47 @@
     async function saveFieldMappings() {
         // Save to electron store
         // if (window.electronAPI?.saveFieldMappings) {
-        //     await window.electronAPI.saveFieldMappings({ ...fieldMappings });
+        //     await window.electronAPI.saveFieldMappings({
+        //         fieldMappings: { ...fieldMappings },
+        //         selectedDeck,
+        //         selectedNoteType
+        //     });
         // }
         // // Update parent component
         // if (updateFieldMappings) {
-        //     updateFieldMappings(fieldMappings);
+        //     updateFieldMappings({
+        //         fieldMappings,
+        //         selectedDeck,
+        //         selectedNoteType
+        //     });
         // }
     }
 
-    // async function fetchAnkiFields() {
-    //     // Fetch available fields from Anki Connect
-    //     if (window.electronAPI?.getAnkiFields) {
-    //         try {
+    // async function fetchAnkiData() {
+    //     // Fetch available decks, note types, and fields from Anki Connect
+    //     try {
+    //         if (window.electronAPI?.getAnkiDecks) {
+    //             const decks = await window.electronAPI.getAnkiDecks();
+    //             if (decks && decks.length > 0) {
+    //                 availableDecks = decks;
+    //             }
+    //         }
+
+    //         if (window.electronAPI?.getAnkiNoteTypes) {
+    //             const noteTypes = await window.electronAPI.getAnkiNoteTypes();
+    //             if (noteTypes && noteTypes.length > 0) {
+    //                 availableNoteTypes = noteTypes;
+    //             }
+    //         }
+
+    //         if (window.electronAPI?.getAnkiFields) {
     //             const fields = await window.electronAPI.getAnkiFields();
     //             if (fields && fields.length > 0) {
     //                 availableAnkiFields = fields;
     //             }
-    //         } catch (error) {
-    //             console.warn("Could not fetch Anki fields:", error);
     //         }
+    //     } catch (error) {
+    //         console.warn("Could not fetch Anki data:", error);
     //     }
     // }
 
@@ -116,7 +144,7 @@
     }
 
     function resetToDefaults() {
-        if (confirm("Reset all field mappings to defaults?")) {
+        if (confirm("Reset all settings to defaults?")) {
             fieldMappings = {
                 targetWord: "Front",
                 exampleSentence: "Back",
@@ -124,12 +152,11 @@
                 sentenceAudio: "Audio",
                 screenshot: "Image"
             };
+            selectedDeck = "";
+            selectedNoteType = "";
             saveFieldMappings();
         }
     }
-
-    let availableNoteTypes: string[] = $state([]);
-    let selectedNoteType = $state("");
 
     async function printDebugInfo() {
         console.log("Deubg");
@@ -174,45 +201,86 @@
         </div>
     </div>
 
-    <div></div>
-
     <div class="mapping-list">
-        {#each cardBuilderFields as field}
-            <div class="mapping-item">
-                <div class="field-info">
-                    <h3 class="field-title">{field.title}</h3>
-                    <p class="field-description">{field.description}</p>
+        <!-- Deck and Note Type Selection -->
+        <div class="anki-config-section">
+            <h3 class="section-title">Anki Configuration</h3>
+
+            <div class="config-row">
+                <div class="config-item">
+                    <label for="deck-selector" class="config-label">Deck</label>
+                    <select
+                        id="deck-selector"
+                        bind:value={selectedDeck}
+                        onchange={saveFieldMappings}
+                        class="config-select"
+                    >
+                        <option value="" disabled>Select Deck...</option>
+                        {#each availableDecks as deck}
+                            <option value={deck}>{deck}</option>
+                        {/each}
+                    </select>
                 </div>
 
-                <div class="mapping-arrow">→</div>
-
-                <div class="anki-field-selector">
-                    <label for="mapping-{field.name}" class="sr-only">
-                        Select Anki field for {field.title}
-                    </label>
+                <div class="config-item">
+                    <label for="note-type-selector" class="config-label">Note Type</label>
                     <select
-                        id="mapping-{field.name}"
-                        bind:value={fieldMappings[field.name as keyof typeof fieldMappings]}
-                        onchange={(e) => updateMapping(field.name, e.currentTarget.value)}
-                        class="field-select"
+                        id="note-type-selector"
+                        bind:value={selectedNoteType}
+                        onchange={saveFieldMappings}
+                        class="config-select"
                     >
-                        <option value="" disabled>Select Anki Field...</option>
-                        {#each availableAnkiFields as ankiField}
-                            <option value={ankiField}>
-                                {ankiField}
-                            </option>
+                        <option value="" disabled>Select Note Type...</option>
+                        {#each availableNoteTypes as noteType}
+                            <option value={noteType}>{noteType}</option>
                         {/each}
                     </select>
                 </div>
             </div>
-        {/each}
+        </div>
+
+        <!-- Field Mappings -->
+        <div class="field-mappings-section">
+            <h3 class="section-title">Field Mappings</h3>
+
+            {#each cardBuilderFields as field}
+                <div class="mapping-item">
+                    <div class="field-info">
+                        <h4 class="field-title">{field.title}</h4>
+                        <p class="field-description">{field.description}</p>
+                    </div>
+
+                    <div class="mapping-arrow">→</div>
+
+                    <div class="anki-field-selector">
+                        <label for="mapping-{field.name}" class="sr-only">
+                            Select Anki field for {field.title}
+                        </label>
+                        <select
+                            id="mapping-{field.name}"
+                            bind:value={fieldMappings[field.name as keyof typeof fieldMappings]}
+                            onchange={(e) => updateMapping(field.name, e.currentTarget.value)}
+                            class="field-select"
+                        >
+                            <option value="" disabled>Select Anki Field...</option>
+                            {#each availableAnkiFields as ankiField}
+                                <option value={ankiField}>
+                                    {ankiField}
+                                </option>
+                            {/each}
+                        </select>
+                    </div>
+                </div>
+            {/each}
+        </div>
     </div>
 
     <div class="config-footer">
         <div class="status-info">
             <p class="status-text">
                 <span class="status-indicator connected"></span>
-                Connected to Anki ({availableAnkiFields.length} fields available)
+                Connected to Anki ({availableDecks.length} decks, {availableNoteTypes.length} note types, {availableAnkiFields.length}
+                fields available)
             </p>
         </div>
     </div>
@@ -261,6 +329,69 @@
 
     .mapping-list {
         padding: 20px;
+    }
+
+    .anki-config-section {
+        margin-bottom: 32px;
+        padding: 24px;
+        background: #333;
+        border: 1px solid #444;
+        border-radius: 8px;
+    }
+
+    .field-mappings-section {
+        padding: 24px;
+        background: #333;
+        border: 1px solid #444;
+        border-radius: 8px;
+    }
+
+    .section-title {
+        margin: 0 0 20px 0;
+        font-size: 18px;
+        font-weight: 600;
+        color: #e0e0e0;
+        border-bottom: 2px solid #0077cc;
+        padding-bottom: 8px;
+    }
+
+    .config-row {
+        display: flex;
+        gap: 20px;
+    }
+
+    .config-item {
+        flex: 1;
+    }
+
+    .config-label {
+        display: block;
+        margin-bottom: 8px;
+        font-size: 14px;
+        font-weight: 500;
+        color: #e0e0e0;
+    }
+
+    .config-select {
+        width: 100%;
+        padding: 12px 16px;
+        background: #2a2a2a;
+        border: 2px solid #555;
+        border-radius: 6px;
+        color: #e0e0e0;
+        font-size: 14px;
+        cursor: pointer;
+        transition: border-color 0.2s ease;
+    }
+
+    .config-select:hover {
+        border-color: #777;
+    }
+
+    .config-select:focus {
+        outline: none;
+        border-color: #0077cc;
+        box-shadow: 0 0 0 3px rgba(0, 119, 204, 0.2);
     }
 
     .mapping-item {
