@@ -12,7 +12,6 @@
     import { SegmentMountingTracker } from "$lib/utils/mountingTracker.js";
     import HotkeyConfig from "$lib/HotkeyConfig.svelte";
     import type { CommandResponse, HotkeyRegister, MPVStateData } from "$lib/interfaces.js";
-    import FieldMappingConfig from "$lib/FieldMappingConfig.svelte";
 
     let { data } = $props();
 

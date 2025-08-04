@@ -32,7 +32,7 @@ let mainWindow;
 const store = new Store({ projectName: "customMpv" });
 
 console.log("PATH:");
-console.log(new Store().path);
+console.log(store.path);
 
 function createWindow() {
     const primaryDisplay = screen.getPrimaryDisplay();
@@ -211,7 +211,7 @@ ipcMain.handle("save-hotkeys", (event, hotkeys) => {
 // saveFieldMappings: (mappings) => ipcRenderer.invoke("save-field-mappings", mappings),
 ipcMain.handle("get-field-mappings", () => {
     const stuff = store.get("field-mappings", {});
-    console.log(stuff, "214ru");
+    console.log(stuff, "retrieved field mappings");
     return stuff;
 });
 

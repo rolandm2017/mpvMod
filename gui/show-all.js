@@ -9,8 +9,9 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
 
 // Initialize the store (same as in your main app)
+const projectName = "customMpv";
 const store = new Store({
-    projectName: "Electron" // You can change this to match your app name
+    projectName: projectName // You can change this to match your app name
     // This will use the same store location as your Electron app
 });
 
@@ -75,5 +76,5 @@ console.log(`   store.has(key)    - Check if key exists`);
 console.log(`   store.get(key)    - Get value for key`);
 console.log(`   store.set(key, value) - Set value for key`);
 
-console.log(`\n✅ Store inspection complete!`);
+console.log(`\n✅ Store inspection complete! And reminder, the store name was: ${projectName}`);
 console.log("=".repeat(60));
