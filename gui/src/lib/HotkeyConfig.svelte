@@ -160,13 +160,17 @@
             <h2>Hotkey Configuration</h2>
             <p>Click on a hotkey field and press your desired key combination</p>
         </div>
-        <div>
-            <button class="secondary-btn" onclick={() => switchPageType()}> Field Mappings </button>
-        </div>
-        <div>
-            <button onclick={() => toggleOptions()}>
-                {showOptions ? "Back" : "Options"}
-            </button>
+        <div id="position-buttons-container">
+            <div id="position-buttons">
+                <div>
+                    <button class="secondary-btn" onclick={() => switchPageType()}> Field Mappings </button>
+                </div>
+                <div>
+                    <button onclick={() => toggleOptions()}>
+                        {showOptions ? "Back" : "Options"}
+                    </button>
+                </div>
+            </div>
         </div>
     </div>
 
@@ -211,6 +215,27 @@
         transition: all 0.2s ease;
     }
 
+    #position-buttons-container {
+        padding-right: 20px;
+        display: flex;
+        justify-content: flex-end;
+        align-items: center;
+        flex: 1;
+    }
+
+    #position-buttons {
+        height: 100%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        gap: 1rem;
+    }
+
+    .flex-row {
+        display: flex;
+        align-items: center; /* Vertically center both sections */
+    }
+
     .hotkey-config {
         background: #2a2a2a;
         color: #e0e0e0;
@@ -223,6 +248,8 @@
         padding: 20px;
         background: #333;
         border-bottom: 1px solid #444;
+        flex: 0 0 auto; /* Don't grow or shrink, stay at natural width */
+        width: fit-content; /* Only take up the width of the content */
     }
 
     .config-header h2 {
@@ -270,10 +297,6 @@
         color: #aaa;
         margin-top: 8px;
         display: block;
-    }
-
-    .flex-row {
-        display: flex;
     }
 
     @keyframes pulse {
