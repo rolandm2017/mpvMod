@@ -3,6 +3,7 @@
     import { onMount } from "svelte";
 
     import { AnkiClient } from "$lib/api/ankiClient";
+    import type { SelectedDeckInfo } from "./interfaces";
 
     const ankiClient = new AnkiClient();
 
@@ -84,7 +85,7 @@
     async function loadFieldMappings() {
         // Load from electron store
         if (window.electronAPI?.getFieldMappings) {
-            const saved = await window.electronAPI.getFieldMappings();
+            const saved: SelectedDeckInfo = await window.electronAPI.getFieldMappings();
             if (saved) {
                 fieldMappings = { ...fieldMappings, ...(saved.fieldMappings || saved) };
                 selectedDeck = saved.selectedDeck || "";
@@ -95,10 +96,12 @@
 
     async function saveFieldMappings() {
         if (window.electronAPI?.saveFieldMappings) {
+            console.log("SAVING: ", selectedDeck);
+            console.log(selectedNoteType, "98ru");
             await window.electronAPI.saveFieldMappings({
-                fieldMappings: { ...fieldMappings },
                 selectedDeck,
-                selectedNoteType
+                selectedNoteType,
+                fieldMappings: { ...fieldMappings }
             });
         }
         // Update parent component so Main UI knows what format to send the data in
@@ -229,7 +232,7 @@
                     <select
                         id="deck-selector"
                         bind:value={selectedDeck}
-                        onchange={saveFieldMappings}
+                        onchange={updateFieldMappings}
                         class="config-select"
                     >
                         {#if availableDecks.length === 0}

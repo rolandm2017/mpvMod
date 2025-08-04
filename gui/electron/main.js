@@ -210,13 +210,15 @@ ipcMain.handle("save-hotkeys", (event, hotkeys) => {
 // getFieldMappings: () => ipcRenderer.invoke("get-field-mappings"),
 // saveFieldMappings: (mappings) => ipcRenderer.invoke("save-field-mappings", mappings),
 ipcMain.handle("get-field-mappings", () => {
-    return store.get("field-mappings", {});
+    const stuff = store.get("field-mappings", {});
+    console.log(stuff, "214ru");
+    return stuff;
 });
 
 ipcMain.handle("save-field-mappings", (event, mappings) => {
     //
     console.log("Setting", mappings);
-    store.set("mappings", mappings);
+    store.set("field-mappings", mappings);
 });
 
 ipcMain.handle("request-default-audio", async () => {
