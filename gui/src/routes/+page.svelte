@@ -447,6 +447,7 @@
             targetWordField={selectedTargetWordText}
             {screenshotDataUrl}
             mp3snippet={mp3DataUrl}
+            {registeredHotkeys}
         />
     </div>
 </div>
@@ -500,17 +501,18 @@
     .hidden {
         display: none;
     }
+
     .options-overlay {
         position: absolute;
         top: 0;
         left: 0;
         right: 0;
         bottom: 0;
-        visibility: hidden;
+        display: none;
     }
 
     .options-overlay.visible {
-        visibility: visible;
+        display: block;
     }
 
     .subtitle-content::-webkit-scrollbar {

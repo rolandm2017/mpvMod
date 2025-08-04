@@ -5,7 +5,15 @@
     import InputField from "./components/InputField.svelte";
 
     // Props - data passed in from parent
-    let { exampleSentenceField, targetWordField, screenshotDataUrl, mp3snippet, showOptions, toggleOptions } = $props();
+    let {
+        exampleSentenceField,
+        targetWordField,
+        screenshotDataUrl,
+        mp3snippet,
+        showOptions,
+        toggleOptions,
+        registeredHotkeys
+    } = $props();
 
     // Watch for changes in screenshotDataUrl
     $effect(() => {
@@ -61,15 +69,19 @@
         <div><h2 class="header-text">Card Builder</h2></div>
         <div>
             <div id="header-buttons">
-                <div>
-                    <!-- // TODO: make a reminder of the set hotkeys top right, right here. -->
-                    <button class="hotkey-reminder-btn header-btns">img</button>
+                <div class="hotkey-hints">
+                    <span class="hotkey-hint">img: {registeredHotkeys.screenshot}</span>
+                    <span class="hotkey-hint">audio: {registeredHotkeys.audioClip}</span>
                 </div>
+                <!-- <div> -->
+                <!-- // TODO: make a reminder of the set hotkeys top right, right here. -->
+                <!-- <button class="hotkey-reminder-btn header-btns">img: F7</button> -->
+                <!-- </div> -->
                 <!-- // todo: make it responsive -->
-                <div>
-                    <!-- // TODO: make a reminder of the set hotkeys top right, right here. -->
-                    <button class="hotkey-reminder-btn header-btns">audio</button>
-                </div>
+                <!-- <div> -->
+                <!-- // TODO: make a reminder of the set hotkeys top right, right here. -->
+                <!-- <button class="hotkey-reminder-btn header-btns">audio: F8</button> -->
+                <!-- </div> -->
                 <div>
                     <button id="options-btn" class="header-btns" onclick={() => toggleOptions()}>
                         {showOptions ? "Back" : "Options"}
@@ -170,6 +182,48 @@
         display: flex;
         justify-content: flex-end;
         /* flex-direction: column; */
+    }
+
+    .hotkey-hints {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        margin-right: 8px;
+        margin-top: 10px;
+    }
+
+    .hotkey-hint {
+        font-size: 14px;
+        color: #666;
+        background-color: #f0f0f0;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-family: "Courier New", monospace;
+        font-weight: 500;
+        white-space: nowrap;
+        border: 1px solid #ddd;
+        user-select: none;
+    }
+
+    /* Slightly different styling for better contrast if needed */
+    .hotkey-hint.alt-style {
+        background-color: #e8f4f8;
+        color: #555;
+        border: 1px solid #c0d6e0;
+    }
+
+    /* Responsive - stack vertically on very small screens */
+    @media (max-width: 1080px) {
+        .hotkey-hints {
+            flex-direction: column;
+            gap: 4px;
+            align-items: flex-end;
+        }
+
+        .hotkey-hint {
+            font-size: 14px;
+            padding: 1px 4px;
+        }
     }
 
     .hotkey-reminder-btn {
