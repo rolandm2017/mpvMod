@@ -3,6 +3,7 @@
     import { onMount, onDestroy } from "svelte";
     import type { HotkeyRegister } from "./interfaces";
     import HotkeyItem from "./components/HotkeyItem.svelte";
+    import FormattedHotkeys from "./components/FormattedHotkeys.svelte";
 
     let { showOptions, toggleOptions, updateMainPageHotkeys, switchPageType } = $props();
 
@@ -182,6 +183,11 @@
             />
         {/each}
     </div>
+
+    // TODO: Claude
+
+    <!-- Recommended Hotkeys Section -->
+    <FormattedHotkeys />
 
     {#if activeHotkey}
         <div class="capture-overlay">
