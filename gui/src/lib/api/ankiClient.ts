@@ -1,6 +1,6 @@
 // src/lib/anki-client.ts
 
-import type { GetDecksResponse, GetNoteTypesResponse } from "$lib/responses.interface";
+import type { GetDecksResponse, GetFieldsResponse, GetNoteTypesResponse } from "$lib/responses.interface";
 
 // Client that calls your SvelteKit API routes instead of AnkiConnect directly
 export class AnkiClient {
@@ -36,7 +36,7 @@ export class AnkiClient {
         return await this.apiCall("/api/anki/note-types", params);
     }
 
-    async getModelFields(modelName: string) {
+    async getModelFields(modelName: string): Promise<GetFieldsResponse> {
         const params = new URLSearchParams({ model: modelName });
         return await this.apiCall("/api/anki/fields", params);
     }

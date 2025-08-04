@@ -29,3 +29,20 @@ export interface GetNoteTypesErrorResponse {
 }
 
 export type GetNoteTypesResponse = GetNoteTypesSuccessResponse | GetNoteTypesErrorResponse;
+
+//
+
+export interface GetFieldsSuccessResponse {
+    success: true;
+    modelName: string;
+    fields: string[];
+    fieldMapping: Record<string, string>;
+    copyPasteReady: string;
+}
+
+export interface GetFieldsErrorResponse {
+    success: false;
+    error: string;
+}
+
+export type GetFieldsResponse = GetFieldsSuccessResponse | GetFieldsErrorResponse;

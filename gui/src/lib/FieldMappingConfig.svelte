@@ -138,8 +138,27 @@
     //     }
     // }
 
+    async function handleNoteTypeChange(noteType: string) {
+        console.log("Selected note type:", noteType);
+        selectedNoteType = noteType;
+        const fields = await ankiClient.getModelFields(selectedNoteType);
+        if (fields.success) {
+            // fields.fields is a string array.
+            availableAnkiFields = fields.fields;
+            console.log(fields);
+            console.log("would be saved");
+        }
+        // TODO: OK so how to save the field mappings?
+        // TODO: Save just the latest field mapping. They accidentally swap, too bad, they re-assign mappings
+
+        // saveFieldMappings();
+    }
+
     function updateMapping(fieldName: string, ankiField: string) {
+        console.log(fieldName, ankiField, "158ru");
         fieldMappings[fieldName as keyof typeof fieldMappings] = ankiField;
+        console.log($state.snapshot(fieldMappings), "188ru");
+
         saveFieldMappings();
     }
 
@@ -157,6 +176,8 @@
             saveFieldMappings();
         }
     }
+
+    // TODO: ON change note type, fetch fields.
 
     async function printDebugInfo() {
         console.log("Deubg");
@@ -177,10 +198,6 @@
             console.error(noteTypes);
         }
         // TODO: Let user pick deck , note type
-
-        if (selectedNoteType) {
-            const fields = ankiClient.getModelFields(selectedNoteType);
-        }
 
         // TODO:" COnsole log all deck names. "
         // TODO: Put all deck names into a dropdown. Let user select the Deck.
@@ -228,10 +245,16 @@
                         onchange={saveFieldMappings}
                         class="config-select"
                     >
-                        <option value="" disabled>Select Deck...</option>
-                        {#each availableDecks as deck}
-                            <option value={deck}>{deck}</option>
-                        {/each}
+                        {#if availableDecks.length === 0}
+                            <option value="" disabled>Select Deck...</option>
+                        {:else}
+                            {#if !selectedDeck}
+                                {(selectedDeck = availableDecks[0])}
+                            {/if}
+                            {#each availableDecks as deck}
+                                <option value={deck}>{deck}</option>
+                            {/each}
+                        {/if}
                     </select>
                 </div>
 
@@ -240,13 +263,19 @@
                     <select
                         id="note-type-selector"
                         bind:value={selectedNoteType}
-                        onchange={saveFieldMappings}
+                        onchange={() => handleNoteTypeChange(selectedNoteType)}
                         class="config-select"
                     >
-                        <option value="" disabled>Select Note Type...</option>
-                        {#each availableNoteTypes as noteType}
-                            <option value={noteType}>{noteType}</option>
-                        {/each}
+                        {#if availableNoteTypes.length === 0}
+                            <option value="" disabled>Select Note Type...</option>
+                        {:else}
+                            {#if !selectedNoteType}
+                                {(selectedNoteType = availableNoteTypes[0])}
+                            {/if}
+                            {#each availableNoteTypes as noteType}
+                                <option value={noteType}>{noteType}</option>
+                            {/each}
+                        {/if}
                     </select>
                 </div>
             </div>
@@ -254,6 +283,7 @@
 
         <!-- Field Mappings -->
         <div class="field-mappings-section">
+            <!-- // TODO: A little mouseover info icon, brings up a tooltip, "<span>"Send what to where?"</span>" -->
             <h3 class="section-title">Field Mappings</h3>
 
             {#each cardBuilderFields as field}
