@@ -25,6 +25,10 @@ class MPVWebSocketServer:
         self.server = None
         self.loop: Optional[asyncio.AbstractEventLoop] = None
         
+        # hotkey registry
+        self.screenshot_hotkey = None
+        self.audio_recording_hotkey = None
+        
         # For audio clipping
         self.clip_start_time = None
         self.current_file_path = None 
@@ -45,6 +49,19 @@ class MPVWebSocketServer:
         
         self.setup_event_handlers()
         signal.signal(signal.SIGINT, self.signal_handler)
+        
+    def add_hotkey_behaviors(self):
+        print(f"Registering hotkeys: screenshot='{self.screenshot_hotkey}', audio='{self.audio_recording_hotkey}'")
+    
+        @self.player.on_key_press(self.screenshot_hotkey)
+        def on_screenshot_hotkey(*args):
+            print(f"Screenshot hotkey fired with event: ", args)
+            self.take_screenshot_from_mpv()
+            
+        @self.player.on_key_press(self.audio_recording_hotkey)
+        def on_mp3_recording_hotkey(*args):
+            print(f"Audio hotkey fired with event: ", args)
+            self.toggle_audio_recording_from_mpv()
         
     def setup_event_handlers(self):
         """Set up MPV event handlers and property observers"""
@@ -141,13 +158,8 @@ class MPVWebSocketServer:
         minutes = int(seconds // 60)
         secs = seconds % 60
         return f"{minutes}:{secs:04.1f}"
+
     
-    def register_screenshot_hotkey(self, hotkey):
-        self.player.register_key_binding(hotkey, self.take_screenshot_from_mpv)
-    
-    def register_audio_clip_hotkey(self, hotkey):
-        self.player.register_key_binding(hotkey, self.toggle_audio_recording_from_mpv)
-        
     def take_screenshot_from_mpv(self, *args):
         # FIXME: MPV Hotkey fires Take Screenshot 2x, 2 sccreenshots are observed in Main
         print(" 🌙 screenshot from MPV hotkey")
@@ -169,8 +181,10 @@ class MPVWebSocketServer:
         if self.recording_audio:
             print("157ru")
             self.end_audio_clip()
+            self.recording_audio = False
         else:
             self.start_audio_clip()
+            self.recording_audio = True
             print("160ru")
         
     
@@ -341,9 +355,9 @@ class MPVWebSocketServer:
             elif command == "register_hotkeys":
                 # TODO: if no hotkey registered, ask once every few sec, for five min
                 hotkeys = command_data.get("hotkeys")
-                # FIXME: Ok but how does the PY SERVER maintain state of hotkeys?
-                self.register_screenshot_hotkey(hotkeys["screenshot"])
-                self.register_audio_clip_hotkey(hotkeys["audioClip"])            
+                self.screenshot_hotkey = hotkeys["screenshot"]
+                self.audio_recording_hotkey = hotkeys["audioClip"]
+                self.add_hotkey_behaviors()
                 
                 
             elif command == "get_status":

@@ -199,6 +199,12 @@
         }
     }
 
+    // FIXME: Horizontal scroll bar, vertical scroll bar (pointless)
+    // FIXME: Horizontal scroll bar, vertical scroll bar (pointless)
+    // FIXME: Horizontal scroll bar, vertical scroll bar (pointless)
+    // FIXME: Horizontal scroll bar, vertical scroll bar (pointless)
+    // FIXME: Horizontal scroll bar
+
     let callcount = 0;
 
     export function storeSegmentPosition(timecode: TimecodeString, y: number, element: HTMLDivElement) {
