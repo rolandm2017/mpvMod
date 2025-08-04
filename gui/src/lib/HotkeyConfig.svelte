@@ -160,7 +160,7 @@
             <p>Click on a hotkey field and press your desired key combination</p>
         </div>
         <div>
-            <button onclick={() => switchPageType()}> Field Mappings </button>
+            <button class="secondary-btn" onclick={() => switchPageType()}> Field Mappings </button>
         </div>
         <div>
             <button onclick={() => toggleOptions()}>
@@ -195,6 +195,16 @@
 </div>
 
 <style>
+    button {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
     .hotkey-config {
         background: #2a2a2a;
         color: #e0e0e0;

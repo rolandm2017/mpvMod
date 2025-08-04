@@ -2,6 +2,7 @@
 // Check AnkiConnect connection and version
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
+import { makeAnkiRequest } from "$lib/utils/apiUtil";
 
 export const GET: RequestHandler = async () => {
     try {

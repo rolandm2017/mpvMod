@@ -2,6 +2,7 @@
 // Get all available deck names
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
+import { makeAnkiRequest } from "$lib/utils/apiUtil";
 
 // ... (copy the makeAnkiRequest function and interfaces from above)
 

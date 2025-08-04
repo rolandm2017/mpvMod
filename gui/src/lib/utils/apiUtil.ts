@@ -37,3 +37,5 @@ async function makeAnkiRequest<T>(request: AnkiConnectRequest): Promise<T> {
         throw error;
     }
 }
+
+export { makeAnkiRequest };

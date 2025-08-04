@@ -2,6 +2,10 @@
 <script lang="ts">
     import { onMount } from "svelte";
 
+    import { AnkiClient } from "$lib/api/ankiClient";
+
+    const ankiClient = new AnkiClient();
+
     let { showOptions, toggleOptions, switchPageType } = $props();
 
     // Field mapping state - maps CardBuilder fields to Anki fields
@@ -63,6 +67,8 @@
         }
     ];
 
+    let availableDecks: string[] = $state([]);
+
     // Load saved mappings on mount
     onMount(() => {
         loadFieldMappings();
@@ -121,6 +127,35 @@
             saveFieldMappings();
         }
     }
+
+    let availableNoteTypes: string[] = $state([]);
+    let selectedNoteType = $state("");
+
+    async function printDebugInfo() {
+        console.log("Deubg");
+        const decks = await ankiClient.getDeckNames();
+        console.log("RESULT");
+        console.log(decks);
+        // const deckNames: string[] = await fieldCheckerApi.getDeckNames();
+        // console.log(deckNames);
+        availableDecks = decks;
+        const noteTypes: string[] = await ankiClient.getNoteTypes();
+        availableNoteTypes = noteTypes;
+        // TODO: Let user pick deck , note type
+
+        if (selectedNoteType) {
+            const fields = ankiClient.getModelFields(selectedNoteType);
+        }
+
+        // TODO:" COnsole log all deck names. "
+        // TODO: Put all deck names into a dropdown. Let user select the Deck.
+        // TODO: Console log all note types.
+        // TODO: Let user put Note Type into a dropdown for the deck.
+        // TODO: Display fields possible to seelect for the Selected Note Type
+        // TODO: Put a save btn
+        // TODO: On store note type, update saved layout.
+        // TODO: Save a layout.
+    }
 </script>
 
 <div class="field-mapping-config">
@@ -130,6 +165,7 @@
             <p>Map Card Builder fields to your Anki note fields</p>
         </div>
         <div class="header-actions">
+            <button class="secondary-btn" onclick={() => printDebugInfo()}> Debug </button>
             <button class="secondary-btn" onclick={() => switchPageType()}> Hotkeys </button>
             <button class="secondary-btn" onclick={resetToDefaults}> Reset Defaults </button>
             <button class="primary-btn" onclick={() => toggleOptions()}>
@@ -137,6 +173,8 @@
             </button>
         </div>
     </div>
+
+    <div></div>
 
     <div class="mapping-list">
         {#each cardBuilderFields as field}
