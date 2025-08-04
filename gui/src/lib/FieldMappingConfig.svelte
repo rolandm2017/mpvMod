@@ -6,7 +6,7 @@
 
     const ankiClient = new AnkiClient();
 
-    let { showOptions, toggleOptions, switchPageType } = $props();
+    let { showOptions, toggleOptions, switchPageType, updateFieldMappings } = $props();
 
     // Field mapping state - maps CardBuilder fields to Anki fields
     let fieldMappings = $state({
@@ -74,69 +74,56 @@
     ];
 
     // Load saved mappings on mount
-    onMount(() => {
-        loadFieldMappings();
-        // fetchAnkiData();
+    onMount(async () => {
+        // TODO: IF a deck and note type came from the store,
+        // preserve those choices as dthe default option
+        await loadFieldMappings();
+        await fetchAnkiData();
     });
 
     async function loadFieldMappings() {
         // Load from electron store
-        // if (window.electronAPI?.getFieldMappings) {
-        //     const saved = await window.electronAPI.getFieldMappings();
-        //     if (saved) {
-        //         fieldMappings = { ...fieldMappings, ...(saved.fieldMappings || saved) };
-        //         selectedDeck = saved.selectedDeck || "";
-        //         selectedNoteType = saved.selectedNoteType || "";
-        //     }
-        // }
+        if (window.electronAPI?.getFieldMappings) {
+            const saved = await window.electronAPI.getFieldMappings();
+            if (saved) {
+                fieldMappings = { ...fieldMappings, ...(saved.fieldMappings || saved) };
+                selectedDeck = saved.selectedDeck || "";
+                selectedNoteType = saved.selectedNoteType || "";
+            }
+        }
     }
 
     async function saveFieldMappings() {
-        // Save to electron store
-        // if (window.electronAPI?.saveFieldMappings) {
-        //     await window.electronAPI.saveFieldMappings({
-        //         fieldMappings: { ...fieldMappings },
-        //         selectedDeck,
-        //         selectedNoteType
-        //     });
-        // }
-        // // Update parent component
-        // if (updateFieldMappings) {
-        //     updateFieldMappings({
-        //         fieldMappings,
-        //         selectedDeck,
-        //         selectedNoteType
-        //     });
-        // }
+        if (window.electronAPI?.saveFieldMappings) {
+            await window.electronAPI.saveFieldMappings({
+                fieldMappings: { ...fieldMappings },
+                selectedDeck,
+                selectedNoteType
+            });
+        }
+        // Update parent component so Main UI knows what format to send the data in
+        updateFieldMappings({
+            fieldMappings,
+            selectedDeck,
+            selectedNoteType
+        });
     }
 
-    // async function fetchAnkiData() {
-    //     // Fetch available decks, note types, and fields from Anki Connect
-    //     try {
-    //         if (window.electronAPI?.getAnkiDecks) {
-    //             const decks = await window.electronAPI.getAnkiDecks();
-    //             if (decks && decks.length > 0) {
-    //                 availableDecks = decks;
-    //             }
-    //         }
-
-    //         if (window.electronAPI?.getAnkiNoteTypes) {
-    //             const noteTypes = await window.electronAPI.getAnkiNoteTypes();
-    //             if (noteTypes && noteTypes.length > 0) {
-    //                 availableNoteTypes = noteTypes;
-    //             }
-    //         }
-
-    //         if (window.electronAPI?.getAnkiFields) {
-    //             const fields = await window.electronAPI.getAnkiFields();
-    //             if (fields && fields.length > 0) {
-    //                 availableAnkiFields = fields;
-    //             }
-    //         }
-    //     } catch (error) {
-    //         console.warn("Could not fetch Anki data:", error);
-    //     }
-    // }
+    async function fetchAnkiData() {
+        // Fetch available decks, note types, and fields from Anki Connect
+        const decks = await ankiClient.getDeckNames();
+        if (decks.success) {
+            availableDecks = decks.decks;
+        } else {
+            console.error(decks);
+        }
+        const noteTypes = await ankiClient.getNoteTypes();
+        if (noteTypes.success) {
+            availableNoteTypes = noteTypes.noteTypes;
+        } else {
+            console.error(noteTypes);
+        }
+    }
 
     async function handleNoteTypeChange(noteType: string) {
         console.log("Selected note type:", noteType);
@@ -151,7 +138,7 @@
         // TODO: OK so how to save the field mappings?
         // TODO: Save just the latest field mapping. They accidentally swap, too bad, they re-assign mappings
 
-        // saveFieldMappings();
+        saveFieldMappings();
     }
 
     function updateMapping(fieldName: string, ankiField: string) {

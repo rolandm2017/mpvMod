@@ -369,10 +369,6 @@
             // Get the currently selected text from the window
             console.log("HER HEirhaewilohrfasdfdis");
             console.log("HER HEirhaewilohrfasdfdis");
-            console.log("HER HEirhaewilohrfasdfdis");
-            console.log("HER HEirhaewilohrfasdfdis");
-            console.log("HER HEirhaewilohrfasdfdis");
-            console.log("HER HEirhaewilohrfasdfdis");
             const selection = window.getSelection();
             const selectedText = selection?.toString().trim() || "";
 
@@ -386,6 +382,10 @@
         } catch (error) {
             console.error("Error in copySelectedSubtitle:", error);
         }
+    }
+
+    function pushFieldMappingsUpdate(update: object) {
+        console.log(update, "field mappings update");
     }
 
     // export function devtoolsScroller(timestamp: number) {
@@ -453,7 +453,12 @@
     {#if optionsPage === "hotkeyConfig"}
         <HotkeyConfig {showOptions} {toggleOptions} {updateMainPageHotkeys} {switchPageType} />
     {:else}
-        <FieldMappingConfig {showOptions} {toggleOptions} {switchPageType} />
+        <FieldMappingConfig
+            {showOptions}
+            {toggleOptions}
+            {switchPageType}
+            updateFieldMappings={pushFieldMappingsUpdate}
+        />
     {/if}
 </div>
 

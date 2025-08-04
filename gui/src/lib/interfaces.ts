@@ -15,9 +15,10 @@ export interface ElectronAPI {
     // hotkeys
     getHotkeys: () => HotkeyRegister;
     saveHotkeys: (hotkeys: any) => void;
-    // field mappings
-    // getFieldMappings: () => FieldMappings;
-    // saveFieldMappings: (hotkeys: any) => void;
+    // field mappings CRUD
+    getFieldMappings: () => SelectedDeckInfo;
+    saveFieldMappings: (mappings: any) => void;
+
     // send cmds
     takeScreenshot: () => Promise<boolean>;
     startAudioClip: () => Promise<boolean>;
@@ -40,6 +41,20 @@ export interface HotkeyRegister {
     audioClip: string;
     copySubtitle: string;
     copyWord: string;
+}
+
+export interface SelectedDeckInfo {
+    selectedDeck: string;
+    selectedNoteType: string;
+    fieldMappings: FieldMappings;
+}
+
+export interface FieldMappings {
+    targetWord: string;
+    exampleSentence: string;
+    nativeTranslation: string;
+    sentenceAudio: string;
+    screenshot: string;
 }
 
 export interface TakeScreenshotResponse {

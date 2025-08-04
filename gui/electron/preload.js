@@ -1,16 +1,21 @@
 // electron/preload.js
 
-const { contextBridge, ipcRenderer } = require('electron');
+const { contextBridge, ipcRenderer } = require("electron");
 
-console.log('Preload script loaded!');
+console.log("Preload script loaded!");
 
-contextBridge.exposeInMainWorld('electronAPI', {
-    getHotkeys: () => ipcRenderer.invoke('get-hotkeys'),
-    saveHotkeys: (hotkeys) => ipcRenderer.invoke('save-hotkeys', hotkeys),
+contextBridge.exposeInMainWorld("electronAPI", {
+    getHotkeys: () => ipcRenderer.invoke("get-hotkeys"),
+    saveHotkeys: (hotkeys) => ipcRenderer.invoke("save-hotkeys", hotkeys),
+    ///
+
+    ///
+    getFieldMappings: () => ipcRenderer.invoke("get-field-mappings"),
+    saveFieldMappings: (mappings) => ipcRenderer.invoke("save-field-mappings", mappings),
 
     onMPVState: (callback) => {
-        console.log('onMPVState called');
-        ipcRenderer.on('mpv-state', (event, data) => {
+        console.log("onMPVState called");
+        ipcRenderer.on("mpv-state", (event, data) => {
             // console.log("in mpv state receiver", data)
             callback(data);
         });
@@ -18,30 +23,28 @@ contextBridge.exposeInMainWorld('electronAPI', {
 
     // Remove listener to prevent memory leaks
     removeMPVListener: () => {
-        ipcRenderer.removeAllListeners('mpv-state');
+        ipcRenderer.removeAllListeners("mpv-state");
     },
 
-    takeScreenshot: () => ipcRenderer.invoke('take-screenshot'),
-    startAudioClip: () => ipcRenderer.invoke('start-audio-clip'),
-    concludeAudioClip: () => ipcRenderer.invoke('end-audio-clip'),
-    getMPVStatus: () => ipcRenderer.invoke('get-mpv-status'),
+    takeScreenshot: () => ipcRenderer.invoke("take-screenshot"),
+    startAudioClip: () => ipcRenderer.invoke("start-audio-clip"),
+    concludeAudioClip: () => ipcRenderer.invoke("end-audio-clip"),
+    getMPVStatus: () => ipcRenderer.invoke("get-mpv-status"),
 
     onScreenshotReady: (callback) => {
-        ipcRenderer.on('screenshot-ready', (event, dataURL) =>
-            callback(dataURL)
-        );
+        ipcRenderer.on("screenshot-ready", (event, dataURL) => callback(dataURL));
     },
     onAudioReady: (callback) => {
-        ipcRenderer.on('audio-ready', (event, dataURL) => callback(dataURL));
+        ipcRenderer.on("audio-ready", (event, dataURL) => callback(dataURL));
     },
 
-    requestDefaultAudio: () => ipcRenderer.invoke('request-default-audio'),
+    requestDefaultAudio: () => ipcRenderer.invoke("request-default-audio"),
 
     onDefaultAudio: (callback) => {
-        ipcRenderer.on('default-audio-ready', (event, dataURL) => {
+        ipcRenderer.on("default-audio-ready", (event, dataURL) => {
             callback(dataURL);
         });
-    },
+    }
 });
 
-console.log('electronAPI exposed to window');
+console.log("electronAPI exposed to window");

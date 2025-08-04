@@ -29,8 +29,9 @@ const BACKEND_DIR = path.join(__dirname, "../../backend"); // Adjust path as nee
 let mpvWS;
 let mainWindow;
 
-const store = new Store();
+const store = new Store({ projectName: "customMpv" });
 
+console.log("PATH:");
 console.log(new Store().path);
 
 function createWindow() {
@@ -203,6 +204,19 @@ ipcMain.handle("get-hotkeys", () => {
 
 ipcMain.handle("save-hotkeys", (event, hotkeys) => {
     store.set("hotkeys", hotkeys);
+    console.log("Setting", hotkeys);
+});
+
+// getFieldMappings: () => ipcRenderer.invoke("get-field-mappings"),
+// saveFieldMappings: (mappings) => ipcRenderer.invoke("save-field-mappings", mappings),
+ipcMain.handle("get-field-mappings", () => {
+    return store.get("field-mappings", {});
+});
+
+ipcMain.handle("save-field-mappings", (event, mappings) => {
+    //
+    console.log("Setting", mappings);
+    store.set("mappings", mappings);
 });
 
 ipcMain.handle("request-default-audio", async () => {
