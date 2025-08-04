@@ -180,11 +180,11 @@
             {/if}
         </div>
         <div class="header-actions">
+            <button class="secondary-btn" onclick={resetToDefaults}>Reset Defaults</button>
             <button class="secondary-btn" onclick={refreshAnkiData} disabled={state.isLoading}>
                 {state.isLoading ? "Loading..." : "Refresh"}
             </button>
-            <button class="secondary-btn" onclick={() => switchPageType()}>Hotkeys</button>
-            <button class="secondary-btn" onclick={resetToDefaults}>Reset Defaults</button>
+            <button class="secondary-btn" onclick={() => switchPageType()}>Hotkey Config</button>
             <button class="primary-btn" onclick={() => toggleOptions()}>
                 {showOptions ? "Back" : "Options"}
             </button>
@@ -436,26 +436,6 @@
     button:disabled {
         opacity: 0.6;
         cursor: not-allowed;
-    }
-
-    .primary-btn {
-        background: #0077cc;
-        color: white;
-    }
-
-    .primary-btn:hover:not(:disabled) {
-        background: #005fa3;
-        transform: translateY(-1px);
-    }
-
-    .secondary-btn {
-        background: #6c757d;
-        color: white;
-    }
-
-    .secondary-btn:hover:not(:disabled) {
-        background: #545b62;
-        transform: translateY(-1px);
     }
 
     button:active:not(:disabled) {

@@ -166,7 +166,7 @@
                     <button class="secondary-btn" onclick={() => switchPageType()}> Field Mappings </button>
                 </div>
                 <div>
-                    <button onclick={() => toggleOptions()}>
+                    <button class="primary-btn" onclick={() => toggleOptions()}>
                         {showOptions ? "Back" : "Options"}
                     </button>
                 </div>

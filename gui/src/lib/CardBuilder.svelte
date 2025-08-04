@@ -83,7 +83,7 @@
                 <!-- <button class="hotkey-reminder-btn header-btns">audio: F8</button> -->
                 <!-- </div> -->
                 <div>
-                    <button id="options-btn" class="header-btns" onclick={() => toggleOptions()}>
+                    <button id="options-btn" class="primary-btn header-btns" onclick={() => toggleOptions()}>
                         {showOptions ? "Back" : "Options"}
                     </button>
                 </div>
@@ -155,7 +155,7 @@
             <button class="success-btn" onclick={handleExportSubtitles}> Export Card </button>
             <button class="danger-btn" onclick={handleClearSubtitles}> Clear All </button>
             <!-- TODO: Show confirmation dialogue for "Clear all?" since it's destructive -->
-            <button class="secondary-btn" onclick={handleSearchSubtitles}> Shutdown </button>
+            <button class="shutdown-btn" onclick={handleSearchSubtitles}> Shutdown </button>
         </div>
     </div>
 </div>
@@ -174,9 +174,9 @@
         /* min-width: 120px; */
     }
 
-    #options-btn {
+    /* #options-btn {
         background-color: #c0ddff;
-    }
+    } */
 
     #header-buttons {
         display: flex;
@@ -226,10 +226,10 @@
         }
     }
 
-    .hotkey-reminder-btn {
+    /* .hotkey-reminder-btn {
         min-width: 50px;
         background-color: #d0edaf;
-    }
+    } */
 
     .header-btns {
         margin-top: 10px;
@@ -362,25 +362,6 @@
         vertical-align: top;
     }
 
-    /* .image-target {
-        display: inline-block;
-        border: 1px solid #ccc;
-        border-radius: 4px;
-        padding: 2px;
-        background: white;
-        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-    }
-
-    .image-target img {
-        display: block;
-        height: 100%;
-        width: 100%;
-        width: auto;
-        height: auto;
-        object-fit: contain;
-        cursor: pointer;
-    } */
-
     /* Optional: Add hover effect for better UX */
     /* .image-target:hover {
         border-color: #999;
@@ -397,12 +378,12 @@
         flex-wrap: wrap;
     }
 
-    .secondary-btn {
+    .shutdown-btn {
         background: #6c757d;
         color: white;
     }
 
-    .secondary-btn:hover {
+    .shutdown-btn:hover {
         background: #545b62;
         transform: translateY(-1px);
     }
