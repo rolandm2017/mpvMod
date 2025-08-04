@@ -1,6 +1,7 @@
 <!-- FieldMappingConfig.svelte -->
 <script lang="ts">
     import { onMount } from "svelte";
+    import FieldMappingItem from "./components/FieldMappingItem.svelte";
 
     import { AnkiClient } from "$lib/api/ankiClient";
     import type { SelectedDeckInfo } from "./interfaces";
@@ -18,23 +19,22 @@
         screenshot: "Image"
     });
 
-    // Available Anki data
-    let availableDecks = $state<string[]>([]);
-    let availableNoteTypes = $state<string[]>([]);
-    let availableAnkiFields = $state([
+    const placeholderUntilLoading = [
         "Front",
         "Back",
         "Translation",
         "Audio",
         "Image",
-        "Extra",
-        "Tags",
-        "Source",
+        "Source", // "which video file?"
         "Notes",
         "Definition",
-        "Reading",
         "Example"
-    ]);
+    ];
+
+    // Available Anki data
+    let availableDecks = $state<string[]>([]);
+    let availableNoteTypes = $state<string[]>([]);
+    let availableAnkiFields = $state(placeholderUntilLoading);
 
     // Selected deck and note type
     let selectedDeck = $state("");
@@ -45,32 +45,27 @@
         {
             name: "targetWord",
             title: "Target Word",
-            description: "The word or phrase being learned",
-            currentValue: () => fieldMappings.targetWord
+            description: "The word or phrase being learned"
         },
         {
             name: "exampleSentence",
             title: "Example Sentence",
-            description: "Context sentence containing the target word",
-            currentValue: () => fieldMappings.exampleSentence
+            description: "Context sentence containing the target word"
         },
         {
             name: "nativeTranslation",
             title: "Native Translation",
-            description: "Translation in your native language",
-            currentValue: () => fieldMappings.nativeTranslation
+            description: "Translation in your native language"
         },
         {
             name: "sentenceAudio",
             title: "Sentence Audio",
-            description: "Audio clip of the example sentence",
-            currentValue: () => fieldMappings.sentenceAudio
+            description: "Audio clip of the example sentence"
         },
         {
             name: "screenshot",
             title: "Screenshot/Image",
-            description: "Visual context from the source material",
-            currentValue: () => fieldMappings.screenshot
+            description: "Visual context from the source material"
         }
     ];
 
@@ -87,7 +82,7 @@
         if (window.electronAPI?.getFieldMappings) {
             const saved: SelectedDeckInfo = await window.electronAPI.getFieldMappings();
             if (saved) {
-                fieldMappings = { ...fieldMappings, ...(saved.fieldMappings || saved) };
+                fieldMappings = { ...saved.fieldMappings };
                 selectedDeck = saved.selectedDeck || "";
                 selectedNoteType = saved.selectedNoteType || "";
             }
@@ -203,6 +198,10 @@
         console.log($state.snapshot(availableDecks), "188ru");
         console.log($state.snapshot(availableNoteTypes), "189ru");
     }
+    // FIXME: The page has just one state.
+    // FIXME: ANY state change, triggers updating the Electron store
+    // FIXME: it's no more, "this is spagheetii," now it all happens in one place, one object.
+    // FIXME:
 </script>
 
 <div class="field-mapping-config">
@@ -232,7 +231,7 @@
                     <select
                         id="deck-selector"
                         bind:value={selectedDeck}
-                        onchange={updateFieldMappings}
+                        onchange={(updatedDeck) => handleUpdateSelectedDeck(updatedDeck)}
                         class="config-select"
                     >
                         {#if availableDecks.length === 0}
@@ -254,6 +253,7 @@
                         id="note-type-selector"
                         bind:value={selectedNoteType}
                         onchange={() => handleNoteTypeChange(selectedNoteType)}
+                        onchange={(noteType) => handleNoteTypeChange(noteType)}
                         class="config-select"
                     >
                         {#if availableNoteTypes.length === 0}
@@ -277,33 +277,12 @@
             <h3 class="section-title">Field Mappings</h3>
 
             {#each cardBuilderFields as field}
-                <div class="mapping-item">
-                    <div class="field-info">
-                        <h4 class="field-title">{field.title}</h4>
-                        <p class="field-description">{field.description}</p>
-                    </div>
-
-                    <div class="mapping-arrow">→</div>
-
-                    <div class="anki-field-selector">
-                        <label for="mapping-{field.name}" class="sr-only">
-                            Select Anki field for {field.title}
-                        </label>
-                        <select
-                            id="mapping-{field.name}"
-                            bind:value={fieldMappings[field.name as keyof typeof fieldMappings]}
-                            onchange={(e) => updateMapping(field.name, e.currentTarget.value)}
-                            class="field-select"
-                        >
-                            <option value="" disabled>Select Anki Field...</option>
-                            {#each availableAnkiFields as ankiField}
-                                <option value={ankiField}>
-                                    {ankiField}
-                                </option>
-                            {/each}
-                        </select>
-                    </div>
-                </div>
+                <FieldMappingItem
+                    {field}
+                    {availableAnkiFields}
+                    currentValue={fieldMappings[field.name as keyof typeof fieldMappings]}
+                    onMappingChange={updateMapping}
+                />
             {/each}
         </div>
     </div>
@@ -427,79 +406,6 @@
         box-shadow: 0 0 0 3px rgba(0, 119, 204, 0.2);
     }
 
-    .mapping-item {
-        display: flex;
-        align-items: center;
-        padding: 20px;
-        margin-bottom: 16px;
-        background: #333;
-        border: 1px solid #444;
-        border-radius: 8px;
-        transition: border-color 0.2s ease;
-    }
-
-    .mapping-item:hover {
-        border-color: #555;
-    }
-
-    .field-info {
-        flex: 1;
-        min-width: 0;
-    }
-
-    .field-title {
-        margin: 0 0 4px 0;
-        font-size: 16px;
-        font-weight: 600;
-        color: #e0e0e0;
-    }
-
-    .field-description {
-        margin: 0;
-        font-size: 14px;
-        color: #aaa;
-        line-height: 1.4;
-    }
-
-    .mapping-arrow {
-        margin: 0 24px;
-        font-size: 20px;
-        color: #0077cc;
-        font-weight: bold;
-    }
-
-    .anki-field-selector {
-        min-width: 200px;
-    }
-
-    .field-select {
-        width: 100%;
-        padding: 12px 16px;
-        background: #2a2a2a;
-        border: 2px solid #555;
-        border-radius: 6px;
-        color: #e0e0e0;
-        font-size: 14px;
-        cursor: pointer;
-        transition: border-color 0.2s ease;
-    }
-
-    .field-select:hover {
-        border-color: #777;
-    }
-
-    .field-select:focus {
-        outline: none;
-        border-color: #0077cc;
-        box-shadow: 0 0 0 3px rgba(0, 119, 204, 0.2);
-    }
-
-    .field-select option {
-        background: #2a2a2a;
-        color: #e0e0e0;
-        padding: 8px;
-    }
-
     .config-footer {
         padding: 20px;
         border-top: 1px solid #444;
@@ -572,36 +478,8 @@
         transform: translateY(0);
     }
 
-    /* Screen reader only class */
-    .sr-only {
-        position: absolute;
-        width: 1px;
-        height: 1px;
-        padding: 0;
-        margin: -1px;
-        overflow: hidden;
-        clip: rect(0, 0, 0, 0);
-        white-space: nowrap;
-        border: 0;
-    }
-
     /* Responsive design */
     @media (max-width: 768px) {
-        .mapping-item {
-            flex-direction: column;
-            text-align: center;
-        }
-
-        .mapping-arrow {
-            margin: 16px 0;
-            transform: rotate(90deg);
-        }
-
-        .anki-field-selector {
-            min-width: 100%;
-            margin-top: 8px;
-        }
-
         .flex-row {
             flex-direction: column;
             align-items: stretch;
