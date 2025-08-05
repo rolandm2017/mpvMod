@@ -125,7 +125,11 @@
         <h3>Image</h3>
         <!-- container div with an image that is dynamically set -->
         <!-- the image is about the size of the Anki thumbnail -->
-        <div class="image-target-container">
+        <div
+            class="image-target-container"
+            class:tall-container={screenshotDataUrl}
+            class:short-container={!screenshotDataUrl}
+        >
             <div
                 class="image-target-editable"
                 contenteditable="true"
@@ -249,6 +253,14 @@
         display: block;
     }
 
+    .tall-container {
+        height: 170px;
+    }
+
+    .short-container {
+        height: 70px;
+    }
+
     .image-target-editable {
         height: 100%;
         width: 100%;
@@ -295,7 +307,7 @@
         content: "";
         position: absolute;
         right: 4px;
-        top: 75%;
+        top: 60%;
         width: 1px;
         height: 40px;
         background-color: #000;
@@ -355,11 +367,6 @@
         color: #495057;
         font-size: 1em;
         font-weight: 600;
-    }
-
-    .image-target-container {
-        display: inline-block;
-        vertical-align: top;
     }
 
     /* Optional: Add hover effect for better UX */
