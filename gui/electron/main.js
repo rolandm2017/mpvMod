@@ -122,6 +122,15 @@ function connectMPV() {
                                 console.error("Failed to load audio:", error);
                             });
                     }
+                } else if (message.type === "request_hotkeys") {
+                    // send hotkeys to server
+                    const storedHotkeys = store.get("hotkeys", {});
+                    sendMPVCommand({
+                        // Must send them on startup to register them with
+                        // the Python server, which lacks saved state
+                        command: "register_hotkeys",
+                        hotkeys: storedHotkeys
+                    });
                 } else {
                     console.log("Uncaught type:", message.type, message.command);
                     // mainWindow.webContents.send("mpv-state", message);

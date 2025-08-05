@@ -73,6 +73,9 @@ class MPVWebSocketServer:
         )
         
         self.setup_event_handlers()
+        
+        threading.Timer(2.0, self.request_hotkeys_from_clients).start()
+        
         signal.signal(signal.SIGINT, self.signal_handler)
         
     def add_hotkey_behaviors(self):
@@ -558,6 +561,26 @@ class MPVWebSocketServer:
             self.running = False
             if self.monitor_thread and self.monitor_thread.is_alive():
                 self.monitor_thread.join(timeout=2)
+                
+    def request_hotkeys_from_clients(self):
+        """Request hotkey configuration from connected clients"""
+        if not self.clients:
+            print("⌨️  No WebSocket clients connected - hotkeys will be requested when clients connect")
+            return
+        
+        request_message = {
+            "type": "request_hotkeys",
+            "content": "Please send hotkey configuration",
+            "timestamp": time.time()
+        }
+        
+        print("⌨️  Requesting hotkeys from connected clients...")
+        
+        if self.clients and self.loop:
+            asyncio.run_coroutine_threadsafe(
+                self._async_broadcast(request_message), 
+                self.loop
+            )
     
     async def register_client(self, websocket):
         """Register a new WebSocket client"""
@@ -574,6 +597,14 @@ class MPVWebSocketServer:
             "available_commands": ["take_screenshot", "start_audio_clip", "end_audio_clip", "get_status", "load_file"]
         }
         await websocket.send(json.dumps(welcome))
+        
+        # Request hotkeys from this new client
+        hotkey_request = {
+            "type": "request_hotkeys",
+            "content": "Please send your hotkey configuration",
+            "timestamp": time.time()
+        }
+        await websocket.send(json.dumps(hotkey_request))
     
     async def unregister_client(self, websocket):
         """Remove a WebSocket client"""
