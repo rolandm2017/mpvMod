@@ -45,7 +45,6 @@
 
     let failCount = 0;
 
-    let mpvState = {};
     // TODO: User edits the example sentence in the input, the reactive variable changes to house it.
     let selectedSubtitleText = $state("");
     // TODO: User edits the target word in the input, the reactive variable changes to house it.

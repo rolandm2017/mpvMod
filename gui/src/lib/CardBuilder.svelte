@@ -124,7 +124,8 @@
         </div>
     </div>
     <div class="control-section">
-        <h3>Image</h3>
+        <!-- image header is disabled to save screen space. the container is self explanatory -->
+        <!-- <h3>Image</h3> -->
         <!-- container div with an image that is dynamically set -->
         <!-- the image is about the size of the Anki thumbnail -->
         <div
@@ -146,7 +147,7 @@
                     <!-- // FIXME: LIKE what do they need a large hitbox for? It's put in by the hotkey. -->
                     <img class="take-full-container" src={screenshotDataUrl} alt="MPV screenshot for Anki flashcard" />
                 {:else}
-                    <div class="image-placeholder">No image</div>
+                    <div class="image-placeholder"><h4>Image</h4></div>
                 {/if}
             </div>
         </div>
