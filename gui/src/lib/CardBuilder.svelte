@@ -51,10 +51,14 @@
 
     // Function to handle backspace deletion
     function handleImageFieldKeydown(event: KeyboardEvent) {
-        if (event.key === "Backspace") {
-            // Clear the image
+        // Only allow backspace, prevent all other typing
+        if (event.key === "Backspace" && screenshotDataUrl) {
             screenshotDataUrl = null;
-            event.preventDefault(); // Prevent default backspace behavior
+            (event.currentTarget as HTMLElement).textContent = "";
+            event.preventDefault();
+        } else {
+            // Prevent all other typing
+            event.preventDefault();
         }
     }
 

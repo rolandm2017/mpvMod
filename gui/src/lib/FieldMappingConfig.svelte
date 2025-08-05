@@ -184,8 +184,8 @@
             <button class="secondary-btn" onclick={refreshAnkiData} disabled={state.isLoading}>
                 {state.isLoading ? "Loading..." : "Refresh"}
             </button>
-            <button class="secondary-btn" onclick={() => switchPageType()}>Hotkey Config</button>
-            <button class="primary-btn" onclick={() => toggleOptions()}>
+            <button class="secondary-btn" onclick={switchPageType}>Hotkey Config</button>
+            <button class="primary-btn" onclick={toggleOptions}>
                 {showOptions ? "Back" : "Options"}
             </button>
         </div>

@@ -73,6 +73,9 @@
 
         let subtitles: Subtitle[] = [];
 
+        // TODO: Change from h ardocded subtitle file,
+        // Change to "GEt subtitle from MPV, load actual patH"
+
         // Use the pre-built arrays from server
         data.segments.forEach((s) => {
             let newSub = new Subtitle(s.text, s.timecode, s.startTimeSeconds);

@@ -163,10 +163,10 @@
         <div id="position-buttons-container">
             <div id="position-buttons">
                 <div>
-                    <button class="secondary-btn" onclick={() => switchPageType()}> Field Mappings </button>
+                    <button class="secondary-btn" onclick={switchPageType}> Field Mappings </button>
                 </div>
                 <div>
-                    <button class="primary-btn" onclick={() => toggleOptions()}>
+                    <button class="primary-btn" onclick={toggleOptions}>
                         {showOptions ? "Back" : "Options"}
                     </button>
                 </div>
