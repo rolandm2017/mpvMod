@@ -13,6 +13,27 @@ from pathlib import Path
 from typing import Optional
 import mpv
 
+import mpv
+import os
+from urllib.parse import urlparse
+
+def get_absolute_path(player) -> str | None:
+    """Get absolute path of currently playing file."""
+    path = player.path
+    if not path:
+        return None
+        
+    # Check if already absolute
+    if os.path.isabs(path):
+        return path
+        
+    # Combine with working directory
+    working_dir = player.working_directory
+    if working_dir:
+        return os.path.abspath(os.path.join(working_dir, path))
+        
+    return os.path.abspath(path)
+
 class MPVWebSocketServer:
     def __init__(self, poll_interval=0.208):
         self.poll_interval = poll_interval
@@ -35,7 +56,7 @@ class MPVWebSocketServer:
         self.original_file_path = None  
         self.recording_audio = False
         
-        # Create MPV instance
+        # Create MPV instance with drag-and-drop support
         self.player = mpv.MPV(
             idle=True,
             osc=True,
@@ -45,6 +66,10 @@ class MPVWebSocketServer:
             input_vo_keyboard=True,
             autofit='50%',
             geometry='+0+0',
+            input_ipc_server='mpv-socket',  # Optional: for external control
+            # Enable drag-and-drop
+            keep_open='yes',  # Keep MPV open after file ends
+            force_window='yes',  # Force window creation even without file
         )
         
         self.setup_event_handlers()
@@ -71,9 +96,19 @@ class MPVWebSocketServer:
             # Store current file path for clipping
             try:
                 self.current_file_path = self.player.filename
-                print(self.current_file_path, "Stored for clipping")
-            except:
+                self.original_file_path = get_absolute_path(player=self.player)
+                print(f"📁 File loaded via drag-and-drop: {self.current_file_path}")
+                # FIXME: Something like, drag and drop into it, then Mp3 snippet breaks
+                print(f"📁 Stored absolute path: {self.original_file_path}")
+                # Broadcast the file path to WebSocket clients
+                self.broadcast_message("file_loaded", f"📁 File loaded: {self.get_filename()}", {
+                    "file_path": self.current_file_path,
+                    "absolute_path": self.original_file_path
+                })
+            except Exception as e:
+                print("Error: ❌ No file in on_start_file")
                 self.current_file_path = None
+                self.original_file_path = None
             
             message = f"🟢 Started playing: {self.get_filename()}"
             self.broadcast_message("event", message)
@@ -130,16 +165,16 @@ class MPVWebSocketServer:
     
     def get_filename(self):
         """Get current filename"""
-        # TODO: User loads new file, it's stored in memory so can be used later for screenshot, snip mp3
+        # TODO: User loads new file, path is stored in memory so can be used later for screenshot, snip mp3
         try:
             if not self.player_active:
                 return "Player closed"
             filename = self.player.filename
             if filename and isinstance(filename, str):
                 return Path(filename).name
-            return "Unknown"
+            return "No file loaded"
         except:
-            return "Unknown"
+            return "No file loaded"
     
     def is_paused(self):
         """Check if player is currently paused"""
@@ -190,6 +225,7 @@ class MPVWebSocketServer:
         """Take a screenshot of current frame"""
         try:
             if not self.player_active or not self.current_file_path:
+                self.broadcast_message("error", "❌ No file loaded for screenshot")
                 return None
             
             # Create screenshots directory if it doesn't exist
@@ -219,6 +255,10 @@ class MPVWebSocketServer:
         if not self.player_active:
             return False
         
+        if not self.current_file_path:
+            self.broadcast_message("error", "❌ No file loaded for audio clipping")
+            return False
+        
         self.clip_start_time = self.get_time_pos()
         if self.clip_start_time is not None:
             self.broadcast_message("info", f"🎵 Audio clip start marked at {self.format_time(self.clip_start_time)}")
@@ -228,6 +268,10 @@ class MPVWebSocketServer:
     def end_audio_clip(self):
         """End audio clipping and create MP3"""
         if not self.player_active or not self.current_file_path or self.clip_start_time is None:
+            if not self.current_file_path:
+                self.broadcast_message("error", "❌ No file loaded for audio clipping")
+            else:
+                self.broadcast_message("error", "❌ No clip start time marked")
             return None
         
         clip_end_time = self.get_time_pos()
@@ -305,8 +349,11 @@ class MPVWebSocketServer:
                         "error": str(e)
                     })
                     
-            print(f"Input file exists: {Path(self.current_file_path).exists()}")
-            print(f"Input file path: {self.current_file_path}")
+            if not isinstance(self.original_file_path, str):
+                self.original_file_path = str(self.original_file_path)
+                    
+            print(f"Input file exists: {Path(self.original_file_path).exists()}")
+            print(f"Input file path: {self.original_file_path}")
             print(f"Command: {' '.join(command)}")
             
             threading.Thread(target=run_ffmpeg, daemon=True).start()
@@ -325,7 +372,7 @@ class MPVWebSocketServer:
             command = command_data.get("command")
             
             if command == "take_screenshot":
-                print("screnehot from Main hotkey ✨")
+                print("screenshot from Main hotkey ✨")
                 screenshot_path = self.take_screenshot()
                 response = {
                     "command": "take_screenshot",
@@ -351,7 +398,6 @@ class MPVWebSocketServer:
                 self.end_audio_clip()
             
             elif command == "register_hotkeys":
-                # TODO: if no hotkey registered, ask once every few sec, for five min
                 hotkeys = command_data.get("hotkeys")
                 self.screenshot_hotkey = hotkeys["screenshot"]
                 self.audio_recording_hotkey = hotkeys["audioClip"]
@@ -366,7 +412,9 @@ class MPVWebSocketServer:
                     "time_pos": self.get_time_pos(),
                     "duration": self.get_duration(),
                     "paused": self.is_paused(),
-                    "clip_start_time": self.clip_start_time
+                    "clip_start_time": self.clip_start_time,
+                    "current_file_path": self.current_file_path,
+                    "absolute_file_path": self.original_file_path
                 }
                 self.broadcast_message("command_response", "📊 Status update", status)
                 
@@ -459,13 +507,14 @@ class MPVWebSocketServer:
                         if not self.player_active:
                             break
                         idle = self.player.idle_active
-                        if idle:
-                            self.broadcast_message("status", "💤 Player idle (no media loaded)")
+                        if idle and not self.current_file_path:
+                            # Only show idle message if no file is loaded
+                            pass  # Don't spam idle messages
                         else:
                             self.broadcast_message("status", "⚠️  No time position available")
                     except:
                         if self.player_active:
-                            self.broadcast_message("error", "⚠️  Player not ready")
+                            pass  # Don't spam error messages when no file is loaded
                         else:
                             break
                 
@@ -484,6 +533,7 @@ class MPVWebSocketServer:
             if not self.player_active:
                 self.broadcast_message("error", "❌ Player is not active")
                 return False
+            
             # Store the original absolute path
             self.original_file_path = str(Path(filepath).resolve())
             self.current_file_path = self.original_file_path
@@ -520,7 +570,8 @@ class MPVWebSocketServer:
             "timestamp": time.time(),
             "player_active": self.player_active,
             "filename": self.get_filename() if self.player_active else None,
-            "available_commands": ["take_screenshot", "start_audio_clip", "end_audio_clip", "get_status"]
+            "current_file_path": self.current_file_path,
+            "available_commands": ["take_screenshot", "start_audio_clip", "end_audio_clip", "get_status", "load_file"]
         }
         await websocket.send(json.dumps(welcome))
     
@@ -581,35 +632,41 @@ class MPVWebSocketServer:
             pass
 
 async def main():
-    if len(sys.argv) < 2:
-        print("Usage: python server.py <video_file_path> [host] [port]")
-        print("Example: python server.py video.mp4")
-        print("Example: python server.py video.mp4 localhost 9001")
-        sys.exit(1)
-    
-    filepath = sys.argv[1]
+    # Optional file path - if provided, load it automatically
+    filepath = sys.argv[1] if len(sys.argv) > 1 else None
     host = sys.argv[2] if len(sys.argv) > 2 else "localhost"
     port = int(sys.argv[3]) if len(sys.argv) > 3 else 9001
     
     server = MPVWebSocketServer(poll_interval=0.208)
     server.start_monitoring()
+        
+    # Only load file if provided
+    if filepath:
+        if not server.load_file(filepath):
+            print("❌ Failed to load video file")
+            sys.exit(1)
+        print("✅ Video loaded successfully")
+    else:
+        print("🎬 MPV player ready - drag and drop a video file to play")
     
-    if not server.load_file(filepath):
-        print("❌ Failed to load video file")
-        sys.exit(1)
-    
-    print("✅ Video loaded successfully")
     print(f"\n🎮 WebSocket Server Info:")
     print(f"   URL: ws://{host}:{port}")
-    print(f"   Video: {Path(filepath).name}")
+    if filepath:
+        print(f"   Video: {Path(filepath).name}")
+    else:
+        print(f"   Waiting for file via drag-and-drop...")
     print(f"\n💡 Available Commands:")
     print(f"   - take_screenshot: Capture current frame")
     print(f"   - start_audio_clip: Mark start time for audio clip")  
     print(f"   - end_audio_clip: Create MP3 from marked start to current time")
+    print(f"   - load_file: Load a specific file")
     print(f"   - get_status: Get current player status")
     print(f"\n📨 Send commands as JSON: {{'command': 'take_screenshot'}}")
-    print(f"   Control MPV directly via the player window")
-    print(f"   Ctrl+C: Quit")
+    print(f"\n🎯 Usage:")
+    print(f"   - Drag and drop video files into the MPV window")
+    print(f"   - Control MPV directly via the player window")
+    print(f"   - Send WebSocket commands for screenshots and audio clips")
+    print(f"   - Ctrl+C: Quit")
     
     try:
         server.loop = asyncio.get_running_loop()

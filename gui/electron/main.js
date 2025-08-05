@@ -123,8 +123,8 @@ function connectMPV() {
                             });
                     }
                 } else {
-                    console.log("Unaught type:", message.type, message.command);
-                    mainWindow.webContents.send("mpv-state", message);
+                    console.log("Uncaught type:", message.type, message.command);
+                    // mainWindow.webContents.send("mpv-state", message);
                 }
             }
         } catch (e) {
