@@ -54,6 +54,7 @@ class MPVWebSocketServer:
         self.clip_start_time = None
         self.current_file_path = None 
         self.original_file_path = None  
+        self.current_srt = None
         self.recording_audio = False
         
         # Create MPV instance with drag-and-drop support
@@ -115,6 +116,16 @@ class MPVWebSocketServer:
             
             message = f"🟢 Started playing: {self.get_filename()}"
             self.broadcast_message("event", message)
+        
+        @self.player.event_callback('file-loaded')
+        def on_file_loaded(event):
+            print(f"📁 File fully loaded: {self.get_filename()}")
+            # Now track list should be ready
+            current_srt = self.get_SRT_file()
+            self.current_srt = current_srt
+            self.broadcast_message("srt_found", f"📄 SRT found: {current_srt}", {
+                    "srt_path": self.current_srt,
+                })
             
         @self.player.event_callback('end-file')
         def on_end_file(event):
@@ -198,50 +209,62 @@ class MPVWebSocketServer:
         return f"{minutes}:{secs:04.1f}"
     
     def get_SRT_file(self):
-        track_list_raw = self.player.track_list
+        """Get SRT file path or detect embedded subtitles - returns absolute path or status"""
+        try:
+            # Give MPV a moment to load track information
+            track_list_raw = self.player.track_list
+            
+            if not isinstance(track_list_raw, list):
+                print("⚠️  Track list not ready yet - no subtitle info available")
+                return None
+            
+            current_sub = self.player._get_property('current-tracks/sub')
+            current_sub_is_dict = isinstance(current_sub, dict)
+            
+            subtitle_files = []
+            embedded_count = 0
+            
+            for track in track_list_raw:
+                if track.get('type') != 'sub':
+                    continue
+                    
+                if track.get('external'):
+                    # External subtitle file
+                    filename = track.get('external-filename')
+                    if filename:
+                        abs_path = os.path.abspath(filename) if not os.path.isabs(filename) else filename
+                        subtitle_files.append(abs_path)
+                        
+                        # Check if this is the current subtitle
+                        is_current = (track.get('selected') or 
+                                    (current_sub and current_sub_is_dict and 
+                                    current_sub.get('id') == track.get('id')))
+                        
+                        status = " (ACTIVE)" if is_current else ""
+                        print(f"📄 External subtitle{status}: {abs_path}")
+                else:
+                    # Embedded subtitle
+                    embedded_count += 1
+                    is_current = (track.get('selected') or 
+                                (current_sub and current_sub_is_dict and 
+                                current_sub.get('id') == track.get('id')))
+                    
+                    lang_info = f" ({track.get('lang')})" if track.get('lang') else ""
+                    status = " (ACTIVE)" if is_current else ""
+                    print(f"📽️  Embedded subtitle{status}: Track #{track.get('id')}{lang_info} in {self.original_file_path}")
+            
+            if not subtitle_files and embedded_count == 0:
+                print("❌ No subtitle tracks found")
+                return None
+            
+            # Return the first external subtitle file path if available
+            return subtitle_files[0] if subtitle_files else f"embedded_in_{self.original_file_path}"
+            
+        except Exception as e:
+            print(f"❌ Error getting subtitle info: {e}")
+            return None
     
-        # Ensure we have a proper list of dictionaries
-        if not isinstance(track_list_raw, list):
-            track_list = []
-        else:
-            track_list = track_list_raw
-        print("Tracks raw:", track_list_raw)
-        current_sub = self.player._get_property('current-tracks/sub')
-        
-        result = {
-            'current_subtitle': None,
-            'external_files': [],
-            'embedded_tracks': [],
-            'total_count': 0,
-            'by_source': {
-                'sub_file_flag': [],
-                'auto_detected': [],
-                'embedded': [],
-                'runtime_added': []
-            }
-        }
-        print(current_sub, "current_sub")
-        
-        video_basename = ''
-        if self.original_file_path:
-            video_basename = os.path.splitext(os.path.basename(self.original_file_path))[0]
-        
-        i = 0
-        for track in track_list:
-            if track.get('type') != 'sub':
-                continue
-            i = i + 1   
-            track_info = {
-                'id': track.get('id'),
-                'lang': track.get('lang'),
-                'title': track.get('title', ''),
-                'codec': track.get('codec'),
-                'external': track.get('external', False),
-                'filename': track.get('external-filename'),
-                'selected': track.get('selected', False)
-            }
-            print(track_info, "track info", i)
-    
+ 
     def take_screenshot_from_mpv(self, *args):
         # FIXME: MPV Hotkey fires Take Screenshot 2x, 2 sccreenshots are observed in Main
         print(" 🌙 screenshot from MPV hotkey")

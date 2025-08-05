@@ -104,7 +104,6 @@ function connectMPV() {
 
                         // Convert immediately:
                         loadImageAsDataURL(fullScreenshotPath).then((dataURL) => {
-                            // Send to renderer via your preferred method
                             mainWindow.webContents.send("screenshot-ready", dataURL);
                         });
                     }
@@ -114,13 +113,9 @@ function connectMPV() {
                         const fullMp3Path = path.join(BACKEND_DIR, message.file_path);
 
                         // Convert immediately:
-                        loadAudioAsDataURL(fullMp3Path)
-                            .then((dataURL) => {
-                                mainWindow.webContents.send("audio-ready", dataURL);
-                            })
-                            .catch((error) => {
-                                console.error("Failed to load audio:", error);
-                            });
+                        loadAudioAsDataURL(fullMp3Path).then((dataURL) => {
+                            mainWindow.webContents.send("audio-ready", dataURL);
+                        });
                     }
                 } else if (message.type === "request_hotkeys") {
                     // send hotkeys to server
@@ -131,6 +126,8 @@ function connectMPV() {
                         command: "register_hotkeys",
                         hotkeys: storedHotkeys
                     });
+                } else if (message.type === "srt_found") {
+                    mainWindow.webContents.send("srt-path", message);
                 } else {
                     console.log("Uncaught type:", message.type, message.command);
                     // mainWindow.webContents.send("mpv-state", message);

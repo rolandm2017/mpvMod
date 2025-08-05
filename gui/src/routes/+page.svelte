@@ -100,9 +100,6 @@
 
         loadHotkeysIntoRegister();
 
-        // console.log('Window object:', window);
-        // console.log('electronAPI available:', !!window.electronAPI);
-
         if (window.electronAPI) {
             console.log("electronAPI is available, setting up listeners...");
 
@@ -174,8 +171,6 @@
     function highlightPlayerPositionSegment(playerPosition: number) {
         const indexToHighlight = Finder.findSubtitleIndexAtPlayerTime(playerPosition, db.subtitleCuePointsInSec);
         const timecodeStringOfTargetEl = db.subtitles[indexToHighlight].timecode;
-        // FIXME: timecode's are not found. the timePositions are never loaded
-        // FIXME: the problem is i'm doing "get" for a precise value, when I want fuzzy matching
 
         if (timecodeStringOfTargetEl) {
             highlightSegment(timecodeStringOfTargetEl);
@@ -188,7 +183,6 @@
         /*
          * Timecodes are a subtitle thing, timestamps are a player position thing.
          */
-
         if (currentHighlightedElement) {
             currentHighlightedElement.classList.remove("highlighted");
         }
@@ -200,12 +194,6 @@
             currentHighlightedTimecode = timecode;
         }
     }
-
-    // FIXME: Horizontal scroll bar, vertical scroll bar (pointless)
-    // FIXME: Horizontal scroll bar, vertical scroll bar (pointless)
-    // FIXME: Horizontal scroll bar, vertical scroll bar (pointless)
-    // FIXME: Horizontal scroll bar, vertical scroll bar (pointless)
-    // FIXME: Horizontal scroll bar
 
     let callcount = 0;
 
@@ -221,13 +209,8 @@
 
         const result = mountingTracker.storeSegmentPosition(timecode, y, element, db);
 
-        // Handle completion
         if (result.isComplete) {
-            // highlightAll();
-            // console.log('All segments mounted:', mountingTracker.getStats());
-
             allSegmentsMounted = true;
-            // console.log('All segments mounted, positions ready');
             // Expose to window for testing
             if (typeof window !== "undefined") {
                 window.allSegmentsMounted = true;
@@ -276,8 +259,6 @@
 
         const hotkeyString = parts.join(" + ");
 
-        // console.log('WHATS IN HERE', registeredHotkeys);
-
         // Check if this matches a registered hotkey, i.e.
         // the q, " ['Ctrl + Shift + S', 'F5', 'Ctrl + C', 'Ctrl + X'] contains "Ctrl + X" ?""
         const action = Object.entries(registeredHotkeys).find(([k, v]) => v === hotkeyString)?.[0];
@@ -290,8 +271,6 @@
     let currentlyRecording = $state(false);
 
     function executeAction(action: string) {
-        // TODO: Convert to use websockets cmd
-
         console.log("EXECUTING: ", action);
         switch (action) {
             case "screenshot":
@@ -324,8 +303,7 @@
                 if (data.success && data.file_path) {
                     screenshotDataUrl = data.file_path;
 
-                    console.log("Screenshot saved:", screenshotDataUrl);
-                    // You could load this image in your UI now
+                    console.log("Screenshot saved!");
                 }
                 break;
 
@@ -340,18 +318,16 @@
                 isClipping = false;
                 if (data.success && data.file_path) {
                     audioClipPath = data.file_path;
-                    console.log("Audio clip saved:", audioClipPath);
-                    // You could play this audio file now
+                    console.log("Audio clip saved!");
                 }
                 break;
         }
     }
 
     function copySelectedSubtitle() {
-        /**
-         // MOSTLY this is just putting the subtitle text
+        /** MOSTLY this is just putting the subtitle text
          * into the state var so i can push it to input field.
-        */
+         */
         try {
             // Get the currently selected text from the window
             const selection = window.getSelection();
@@ -369,10 +345,9 @@
     }
 
     function copySelectedWord() {
-        /**
-         // MOSTLY this is just putting the subtitle word
+        /** MOSTLY this is just putting the subtitle word
          * into the state var so i can push it to input field.
-        */
+         */
         try {
             // Get the currently selected text from the window
             console.log("HER HEirhaewilohrfasdfdis");
@@ -396,9 +371,7 @@
         console.log(update, "field mappings update");
     }
 
-    // export function devtoolsScroller(timestamp: number) {
     export function playerPositionDevTool(playerPosition: PlayerPosition) {
-        // highlightPlayerPositionSegment(playerPosition);
         scrollToClosestSubtitle(playerPosition, db, scrollContainer);
     }
     export function timecodeDevTool(timecode: TimecodeString) {
@@ -427,8 +400,8 @@
 
 <svelte:window on:keydown={handleKeyDown} />
 
+<!-- 424 components stay alive using :hidden -->
 <div class="main-content" class:hidden={showOptions}>
-    <!-- 424 components stay alive -->
     <div class="container">
         <div class="subtitle-panel">
             <div class="subtitle-header">Subtitles</div>
