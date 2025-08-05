@@ -179,13 +179,11 @@ class MPVWebSocketServer:
     def toggle_audio_recording_from_mpv(self, *args):
         print("Toggling audio record, allegedly")
         if self.recording_audio:
-            print("157ru")
             self.end_audio_clip()
             self.recording_audio = False
         else:
             self.start_audio_clip()
             self.recording_audio = True
-            print("160ru")
         
     
     def take_screenshot(self):

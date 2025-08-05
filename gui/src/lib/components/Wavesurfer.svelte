@@ -20,14 +20,13 @@
      * 3. Use Svelte's $: reactivity sparingly — don't tie it to waveform rendering
      */
 
-    // TODO: 1. Get the duration of the clip showing. How long is the full clip, un-cut, outside of the little boundary box?
-    // TODO: 2. Display the start, end of the bounding box. the Regions markers
-    // TODO: 3. User clicks "Make card," the mp3 is snipped.
     // TODO: Maybe a tickbox to let user prevent accidentally moving the boundaries?
     // FIXME: The first time the page loads, you must click Play Audio twice to make it play
 
-    // TODO: MUST  have FFmpeg make the clip, send it to the client, so client can
-    // send the clip to Anki
+    // TODO: 1. Get the duration of the clip showing. How long is the full clip, un-cut, outside of the little boundary box?
+    // TODO: 2. Display the start, end of the bounding box. the Regions markers
+
+    // TODO: 3. User clicks "Make card," the mp3 is snipped.
 
     let container: HTMLDivElement;
     let wavesurfer: WaveSurfer | null = null;
@@ -56,7 +55,7 @@
     let cursorPosition = $state(0); // for the cursor string
 
     let regionStart = $state(5);
-    let regionEnd = $state(7);
+    let regionEnd = $state(8);
 
     // Case: Region is playing, usre clicks "play main". Result: REgion is paused, ticker goes to start
     // Case: Region is paused, user clicks "play main". result: region still paused, ticket goes tos tart
@@ -105,6 +104,7 @@
 
         // Add regions after initialization
         wavesurfer.on("ready", () => {
+            regionsPlugin.clearRegions();
             stateTracker?.setRegion(regionStart, regionEnd);
             regionDisplay = regionsPlugin.addRegion({
                 start: regionStart,
@@ -147,6 +147,24 @@
         };
     });
 
+    function resetRegionForNewClip(endTime: number) {
+        // reset the cursor to 0:00
+        cursorPosition = 0;
+
+        // set the region start to 1/3
+        const startPosition = endTime * 0.3333;
+        regionStart = 3;
+        // set the region end to 1/3
+        const endPosition = endTime * 0.6666;
+        regionEnd = 5;
+
+        updateRegion(startPosition, endPosition);
+        // reset region cursor to start
+        // does needed?
+
+        // reset brace start, end
+    }
+
     let previousMp3 = $state(null);
 
     $effect(() => {
@@ -165,6 +183,11 @@
                 stateTracker = new MP3PlayerState(audioDurationInSec, wavesurfer);
                 fullFileEndTime = audioDurationInSec;
                 fullFileEndTimeDisplayString = convertToTimeString(audioDurationInSec);
+                if (previousMp3 === null) {
+                    // use default region for first clip
+                    return;
+                }
+                resetRegionForNewClip(audioDurationInSec);
             });
 
             previousMp3 = mp3;
@@ -205,10 +228,8 @@
         if (!stateTracker) throw new Error("Null state tracker");
         if (stateTracker.getState().main.isPlaying) {
             stateTracker.pauseMain();
-            console.log(currentState?.main.isPlaying, "179ru");
         } else {
             stateTracker.playMain();
-            console.log(currentState?.main.isPlaying, "180ru");
         }
         // Trigger reactivity
         reactivityTrigger++;
