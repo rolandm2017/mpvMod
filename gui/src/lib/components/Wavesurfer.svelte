@@ -241,10 +241,8 @@
         if (!stateTracker) throw new Error("Null state tracker");
         if (stateTracker.getState().region.isPlaying) {
             stateTracker.pauseRegion();
-            console.log(currentState?.region.isPlaying, "192ru");
         } else {
             stateTracker.playRegion();
-            console.log(currentState?.region.isPlaying, "195ru");
         }
         // Trigger reactivity
         reactivityTrigger++;
@@ -270,7 +268,6 @@
     }
 
     function updateRegion(newStart: number, newEnd: number) {
-        console.log(regionDisplay, stateTracker, "198ru");
         if (regionDisplay && stateTracker) {
             // TODO: Update the Mp3 state tracker
             console.log("calling setRegion", newStart, newEnd);

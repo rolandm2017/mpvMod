@@ -85,8 +85,6 @@ export class MP3PlayerState {
 
         if (this.main.isPlaying) return; // Already playing
 
-        console.log("seek to: ", this.main.currentTime, "81ru");
-
         this.surfer.seekTo(this.main.currentTime / this.duration);
         this.surfer.play();
         this.main.isPlaying = true;
@@ -148,10 +146,7 @@ export class MP3PlayerState {
 
     // Handle audio timeupdate events
     handleTimeUpdate(currentTime: number) {
-        // console.log("HANDLE TIME UPATE:", currentTime);
-        // console.log("context:", this.activeContext);
         // FIXME: Instead it's, "take current time as argument, from outside"
-        console.log(this.activeContext, "1477ru");
 
         if (this.activeContext === "main") {
             this.main.currentTime = currentTime;

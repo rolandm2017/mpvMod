@@ -241,7 +241,8 @@ class MPVWebSocketServer:
                                     current_sub.get('id') == track.get('id')))
                         
                         status = " (ACTIVE)" if is_current else ""
-                        print(f"📄 External subtitle{status}: {abs_path}")
+                        if status:
+                            print(f"📄 External subtitle{status}: {abs_path}")
                 else:
                     # Embedded subtitle
                     embedded_count += 1

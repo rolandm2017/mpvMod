@@ -21,6 +21,13 @@
     let showOptions = $state(false);
     let optionsPage: "hotkeyConfig" | "connectConfig" = $state("hotkeyConfig");
 
+    let subtitlePath = $state("");
+
+    $effect(() => {
+        //
+        subtitlePath;
+    });
+
     let currentHighlightedElement: HTMLDivElement | null = null;
     let currentHighlightedTimecode = "";
 
@@ -158,6 +165,10 @@
             window.electronAPI.onAudioReady((dataURL: string) => {
                 console.log("in the +page.svelte screenshot api:", dataURL.substring(0, 50) + "...");
                 mp3DataUrl = dataURL; // Store the data URL
+            });
+            window.electronAPI.forwardSubtitleInfo((filePath: string) => {
+                console.log("In the +page.svelte SRT file loader:", filePath);
+                subtitlePath = filePath;
             });
         } else {
             console.error("electronAPI not available");

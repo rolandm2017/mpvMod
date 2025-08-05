@@ -38,6 +38,12 @@ contextBridge.exposeInMainWorld("electronAPI", {
         ipcRenderer.on("audio-ready", (event, dataURL) => callback(dataURL));
     },
 
+    // file loaded, SRT ready, etc
+    forwardSubtitleInfo: (callback) => {
+        ipcRenderer.on("srt-content", (event, srtContent) => callback(srtContent));
+    },
+
+    // initialize
     requestDefaultAudio: () => ipcRenderer.invoke("request-default-audio"),
 
     onDefaultAudio: (callback) => {

@@ -4,6 +4,7 @@ import { app, BrowserWindow, ipcMain, screen } from "electron";
 import WebSocket from "ws";
 
 import fs from "fs/promises";
+import { readFileSync } from "fs"; // Add this import
 
 import { fileURLToPath } from "url";
 import path, { dirname } from "path";
@@ -127,7 +128,11 @@ function connectMPV() {
                         hotkeys: storedHotkeys
                     });
                 } else if (message.type === "srt_found") {
-                    mainWindow.webContents.send("srt-path", message);
+                    console.log(message, "130ru");
+                    const srtFilePath = message.srt_path;
+                    console.log(srtFilePath, "133ru");
+                    const srtContent = readFileSync(srtFilePath, "utf8");
+                    mainWindow.webContents.send("srt-content", srtContent);
                 } else {
                     console.log("Uncaught type:", message.type, message.command);
                     // mainWindow.webContents.send("mpv-state", message);

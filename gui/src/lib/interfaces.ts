@@ -34,6 +34,11 @@ export interface ElectronAPI {
     // Add screenshot listener
     onScreenshotReady: (callback: (dataURL: string) => void) => void;
     onAudioReady: (callback: (dataURL: string) => void) => void;
+
+    // Load file, get SRT path, etc
+    forwardSubtitleInfo: (callback: (filePath: string) => void) => void;
+
+    // Init
     onDefaultAudio: (callback: (nullishMp3File: string) => void) => void;
     requestDefaultAudio: () => void;
 }
