@@ -69,7 +69,7 @@
             container,
             waveColor: "#999",
             progressColor: "#555",
-            height: 100,
+            height: 80, // 100 was too much real estate
             plugins: [regionsPlugin]
         });
 
@@ -388,7 +388,8 @@
         background-color: #4caf50;
         color: white;
         border: none;
-        padding: 10px 20px;
+        margin-right: 8px;
+        padding: 8px 20px;
         border-radius: 4px;
         cursor: pointer;
         font-size: 16px;

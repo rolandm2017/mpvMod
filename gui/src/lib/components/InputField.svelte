@@ -19,7 +19,9 @@
 
     label {
         display: block;
-        margin-bottom: 5px;
+        margin-top: 6px;
+        margin-bottom: 4px;
+        margin-left: 2px;
         font-weight: 500;
         color: #495057;
         font-size: 0.9em;

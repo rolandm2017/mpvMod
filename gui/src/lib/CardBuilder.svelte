@@ -131,7 +131,6 @@
             class="image-target-container"
             class:tall-container={screenshotDataUrl}
             class:short-container={!screenshotDataUrl}
-            onclick={handleImageFieldFocus}
         >
             <div
                 class="image-target-editable"
@@ -220,7 +219,7 @@
     }
 
     /* Responsive - stack vertically on very small screens */
-    @media (max-width: 1080px) {
+    @media (max-width: 680px) {
         .hotkey-hints {
             flex-direction: column;
             gap: 4px;
@@ -351,13 +350,14 @@
     }
 
     .header-text {
-        margin: 10px 0px 10px 0px;
+        margin: 10px 0px 4px 0px;
         padding: 6px 12px;
         background-color: #eee5ed;
+        font-size: 22px;
     }
 
     .control-section {
-        padding: 16px 20px;
+        padding: 16px 20px 4px 20px;
         border-bottom: 1px solid #dee2e6;
     }
 
