@@ -101,13 +101,13 @@ class MPVWebSocketServer:
                 self.current_file_path = self.player.filename
                 self.original_file_path = get_absolute_path(player=self.player)
                 print(f"📁 File loaded via drag-and-drop: {self.current_file_path}")
-                # FIXME: Something like, drag and drop into it, then Mp3 snippet breaks
                 print(f"📁 Stored absolute path: {self.original_file_path}")
                 # Broadcast the file path to WebSocket clients
                 self.broadcast_message("file_loaded", f"📁 File loaded: {self.get_filename()}", {
                     "file_path": self.current_file_path,
                     "absolute_path": self.original_file_path
                 })
+                # Check if , if you can get SRT file on load
             except Exception as e:
                 print("Error: ❌ No file in on_start_file")
                 self.current_file_path = None
@@ -196,7 +196,51 @@ class MPVWebSocketServer:
         minutes = int(seconds // 60)
         secs = seconds % 60
         return f"{minutes}:{secs:04.1f}"
-
+    
+    def get_SRT_file(self):
+        track_list_raw = self.player.track_list
+    
+        # Ensure we have a proper list of dictionaries
+        if not isinstance(track_list_raw, list):
+            track_list = []
+        else:
+            track_list = track_list_raw
+        print("Tracks raw:", track_list_raw)
+        current_sub = self.player._get_property('current-tracks/sub')
+        
+        result = {
+            'current_subtitle': None,
+            'external_files': [],
+            'embedded_tracks': [],
+            'total_count': 0,
+            'by_source': {
+                'sub_file_flag': [],
+                'auto_detected': [],
+                'embedded': [],
+                'runtime_added': []
+            }
+        }
+        print(current_sub, "current_sub")
+        
+        video_basename = ''
+        if self.original_file_path:
+            video_basename = os.path.splitext(os.path.basename(self.original_file_path))[0]
+        
+        i = 0
+        for track in track_list:
+            if track.get('type') != 'sub':
+                continue
+            i = i + 1   
+            track_info = {
+                'id': track.get('id'),
+                'lang': track.get('lang'),
+                'title': track.get('title', ''),
+                'codec': track.get('codec'),
+                'external': track.get('external', False),
+                'filename': track.get('external-filename'),
+                'selected': track.get('selected', False)
+            }
+            print(track_info, "track info", i)
     
     def take_screenshot_from_mpv(self, *args):
         # FIXME: MPV Hotkey fires Take Screenshot 2x, 2 sccreenshots are observed in Main
