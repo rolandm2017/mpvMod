@@ -61,6 +61,8 @@
     // Function to handle focus - ensures the field is focusable
     function handleImageFieldFocus(event: FocusEvent & { currentTarget: EventTarget & HTMLDivElement }) {
         console.log("Image field focused");
+        console.log("Current content:", event.currentTarget.textContent);
+        console.log("Current HTML:", event.currentTarget.innerHTML.slice(400));
     }
 </script>
 
@@ -129,10 +131,11 @@
             class="image-target-container"
             class:tall-container={screenshotDataUrl}
             class:short-container={!screenshotDataUrl}
+            onclick={handleImageFieldFocus}
         >
             <div
                 class="image-target-editable"
-                contenteditable="true"
+                contenteditable={screenshotDataUrl ? "true" : "false"}
                 tabindex="0"
                 onkeydown={handleImageFieldKeydown}
                 onfocus={handleImageFieldFocus}
