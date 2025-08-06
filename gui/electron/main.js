@@ -243,6 +243,13 @@ ipcMain.handle("save-field-mappings", (event, mappings) => {
     store.set("field-mappings", mappings);
 });
 
+ipcMain.handle("request-srt-content", async () => {
+    console.log("Server restarting, requesting SRT file...");
+    sendMPVCommand({
+        command: "send_srt_file"
+    });
+});
+
 ipcMain.handle("request-default-audio", async () => {
     console.log("Manual request for default audio received");
     await loadDefaultSilenceAudio();

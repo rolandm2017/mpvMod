@@ -41,6 +41,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
     forwardSubtitleInfo: (callback) => {
         ipcRenderer.on("srt-content", (event, srtFileContent) => callback(srtFileContent));
     },
+    requestCurrentSubtitles: () => ipcRenderer.invoke("request-srt-content"),
 
     // initialize
     requestDefaultAudio: () => ipcRenderer.invoke("request-default-audio"),

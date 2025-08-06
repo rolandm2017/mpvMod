@@ -474,6 +474,13 @@ class MPVWebSocketServer:
                 self.audio_recording_hotkey = hotkeys["audioClip"]
                 self.add_hotkey_behaviors()
                 
+            elif command == "send_srt_file":
+                if self.current_srt:
+                    self.broadcast_message("srt_found", f"📄 Sending SRT: {self.current_srt}", {
+                        "srt_path": self.current_srt,
+                    })
+                else:
+                    self.broadcast_message("info", "📄 No SRT file currently loaded")
                 
             elif command == "get_status":
                 status = {

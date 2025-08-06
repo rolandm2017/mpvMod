@@ -46,6 +46,7 @@ export interface ElectronAPI {
 
     // Load file, get SRT path, etc
     forwardSubtitleInfo: (callback: (srtFileContent: string) => void) => void;
+    requestCurrentSubtitles: (callback: (srtFileContent: string) => void) => void;
 
     // Init
     onDefaultAudio: (callback: (nullishMp3File: string) => void) => void;

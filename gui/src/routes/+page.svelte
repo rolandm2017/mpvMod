@@ -213,6 +213,9 @@
                 console.log("In the +page.svelte SRT file loader:", rawSrtContent.length);
                 rawSrts = rawSrtContent;
             });
+            window.electronAPI.requestCurrentSubtitles((rawSrtContent: string) => {
+                rawSrts = rawSrtContent;
+            });
         } else {
             console.error("electronAPI not available");
         }
