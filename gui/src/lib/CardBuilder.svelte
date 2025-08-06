@@ -142,11 +142,11 @@
     </div>
 
     <div class="control-section">
-        <div>
-            <div>
+        <div class="flex-row">
+            <div class="">
                 <h3>Sentence Audio</h3>
             </div>
-            <div>
+            <div class="">
                 <!-- recorder awareness controls -->
                 <RecorderAwarenessControls {recordingState} />
             </div>
