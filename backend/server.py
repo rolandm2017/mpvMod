@@ -138,6 +138,30 @@ class MPVWebSocketServer:
             pos = self.get_time_pos()
             if pos is not None:
                 message = f"⏩ Seeked to {self.format_time(pos)}"
+                # TODO: Broadcast timestamp update immediately
+                time_pos = self.get_time_pos()
+                
+                if time_pos is not None:
+                    duration = self.get_duration()
+                    formatted_time = self.format_time(time_pos)
+                    
+                    if duration and isinstance(duration, (int, float)) and isinstance(time_pos, (int, float)):
+                        progress = (time_pos / duration) * 100
+                        formatted_duration = self.format_time(duration)
+                        content = f"⏱️  {formatted_time} / {formatted_duration} ({progress:.1f}%)"
+                        
+                        extra_data = {
+                            "time_pos": round(time_pos, 3),  
+                            "progress": round(progress, 3),
+                            "formatted_time": formatted_time,
+                            "formatted_duration": formatted_duration
+                        }
+                        self.broadcast_message("time_update", content, extra_data)
+                    else:
+                        self.broadcast_message("time_update", f"⏱️  {formatted_time}", {
+                            "time_pos": time_pos,
+                            "formatted_time": formatted_time
+                        })
                 self.broadcast_message("event", message)
         
         @self.player.property_observer('pause')
@@ -743,7 +767,22 @@ async def main():
     host = sys.argv[2] if len(sys.argv) > 2 else "localhost"
     port = int(sys.argv[3]) if len(sys.argv) > 3 else 9001
     
-    server = MPVWebSocketServer(poll_interval=0.208)
+    # server = MPVWebSocketServer(poll_interval=0.208)  # 208 ms seemed too slow
+    # Quote Claude:
+    # """"
+    # Consider 100-150ms if:
+
+    # You want snappier time updates
+    # Users are actively scrubbing/seeking
+    # You want it to feel more "live"
+
+    # Consider 50ms only if:
+
+    # You're doing frame-accurate work
+    # Users are doing precise timing work
+    # """"
+        
+    server = MPVWebSocketServer(poll_interval=0.107)
     server.start_monitoring()
         
     # Only load file if provided

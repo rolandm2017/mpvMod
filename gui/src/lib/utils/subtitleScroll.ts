@@ -84,6 +84,44 @@ export function scrollToClosestSubtitle(
         playerPosition,
         db.subtitleCuePointsInSec
     );
+    // const correspondingSubtitleIndex = Finder.findSubtitleIndexAtPlayerTime(playerPosition, db.subtitleCuePointsInSec);
+    // FIXME: HAVE: Lots of stuff
+    // FIXME: WANT: The height of the subtitle that is just like, "a few units" away.
+    const heightForSub = db.getHeightFromPlayerPosition(corresponding) ?? 0;
+
+    const heightForCenteringSubtitle = scrollContainer.clientHeight / 2;
+    const finalHeight = heightForSub - heightForCenteringSubtitle;
+    // TODO: "GetHeightOfContainer", subtract half
+
+    // WANT: viewport at position of related subtitle
+    scrollToLocation(finalHeight, scrollContainer);
+    return finalHeight;
+}
+
+export function scrollContainerTopToClosestSubtitle(
+    playerPosition: PlayerPosition,
+    // subtitleCuePointsArr: SubtitleTiming[],
+    // subtitleHeights: SubtitleHeights,
+    db: SubtitleDatabase,
+    scrollContainer: HTMLDivElement
+) {
+    /** PROBLEM: This moves the current subtitle to the very top of the container!
+     *      -> I want it to scroll that subtitle to the middle of it.
+     * @param playerPosition - the playerPosition of the frame
+     * @param subtitleCuePointsArr - an arr of all subtitle's start times
+     */
+    if (!scrollContainer) {
+        // console.log(scrollContainer);
+        throw new Error("Scroll Container was null");
+    }
+    // PLAYER POSITION -> ??? ->
+    // ?? -> SubtitleTiming
+    // SubtitleTiming -> Height
+    const corresponding: SubtitleTiming = Finder.findPlayerTimeForSubtitleTiming(
+        playerPosition,
+        db.subtitleCuePointsInSec
+    );
+    // const correspondingSubtitleIndex = Finder.findSubtitleIndexAtPlayerTime(playerPosition, db.subtitleCuePointsInSec)
     const heightForSub = db.getHeightFromPlayerPosition(corresponding) ?? 0;
 
     // WANT: viewport at position of related subtitle
