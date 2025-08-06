@@ -64,6 +64,7 @@
     "dependencies": {
         "dotenv": "^17.2.1",
         "electron-store": "^10.1.0",
+        "lucide-svelte": "^0.536.0",
         "wavesurfer.js": "^7.10.1"
     }
 }

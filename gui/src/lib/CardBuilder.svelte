@@ -3,6 +3,7 @@
     import Wavesurfer from "./components/Wavesurfer.svelte";
 
     import InputField from "./components/InputField.svelte";
+    import RecorderAwarenessControls from "./components/RecorderAwarenessControls.svelte";
 
     // Props - data passed in from parent
     let {
@@ -12,13 +13,35 @@
         mp3snippet,
         showOptions,
         toggleOptions,
-        registeredHotkeys
+        registeredHotkeys,
+        currentlyRecording
     } = $props();
 
     // Watch for changes in screenshotDataUrl
     // $effect(() => {
     //     console.log("screenshotDataUrl changed:", screenshotDataUrl.slice(20));
     // });
+
+    let recordingState: "idle" | "recording" | "finished" = $state("idle");
+    let previousRecordingState = $state(false);
+
+    // Function to update recording state based on currentlyRecording prop
+    function updateRecordingState() {
+        if (currentlyRecording && !previousRecordingState) {
+            // Just started recording
+            recordingState = "recording";
+        } else if (!currentlyRecording && previousRecordingState) {
+            // Just finished recording
+            recordingState = "finished";
+            // Will automatically fade back to idle after 1 second via the component
+        }
+        previousRecordingState = currentlyRecording;
+    }
+
+    // Watch for changes in currentlyRecording prop
+    $effect(() => {
+        updateRecordingState();
+    });
 
     // Local state
     let selectedLanguage = $state("en");
@@ -119,7 +142,15 @@
     </div>
 
     <div class="control-section">
-        <h3>Sentence Audio</h3>
+        <div>
+            <div>
+                <h3>Sentence Audio</h3>
+            </div>
+            <div>
+                <!-- recorder awareness controls -->
+                <RecorderAwarenessControls {recordingState} />
+            </div>
+        </div>
         <div class="time-controls">
             <!-- TODO: Make MP3 Editor TOGGLEABLE! -->
             <!-- //TODO: Like it's MOSTLY hidden except play, pause, until you open the editor. -->

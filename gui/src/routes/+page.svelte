@@ -479,6 +479,7 @@
             {screenshotDataUrl}
             mp3snippet={mp3DataUrl}
             {registeredHotkeys}
+            {currentlyRecording}
         />
     </div>
 </div>
