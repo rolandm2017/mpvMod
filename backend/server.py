@@ -34,6 +34,113 @@ def get_absolute_path(player) -> str | None:
         
     return os.path.abspath(path)
 
+
+def parse_mpv_config(config_path: str) -> dict:
+    """Parse mpv.conf file and return dict of options."""
+    options = {}
+    
+    if not os.path.exists(config_path):
+        print(f"Config file not found: {config_path}")
+        return options
+
+    line_num = "None set"
+    
+    try:
+        with open(config_path, 'r', encoding='utf-8') as f:
+            for line_num, line in enumerate(f, 1):
+                # Remove comments and whitespace
+                line = line.split('#')[0].strip()
+                if not line:
+                    continue
+                
+                # Handle key=value format
+                if '=' in line:
+                    key, value = line.split('=', 1)
+                    key = key.strip().replace('-', '_')  # Convert dashes to underscores for Python
+                    value = value.strip()
+                    
+                    # Remove quotes if present, but keep the content
+                    if (value.startswith('"') and value.endswith('"')) or \
+                       (value.startswith("'") and value.endswith("'")):
+                        value = value[1:-1]
+                    
+                    # Skip empty values as they can cause MPV errors
+                    if not value:
+                        print(f"Skipping empty value for option: {key}")
+                        continue
+                    
+                    # Special handling for specific options first
+                    if key == 'loop' and value == 'inf':
+                        value = 'inf'  # Keep as string
+                    elif key == 'osd_level':
+                        # osd-level should be an integer (0, 1, 2, 3)
+                        if value.isdigit():
+                            value = int(value)
+                        else:
+                            print(f"Warning: osd_level value '{value}' is not a valid integer, skipping")
+                            continue
+                    # Convert common boolean values (but not for numeric options)
+                    elif value.lower() in ('yes', 'true') and key not in ['osd_level', 'sub_pos', 'sub_margin_y', 'sub_border_size', 'sub_shadow_offset', 'sub_font_size', 'volume', 'osd_duration']:
+                        value = True
+                    elif value.lower() in ('no', 'false') and key not in ['osd_level', 'sub_pos', 'sub_margin_y', 'sub_border_size', 'sub_shadow_offset', 'sub_font_size', 'volume', 'osd_duration']:
+                        value = False
+                    elif value == '1' and key not in ['osd_level', 'sub_pos', 'sub_margin_y', 'sub_border_size', 'sub_shadow_offset', 'sub_font_size', 'volume', 'osd_duration']:
+                        value = True
+                    elif value == '0' and key not in ['osd_level', 'sub_pos', 'sub_margin_y', 'sub_border_size', 'sub_shadow_offset', 'sub_font_size', 'volume', 'osd_duration']:
+                        value = False
+                    # Try to convert to number if possible (but be more careful)
+                    elif value.replace('.', '', 1).replace('-', '', 1).replace('+', '', 1).isdigit():
+                        value = float(value) if '.' in value else int(value)
+                    # Keep color values and other strings as-is
+                    
+                    options[key] = value
+                    print(f"Parsed: {key} = {value} (type: {type(value).__name__})")
+                else:
+                    # Handle flag options (no value) - convert dashes to underscores
+                    flag_key = line.replace('-', '_')
+                    options[flag_key] = True
+                    print(f"Parsed flag: {flag_key} = True")
+                    
+    except Exception as e:
+        print(f"Error parsing config file line {line_num}: {e}")
+    
+    return options
+
+def find_mpv_config() -> str | None:
+    """Find mpv.conf file in standard locations."""
+    # Common mpv config locations
+    config_paths = []
+    
+    # Windows locations
+    if os.name == 'nt':
+        appdata = os.environ.get('APPDATA', '')
+        if appdata:
+            config_paths.append(os.path.join(appdata, 'mpv', 'mpv.conf'))
+        
+        # Portable config (next to executable)
+        config_paths.append('mpv.conf')
+        config_paths.append(os.path.join(os.path.dirname(sys.executable), 'mpv.conf'))
+        
+    # Unix/Linux locations
+    else:
+        home = os.path.expanduser('~')
+        config_paths.extend([
+            os.path.join(home, '.config', 'mpv', 'mpv.conf'),
+            os.path.join(home, '.mpv', 'config'),
+            '/etc/mpv/mpv.conf',
+            'mpv.conf'  # Current directory
+        ])
+    
+    # Check each location
+    for path in config_paths:
+        if os.path.exists(path):
+            print(f"Found config file: {path}")
+            return path
+    
+    print("No mpv.conf file found in standard locations")
+    return None
+
+
 class MPVWebSocketServer:
     def __init__(self, poll_interval=0.208):
         self.poll_interval = poll_interval
@@ -57,21 +164,84 @@ class MPVWebSocketServer:
         self.current_srt = None
         self.recording_audio = False
         
-        # Create MPV instance with drag-and-drop support
-        self.player = mpv.MPV(
-            idle=True,
-            osc=True,
-            mute=True,
-            sub_auto='all',
-            input_default_bindings=True,
-            input_vo_keyboard=True,
-            autofit='50%',
-            geometry='+0+0',
-            input_ipc_server='mpv-socket',  # Optional: for external control
-            # Enable drag-and-drop
-            keep_open='yes',  # Keep MPV open after file ends
-            force_window='yes',  # Force window creation even without file
-        )
+        # Load config file
+        config_file = find_mpv_config()
+        print("CONFIG FILE:", config_file)
+        
+        config_options = {}
+        if config_file:
+            config_options = parse_mpv_config(config_file)
+            print(f"Loaded {len(config_options)} options from config file")
+        
+        # Default options (can be overridden by config file)
+        default_options = {
+            'idle': True,
+            'osc': True,
+            'mute': True,
+            'sub_auto': 'all',
+            'input_default_bindings': True,
+            'input_vo_keyboard': True,
+            'autofit': '50%',
+            'geometry': '+0+0',
+            'input_ipc_server': 'mpv-socket',
+            'keep_open': 'yes',
+            'force_window': 'yes',
+        }
+        
+        # Merge default options with config file options
+        # Config file options take precedence
+        final_options = {**default_options, **config_options}
+        
+        # Filter out problematic options that might cause issues
+        filtered_options = {}
+        problematic_keys = {'config_dir', 'config', 'include', 'profile', 'show_profile', 'list_options'}
+        
+        # Options that are known to cause issues in python-mpv
+        known_problematic = {'sub_ass_override'}  # This option often causes issues
+        
+        for key, value in final_options.items():
+            if key in problematic_keys:
+                print(f"Skipping potentially problematic option: {key}={value}")
+                continue
+            
+            # Skip known problematic options but log them
+            if key in known_problematic:
+                print(f"Skipping known problematic option: {key}={value}")
+                continue
+                
+            # Handle specific options that need special treatment
+            if key == 'geometry' and 'autofit' in final_options:
+                print(f"Note: geometry ({value}) will override autofit setting")
+            
+            # Validate color values - they should start with # for hex colors
+            if key in ['sub_color', 'sub_border_color', 'sub_shadow_color', 'osd_color']:
+                if isinstance(value, str) and value and not value.startswith('#'):
+                    print(f"Warning: Color value {key}={value} doesn't start with #, might cause issues")
+            
+            filtered_options[key] = value
+            
+        print(f"Final filtered options: {filtered_options}")
+        
+        # NOTE: User MUST use an MPV Player instance launched with this server.py file.
+        # The alternative is to switch EVERYTHING to use JSON IPC. NOPE!
+        
+        # Create MPV instance with merged options
+        try:
+            print(f"Creating MPV with options: {filtered_options}")
+            self.player = mpv.MPV(**filtered_options)
+            print("MPV player created successfully with config options")
+        except Exception as e:
+            print(f"Error creating MPV player: {e}")
+            print(f"Problematic options might be: {[k for k in config_options.keys()]}")
+            print("Falling back to default options...")
+            try:
+                self.player = mpv.MPV(**default_options)
+            except Exception as e2:
+                print(f"Even default options failed: {e2}")
+                # Try with minimal options
+                minimal_options = {'idle': True, 'force_window': True}
+                self.player = mpv.MPV(**minimal_options)
+                print("Created MPV with minimal options")
         
         self.setup_event_handlers()
         
