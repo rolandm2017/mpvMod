@@ -153,16 +153,18 @@
 
         // set the region start to 1/3
         const startPosition = endTime * 0.3333;
-        regionStart = 3;
+        regionStart = startPosition;
         // set the region end to 1/3
         const endPosition = endTime * 0.6666;
-        regionEnd = 5;
+        regionEnd = endPosition;
 
         updateRegion(startPosition, endPosition);
         // reset region cursor to start
+        canNudgeStartBackwards = true;
         // does needed?
 
         // reset brace start, end
+        canNudgeEndBraceForwards = true;
     }
 
     let previousMp3 = $state(null);
@@ -246,9 +248,28 @@
         reactivityTrigger++;
     }
 
+    let canNudgeStartBackwards = $state(true);
+    let canNudgeEndBraceForwards = $state(true);
+
     function nudgeStart(direction: number) {
-        regionStart += direction;
-        updateRegion(regionStart, regionEnd);
+        const resultOfUpdate = regionStart + direction;
+        // TODO: Handle case where yields negative duration
+        if (resultOfUpdate <= 0) {
+            regionStart = 0;
+            updateRegion(0, regionEnd);
+            // grey out nudge back until user nudges fwdd
+            canNudgeStartBackwards = false;
+        } else {
+            regionStart = resultOfUpdate;
+
+            updateRegion(resultOfUpdate, regionEnd);
+            canNudgeStartBackwards = true;
+
+            const yieldsNegativeDuration = regionEnd < resultOfUpdate;
+            if (yieldsNegativeDuration) {
+                regionEnd = resultOfUpdate + 0.3;
+            }
+        }
         stateTracker?.setRegion(regionStart, regionEnd); // ADD THIS
     }
 
@@ -258,11 +279,20 @@
         const endResult = regionEnd + direction;
         const yieldsNegativeDuration = endResult <= regionStart;
         if (yieldsNegativeDuration) {
+            regionEnd = endResult;
+            regionStart = endResult - 0.2;
+            updateRegion(endResult - 0.2, endResult);
             return;
         }
-        regionEnd += direction;
-        console.log("HERE ", direction, regionStart, regionEnd);
-        updateRegion(regionStart, regionEnd);
+        if (endResult >= fullFileEndTime) {
+            regionEnd = fullFileEndTime;
+            canNudgeEndBraceForwards = false;
+        } else {
+            regionEnd += direction;
+            console.log("HERE ", direction, regionStart, regionEnd);
+            updateRegion(regionStart, regionEnd);
+            canNudgeEndBraceForwards = true;
+        }
     }
 
     function updateRegion(newStart: number, newEnd: number) {
@@ -295,8 +325,11 @@
             <h4 class="push-items-top">Start Time</h4>
         </div>
         <div class="time-display">
-            <button class="nudge-btn" onclick={() => nudgeStart(-0.5)}>←</button>
+            <button class="nudge-btn" class:disabled-text={!canNudgeStartBackwards} onclick={() => nudgeStart(-0.5)}
+                >←</button
+            >
             <span class="time-value">{msTimeString(regionStart)}</span>
+            <!-- // TODO: disable if nudge fwd puts it ahead of end brace -->
             <button class="nudge-btn" onclick={() => nudgeStart(0.5)}>→</button>
         </div>
     </div>
@@ -308,7 +341,9 @@
         <div class="time-display">
             <button class="nudge-btn" onclick={() => nudgeEnd(-0.5)}>←</button>
             <span class="time-value">{msTimeString(regionEnd)}</span>
-            <button class="nudge-btn" onclick={() => nudgeEnd(0.5)}>→</button>
+            <button class="nudge-btn" class:disabled-text={!canNudgeEndBraceForwards} onclick={() => nudgeEnd(0.5)}
+                >→</button
+            >
         </div>
     </div>
 </div>
@@ -396,5 +431,9 @@
 
     .flex-row {
         display: flex;
+    }
+
+    .disabled-text {
+        color: #999;
     }
 </style>
