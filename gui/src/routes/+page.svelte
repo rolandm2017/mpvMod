@@ -10,8 +10,9 @@
     import type { PlayerPosition, TimecodeString } from "$lib/types.js";
     import { SegmentMountingTracker } from "$lib/utils/mountingTracker.js";
     import HotkeyConfig from "$lib/HotkeyConfig.svelte";
-    import type { CommandResponse, HotkeyRegister, MPVStateData } from "$lib/interfaces.js";
+    import type { CommandResponse, HotkeyRegister, MPVStateData, ParsedSegmentObj } from "$lib/interfaces.js";
     import FieldMappingConfig from "$lib/FieldMappingConfig.svelte";
+    import { parseSrtFileIntoSegments, prebuildLookupArrays } from "$lib/utils/parsing.js";
 
     let { data } = $props();
 
@@ -21,18 +22,62 @@
     let showOptions = $state(false);
     let optionsPage: "hotkeyConfig" | "connectConfig" = $state("hotkeyConfig");
 
-    let subtitlePath = $state("");
+    let rawSrts = $state("");
 
+    let db: SubtitleDatabase;
+    let mountingTracker: SegmentMountingTracker;
+
+    let segments: ParsedSegmentObj[] = $state([]);
+
+    // Remove the $effect block and replace with:
+
+    // Create a derived value that only depends on rawSrts
+    const segmentsFromSrt: ParsedSegmentObj[] = $derived.by(() => {
+        if (!rawSrts.trim()) return [];
+
+        console.log("Processing rawSrts");
+        const blocks = rawSrts.trim().split(/\n\s*\n/);
+        return parseSrtFileIntoSegments(blocks);
+    });
+
+    // Create another derived for the database setup
+    const dbSetup = $derived.by(() => {
+        const currentSegments = segmentsFromSrt;
+        if (currentSegments.length === 0) return null;
+
+        const serverLoadReplacement = prebuildLookupArrays(currentSegments);
+        let subtitles: Subtitle[] = [];
+
+        currentSegments.forEach((s) => {
+            let newSub = new Subtitle(s.text, s.timecode, s.startTimeSeconds);
+            subtitles.push(newSub);
+        });
+
+        const database = new SubtitleDatabase(
+            subtitles,
+            serverLoadReplacement.subtitleTimingToTimecodesMap,
+            serverLoadReplacement.subtitleCuePointsInSec,
+            serverLoadReplacement.timecodes
+        );
+
+        const tracker = new SegmentMountingTracker(currentSegments.length);
+
+        return { database, tracker, segments: currentSegments };
+    });
+
+    // Then use these in your component:
     $effect(() => {
-        //
-        subtitlePath;
+        const setup = dbSetup;
+        if (setup) {
+            db = setup.database;
+            mountingTracker = setup.tracker;
+            segments = setup.segments; // This assignment won't cause recursion
+            console.log(setup.segments.length, "done loading");
+        }
     });
 
     let currentHighlightedElement: HTMLDivElement | null = null;
     let currentHighlightedTimecode = "";
-
-    let db: SubtitleDatabase;
-    let mountingTracker: SegmentMountingTracker;
 
     let content = "";
     let playerPosition = 0;
@@ -73,36 +118,34 @@
         }
     }
 
+    // TODO: On load app, Ask the backend, "Hey are you there? If so is any media loaded?"
+    // so app can "just know" if the SRT is already up and running
+
     onMount(() => {
         (window as any).playerPositionDevTool = playerPositionDevTool;
         (window as any).timecodeDevTool = timecodeDevTool;
         (window as any).resetHotkeys = resetAllHotkeys;
 
-        let subtitles: Subtitle[] = [];
-
         // TODO: Change from h ardocded subtitle file,
         // Change to "GEt subtitle from MPV, load actual patH"
 
-        // Use the pre-built arrays from server
-        data.segments.forEach((s) => {
-            let newSub = new Subtitle(s.text, s.timecode, s.startTimeSeconds);
-            subtitles.push(newSub);
-        });
+        // data.segments.forEach((s) => {
+        //     let newSub = new Subtitle(s.text, s.timecode, s.startTimeSeconds);
+        //     subtitles.push(newSub);
+        // });
 
-        db = new SubtitleDatabase(
-            subtitles,
-            data.subtitleTimingToTimecodesMap,
-            data.subtitleCuePointsInSec,
-            data.timecodes
-        );
-        mountingTracker = new SegmentMountingTracker(data.segments.length);
+        // db = new SubtitleDatabase(
+        //     subtitles,
+        //     data.subtitleTimingToTimecodesMap,
+        //     data.subtitleCuePointsInSec,
+        //     data.timecodes
+        // );
+        // mountingTracker = new SegmentMountingTracker(data.segments.length);
 
         // Expose for testing
         if (typeof window !== "undefined") {
             window.allSegmentsMounted = false;
             window.testInteger = 99;
-            window.tracker = mountingTracker;
-            window.db = db;
         }
 
         loadHotkeysIntoRegister();
@@ -116,17 +159,17 @@
             });
 
             setTimeout(async () => {
-                console.log("Manually requesting default audio...");
+                // console.log("Manually requesting default audio...");
                 try {
                     await window.electronAPI.requestDefaultAudio();
-                    console.log("Manual request completed");
+                    // console.log("Manual request completed");
                 } catch (error) {
                     console.error("Manual request failed:", error);
                 }
                 // 100 ms to ready all listeners
             }, 100);
             console.log("Running onMPVstate");
-            window.electronAPI.onMPVState((data) => {
+            window.electronAPI.onMPVState((mpvState) => {
                 // content :  "⏱️  0:13.6 / 22:35.7 (1.0%)"
                 // formatted_duration :  "22:35.7"
                 // formatted_time :  "0:13.6"
@@ -134,9 +177,9 @@
                 // time_pos :  13.555
                 // timestamp :  1753652691.9598007
                 // type :  "time_update"
-                content = data.content;
-                playerPosition = data.time_pos;
-                formattedTime = data.formatted_time;
+                content = mpvState.content;
+                playerPosition = mpvState.time_pos;
+                formattedTime = mpvState.formatted_time;
 
                 // Auto-scroll to current position (throttled)
                 const now = Date.now();
@@ -153,8 +196,8 @@
                     }
                 }
 
-                if (isCommandResponse(data)) {
-                    handleCommandResponse(data);
+                if (isCommandResponse(mpvState)) {
+                    handleCommandResponse(mpvState);
                 }
             });
             // Handle screenshot data separately
@@ -166,17 +209,17 @@
                 console.log("in the +page.svelte screenshot api:", dataURL.substring(0, 50) + "...");
                 mp3DataUrl = dataURL; // Store the data URL
             });
-            window.electronAPI.forwardSubtitleInfo((filePath: string) => {
-                console.log("In the +page.svelte SRT file loader:", filePath);
-                subtitlePath = filePath;
+            window.electronAPI.forwardSubtitleInfo((rawSrtContent: string) => {
+                console.log("In the +page.svelte SRT file loader:", rawSrtContent.length);
+                rawSrts = rawSrtContent;
             });
         } else {
             console.error("electronAPI not available");
         }
     });
 
-    function isCommandResponse(data: MPVStateData): data is MPVStateData & CommandResponse {
-        return data.type === "command_response" && "command" in data;
+    function isCommandResponse(mpvStateInfo: MPVStateData): mpvStateInfo is MPVStateData & CommandResponse {
+        return mpvStateInfo.type === "command_response" && "command" in mpvStateInfo;
     }
 
     function highlightPlayerPositionSegment(playerPosition: number) {
@@ -236,7 +279,6 @@
 
     function switchPageType() {
         // switches them
-        console.log("switch page type", optionsPage);
         if (optionsPage === "hotkeyConfig") {
             optionsPage = "connectConfig";
         } else {
@@ -282,13 +324,11 @@
     let currentlyRecording = $state(false);
 
     function executeAction(action: string) {
-        console.log("EXECUTING: ", action);
         switch (action) {
             case "screenshot":
                 window.electronAPI?.takeScreenshot();
                 break;
             case "audioClip":
-                // TODO:
                 if (currentlyRecording) {
                     window.electronAPI?.concludeAudioClip();
                     currentlyRecording = false;
@@ -306,20 +346,20 @@
         }
     }
 
-    function handleCommandResponse(data: CommandResponse) {
-        console.log("Command response:", data);
+    function handleCommandResponse(commandResponse: CommandResponse) {
+        console.log("Command response:", commandResponse.command);
 
-        switch (data.command) {
+        switch (commandResponse.command) {
             case "take_screenshot":
-                if (data.success && data.file_path) {
-                    screenshotDataUrl = data.file_path;
+                if (commandResponse.success && commandResponse.file_path) {
+                    screenshotDataUrl = commandResponse.file_path;
 
                     console.log("Screenshot saved!");
                 }
                 break;
 
             case "start_audio_clip":
-                if (data.success) {
+                if (commandResponse.success) {
                     isClipping = true;
                     console.log("Started audio clipping");
                 }
@@ -327,8 +367,8 @@
 
             case "end_audio_clip":
                 isClipping = false;
-                if (data.success && data.file_path) {
-                    audioClipPath = data.file_path;
+                if (commandResponse.success && commandResponse.file_path) {
+                    audioClipPath = commandResponse.file_path;
                     console.log("Audio clip saved!");
                 }
                 break;
@@ -361,12 +401,9 @@
          */
         try {
             // Get the currently selected text from the window
-            console.log("HER HEirhaewilohrfasdfdis");
-            console.log("HER HEirhaewilohrfasdfdis");
             const selection = window.getSelection();
             const selectedText = selection?.toString().trim() || "";
 
-            console.log(selectedText, "HERE");
             if (!selectedText) return;
 
             selectedTargetWordText = selectedText;
@@ -417,8 +454,8 @@
         <div class="subtitle-panel">
             <div class="subtitle-header">Subtitles</div>
             <div class="subtitle-content" data-testid="scroll-container" bind:this={scrollContainer}>
-                {#if data.segments.length > 0}
-                    {#each data.segments as segment}
+                {#if segments.length > 0}
+                    {#each segments as segment}
                         <SubtitleSegment
                             index={segment.index}
                             timecode={segment.timecode}

@@ -215,12 +215,10 @@
     }
 
     $effect(() => {
-        // FIXME: Does this work? when mp3 changes from first_mp3.mp3 to second_mp3.mpe, does it update?
         if (wavesurfer && mp3) {
-            console.log("Loading mp3 : ", mp3.slice(0, 40));
             wavesurfer.load(mp3);
         } else {
-            console.log(wavesurfer, mp3.slice(0, 40), "Nothing");
+            // console.log(wavesurfer, mp3.slice(0, 40), "Nothing");
         }
     });
 

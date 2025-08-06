@@ -4,14 +4,20 @@ import type { PageServerLoad } from "./$types";
 import type { SubtitleTiming, TimecodeString } from "$lib/types";
 import { parseSrtFileIntoSegments, prebuildLookupArrays } from "$lib/utils/parsing";
 
-export type ParsedSegmentObj = {
-    index: number;
-    timecode: TimecodeString;
-    text: string;
-    startTimeSeconds: SubtitleTiming; // Add pre-parsed timestamp
-};
+import type { ParsedSegmentObj } from "$lib/interfaces";
+// OLD code!
+// OLD code! Only was used prior tu August 5, 2025, to load dummy subtitles.
+// OLD code!    -> Now, they come from the MPV
+// OLD code!
 
 export const load: PageServerLoad = async () => {
+    // Early return - subtitles now come from MPV
+    return {
+        segments: [],
+        subtitleTimingToTimecodesMap: new Map(),
+        subtitleCuePointsInSec: [],
+        timecodes: []
+    };
     let segments: ParsedSegmentObj[] = [];
 
     // "subtitleStartInSec" -> Don't call this a timestamp!

@@ -1,5 +1,5 @@
 import type { SubtitleTiming, TimecodeString } from "$lib/types";
-import type { ParsedSegmentObj } from "../../routes/+page.server";
+import type { ParsedSegmentObj } from "$lib/interfaces";
 
 export function parseSrtFileIntoSegments(blocks: string[]) {
     return blocks

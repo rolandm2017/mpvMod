@@ -14,7 +14,6 @@ contextBridge.exposeInMainWorld("electronAPI", {
     saveFieldMappings: (mappings) => ipcRenderer.invoke("save-field-mappings", mappings),
 
     onMPVState: (callback) => {
-        console.log("onMPVState called");
         ipcRenderer.on("mpv-state", (event, data) => {
             // console.log("in mpv state receiver", data)
             callback(data);
@@ -40,7 +39,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
 
     // file loaded, SRT ready, etc
     forwardSubtitleInfo: (callback) => {
-        ipcRenderer.on("srt-content", (event, srtContent) => callback(srtContent));
+        ipcRenderer.on("srt-content", (event, srtFileContent) => callback(srtFileContent));
     },
 
     // initialize

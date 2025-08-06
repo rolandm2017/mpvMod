@@ -16,9 +16,9 @@
     } = $props();
 
     // Watch for changes in screenshotDataUrl
-    $effect(() => {
-        console.log("screenshotDataUrl changed:", screenshotDataUrl.slice(20));
-    });
+    // $effect(() => {
+    //     console.log("screenshotDataUrl changed:", screenshotDataUrl.slice(20));
+    // });
 
     // Local state
     let selectedLanguage = $state("en");

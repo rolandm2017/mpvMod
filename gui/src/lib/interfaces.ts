@@ -1,3 +1,12 @@
+import type { SubtitleTiming, TimecodeString } from "./types";
+
+export type ParsedSegmentObj = {
+    index: number;
+    timecode: TimecodeString;
+    text: string;
+    startTimeSeconds: SubtitleTiming; // Add pre-parsed timestamp
+};
+
 export interface MPVStateData {
     content: string;
     formatted_duration: string;
@@ -36,7 +45,7 @@ export interface ElectronAPI {
     onAudioReady: (callback: (dataURL: string) => void) => void;
 
     // Load file, get SRT path, etc
-    forwardSubtitleInfo: (callback: (filePath: string) => void) => void;
+    forwardSubtitleInfo: (callback: (srtFileContent: string) => void) => void;
 
     // Init
     onDefaultAudio: (callback: (nullishMp3File: string) => void) => void;
