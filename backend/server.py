@@ -135,33 +135,30 @@ class MPVWebSocketServer:
             
         @self.player.event_callback('seek')
         def on_seek(event):
-            pos = self.get_time_pos()
-            if pos is not None:
-                message = f"⏩ Seeked to {self.format_time(pos)}"
+            time_pos = self.get_time_pos()
+            if time_pos is not None:
+                message = f"⏩ Seeked to {self.format_time(time_pos)}"
                 # TODO: Broadcast timestamp update immediately
-                time_pos = self.get_time_pos()
+                duration = self.get_duration()
+                formatted_time = self.format_time(time_pos)
                 
-                if time_pos is not None:
-                    duration = self.get_duration()
-                    formatted_time = self.format_time(time_pos)
+                if duration and isinstance(duration, (int, float)) and isinstance(time_pos, (int, float)):
+                    progress = (time_pos / duration) * 100
+                    formatted_duration = self.format_time(duration)
+                    content = f"⏱️  {formatted_time} / {formatted_duration} ({progress:.1f}%)"
                     
-                    if duration and isinstance(duration, (int, float)) and isinstance(time_pos, (int, float)):
-                        progress = (time_pos / duration) * 100
-                        formatted_duration = self.format_time(duration)
-                        content = f"⏱️  {formatted_time} / {formatted_duration} ({progress:.1f}%)"
-                        
-                        extra_data = {
-                            "time_pos": round(time_pos, 3),  
-                            "progress": round(progress, 3),
-                            "formatted_time": formatted_time,
-                            "formatted_duration": formatted_duration
-                        }
-                        self.broadcast_message("time_update", content, extra_data)
-                    else:
-                        self.broadcast_message("time_update", f"⏱️  {formatted_time}", {
-                            "time_pos": time_pos,
-                            "formatted_time": formatted_time
-                        })
+                    extra_data = {
+                        "time_pos": round(time_pos, 3),  
+                        "progress": round(progress, 3),
+                        "formatted_time": formatted_time,
+                        "formatted_duration": formatted_duration
+                    }
+                    self.broadcast_message("time_update", content, extra_data)
+                else:
+                    self.broadcast_message("time_update", f"⏱️  {formatted_time}", {
+                        "time_pos": time_pos,
+                        "formatted_time": formatted_time
+                    })
                 self.broadcast_message("event", message)
         
         @self.player.property_observer('pause')
@@ -335,7 +332,7 @@ class MPVWebSocketServer:
             screenshot_path = screenshots_dir / f"screenshot_{timestamp}_{time_str}.png"
             
             # Use MPV's screenshot command
-            self.player.screenshot_to_file(str(screenshot_path))
+            self.player.screenshot_to_file(str(screenshot_path), "video")
             
             return str(screenshot_path)
             
