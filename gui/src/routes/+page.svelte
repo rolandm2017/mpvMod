@@ -158,6 +158,12 @@
                 mp3DataUrl = audioDataURL;
             });
 
+            // FIXME: Paage mounts like ten times, every time the page refrreshes
+            // FIXME: Paage mounts like ten times, every time the page refrreshes
+            // FIXME: Paage mounts like ten times, every time the page refrreshes
+            // FIXME: Paage mounts like ten times, every time the page refrreshes
+            // FIXME: Paage mounts like ten times, every time the page refrreshes
+
             setTimeout(async () => {
                 // console.log("Manually requesting default audio...");
                 try {
@@ -300,6 +306,34 @@
     }
 
     function handleKeyDown(e: KeyboardEvent) {
+        // Check if there's an active text selection within the subtitle content area
+        const selection = window.getSelection();
+        let isInSubtitleContent = false;
+
+        if (selection && selection.rangeCount > 0) {
+            const range = selection.getRangeAt(0);
+            const commonAncestor = range.commonAncestorContainer;
+
+            // Check if the selection's common ancestor is within our subtitle container
+            const ancestorElement =
+                commonAncestor.nodeType === Node.TEXT_NODE
+                    ? commonAncestor.parentElement
+                    : (commonAncestor as HTMLElement);
+
+            isInSubtitleContent = scrollContainer?.contains(ancestorElement) || false;
+        }
+
+        // Fallback: check if the event target is within subtitle content
+        if (!isInSubtitleContent) {
+            const target = e.target as HTMLElement;
+            isInSubtitleContent = scrollContainer?.contains(target) || false;
+        }
+
+        // Only proceed if we're in the subtitle content area
+        if (!isInSubtitleContent) {
+            return;
+        }
+
         // Build hotkey string
         const parts: string[] = [];
         if (e.ctrlKey) parts.push("Ctrl");
@@ -315,8 +349,7 @@
 
         const hotkeyString = parts.join(" + ");
 
-        // Check if this matches a registered hotkey, i.e.
-        // the q, " ['Ctrl + Shift + S', 'F5', 'Ctrl + C', 'Ctrl + X'] contains "Ctrl + X" ?""
+        // Check if this matches a registered hotkey
         const action = Object.entries(registeredHotkeys).find(([k, v]) => v === hotkeyString)?.[0];
         if (action) {
             e.preventDefault();
