@@ -30,7 +30,10 @@ const BACKEND_DIR = path.join(__dirname, "../../backend"); // Adjust path as nee
 let mpvWS;
 let mainWindow;
 
-const store = new Store({ projectName: "customMpv" });
+const store = new Store({
+    projectName: "customMpv-nodejs",
+    name: "config" // This ensures it creates config.json specifically
+});
 
 console.log("PATH:");
 console.log(store.path);
@@ -125,6 +128,7 @@ function connectMPV() {
                         // Must send them on startup to register them with
                         // the Python server, which lacks saved state
                         command: "register_hotkeys",
+                        reason: "they were requested by request_hotkeys",
                         hotkeys: storedHotkeys
                     });
                 } else if (message.type === "srt_found") {
@@ -215,6 +219,7 @@ ipcMain.handle("get-hotkeys", () => {
         // Must send them on startup to register them with
         // the Python server, which lacks saved state
         command: "register_hotkeys",
+        reason: "they were requested in get-hotkeys",
         hotkeys: storedHotkeys
     });
     return storedHotkeys;
@@ -225,6 +230,7 @@ ipcMain.handle("save-hotkeys", (event, hotkeys) => {
     console.log("Setting", hotkeys);
     sendMPVCommand({
         command: "register_hotkeys",
+        reason: "They are being saved",
         hotkeys: hotkeys
     });
 });
@@ -252,6 +258,8 @@ ipcMain.handle("request-srt-content", async () => {
 
 ipcMain.handle("load-current-deck", () => {
     const mappings = store.get("field-mappings", {});
+
+    console.log(mappings, "256ru");
     const storedDeck = mappings.selectedDeck;
     return storedDeck;
 });
