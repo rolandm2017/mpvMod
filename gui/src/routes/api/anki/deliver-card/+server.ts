@@ -1,31 +1,34 @@
 // routes/api/anki/deliver-card/+server.ts
 import { json } from "@sveltejs/kit";
 import type { RequestHandler } from "./$types";
-import { makeAnkiRequest } from "$lib/utils/apiUtil";
+import { makeAnkiRequest } from "../../../../lib/utils/apiUtil";
 
-const TARGET_DECK = "customMPV"; // You can make this configurable
-
-export const POST: RequestHandler = async ({ request, url }) => {
+export const POST: RequestHandler = async ({ request }) => {
     try {
-        // Get data from request body
-        const cardData = await request.json();
+        // Get the AnkiConnect payload from your client
+        const ankiPayload = await request.json();
 
-        // Or still use URL params as fallback
-        const targetDeck = cardData.targetDeck || url.searchParams.get("target") || TARGET_DECK;
+        console.log("Received payload:", JSON.stringify(ankiPayload, null, 2));
 
-        // Your existing logic...
+        // Forward the payload directly to AnkiConnect
+        const ankiResponse = await makeAnkiRequest<number>(ankiPayload);
 
+        console.log("AnkiConnect response:", ankiResponse);
+
+        // Return success with the note ID
         return json({
             success: true,
-            cardData,
-            targetDeck,
-            message: targetDeck ? `Target deck "${targetDeck}" found!` : `Target deck "${targetDeck}" not found`
+            result: ankiResponse, // This will be the note ID
+            message: `Card created successfully with ID: ${ankiResponse}`
         });
     } catch (error) {
+        console.error("Error delivering card to Anki:", error);
+
         return json(
             {
                 success: false,
-                error: error instanceof Error ? error.message : "Unknown error"
+                error: error instanceof Error ? error.message : "Unknown error",
+                result: null
             },
             { status: 500 }
         );
