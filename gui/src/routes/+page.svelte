@@ -17,6 +17,10 @@
 
     let { data } = $props();
 
+    // TODO: A feature where, user can tikc a box that says, "start snipping a half sec before you pressed the btn"
+    //              -> Feature allows for user to be a little bit late pressing start.
+    // Could also have a button, "move start a bit earlier," as a different way to solve this problem.
+
     //FIXME: src/routes/+page.svelte:20:8 `scrollContainer` is updated, but is not declared with `$state(...)`. Changing its value will not correctly trigger updates
     let scrollContainer: HTMLDivElement;
 
@@ -496,6 +500,12 @@
         currentDeck = newDeckName;
     }
 
+    function resetGatheredText() {
+        // Remember that Native Translation is local to the page
+        selectedTargetWordText = "";
+        selectedSubtitleText = "";
+    }
+
     function clearMp3andScreenshot() {
         // used to reset when done a card
         screenshotDataUrl = "";
@@ -566,6 +576,7 @@
             {registeredHotkeys}
             {showOptions}
             {toggleOptions}
+            clearTextFields={resetGatheredText}
             {clearMp3andScreenshot}
         />
     </div>

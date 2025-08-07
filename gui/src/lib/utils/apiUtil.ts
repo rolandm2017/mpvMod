@@ -28,6 +28,9 @@ async function makeAnkiRequest<T>(request: AnkiConnectRequest): Promise<T> {
         const result = (await response.json()) as AnkiConnectResponse<T>;
 
         if (result.error) {
+            if (result.error.includes("empty")) {
+                throw new Error(`EMPTY_NOTE: ${result.error}`);
+            }
             throw new Error(`AnkiConnect error: ${result.error}`);
         }
 

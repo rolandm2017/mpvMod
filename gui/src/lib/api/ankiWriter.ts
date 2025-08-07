@@ -71,6 +71,8 @@ export class AnkiWriter {
         const response = await fetch(url, requestOptions);
 
         if (!response.ok) {
+            console.log("error caused by: ", body, params);
+            console.log(response);
             throw new Error(`API call failed: ${response.status} ${response.statusText}`);
         }
 
@@ -138,16 +140,24 @@ export class AnkiWriter {
         };
     }
 
-    async deliverCard(cardData: BasicCardDeliverable, noteTypeName?: string): Promise<number> {
-        const ankiPayload = this.createAnkiPayload(cardData, noteTypeName);
-        const result = await this.apiCall<AnkiConnectResponse<number>>("/api/anki/deliver-card", ankiPayload);
-        console.log(result, "Result result");
+    async deliverCard(cardData: BasicCardDeliverable, noteTypeName?: string): Promise<number | string> {
+        try {
+            const ankiPayload = this.createAnkiPayload(cardData, noteTypeName);
+            const result = await this.apiCall<AnkiConnectResponse<number>>("/api/anki/deliver-card", ankiPayload);
+            console.log(result, "Result result");
 
-        if (result.result === null) {
-            throw new Error(result.error || "Failed to create card");
+            if (result.result === null) {
+                throw new Error(result.error || "Failed to create card");
+            }
+
+            return result.result; // Returns the note ID
+        } catch (error) {
+            const err = error as Error;
+            if (err.message.startsWith("EMPTY_NOTE:")) {
+                return "EMPTY_NOTE_ERROR";
+            }
+            throw error;
         }
-
-        return result.result; // Returns the note ID
     }
 
     async updateCard(noteId: number, fields: Record<string, string>) {

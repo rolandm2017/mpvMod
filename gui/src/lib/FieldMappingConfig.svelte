@@ -22,6 +22,8 @@
     // Debounced save
     let saveTimeout: ReturnType<typeof setTimeout> | null = null;
 
+    // TODO: enable marking a field "required", or let Anki do it itself
+
     // Card Builder field definitions
     const cardBuilderFields: Array<{
         name: keyof FieldMappings;

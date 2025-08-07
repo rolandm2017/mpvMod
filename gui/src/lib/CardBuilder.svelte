@@ -24,8 +24,12 @@
         toggleOptions,
         registeredHotkeys,
         currentlyRecording,
+        clearTextFields,
         clearMp3andScreenshot
     } = $props();
+
+    // TODO: the text fields should come in from the parent, but, be reset by changing a card.
+    // FIXME: It's actually a fixme
 
     onMount(() => {
         console.log(`F ffdfdf current deck: "${currentDeck}", debug`);
@@ -89,8 +93,16 @@
             const cardIdResponse = Number.isFinite(response);
             if (cardIdResponse) {
                 resetFields();
+            } else if (response === "EMPTY_NOTE_ERROR") {
+                // highlight empty fields
+                highlightMissingFields(deliverable);
             }
         });
+    }
+
+    function highlightMissingFields(deliverable: object) {
+        //
+        console.warn(deliverable, "needs highlighting");
     }
 
     function removeDataUrls(card: BasicCardDeliverable) {
@@ -99,15 +111,15 @@
     }
 
     function handleSearchSubtitles() {
-        // TODO: What on earth is this for?
+        // TODO: What on earth is this for? I like the idea of it anyway, "search subtitles"
+        // TODO: Maybe it's for when the user is lost
         // console.log('Searching for:', searchQuery);
         // Add your search logic here
     }
 
-    function handleClearSubtitles() {
-        if (confirm("Are you sure you want to clear all subtitles?")) {
-            console.log("Clearing subtitles");
-            // Add your clear logic here
+    function handleResetAllFieldsRequest() {
+        if (confirm("Are you sure you want to clear all fields?")) {
+            console.log("Clearing fields");
         }
     }
 
@@ -133,9 +145,10 @@
 
     function resetFields() {
         //
-        targetWordField = "";
-        exampleSentenceField = "";
-        nativeLangTranslation = "";
+        // targetWordField = "";
+        // exampleSentenceField = "";
+        nativeLangTranslation = ""; // is local to the page
+        clearTextFields();
         clearMp3andScreenshot();
     }
 </script>
@@ -242,7 +255,7 @@
 
         <div class="button-group">
             <button class="success-btn" onclick={sendFinishedCardToAnki}> Export Card </button>
-            <button class="danger-btn" onclick={handleClearSubtitles}> Clear All </button>
+            <button class="danger-btn" onclick={handleResetAllFieldsRequest}> Clear All </button>
             <!-- TODO: Show confirmation dialogue for "Clear all?" since it's destructive -->
         </div>
     </div>
