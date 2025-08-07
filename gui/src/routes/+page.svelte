@@ -2,6 +2,7 @@
 <script lang="ts">
     import { onMount, onDestroy, getContext } from "svelte";
 
+    import { initFieldMappings } from "$lib/stores/fieldMappingStore";
     import CardBuilder from "$lib/CardBuilder.svelte";
     import SubtitleSegment from "$lib/SubtitleSegment.svelte";
 
@@ -219,6 +220,8 @@
             window.allSegmentsMounted = false;
             window.testInteger = 99;
         }
+
+        initFieldMappings(); // not instant
 
         loadHotkeysIntoRegister();
 

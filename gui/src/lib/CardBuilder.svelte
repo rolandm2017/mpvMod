@@ -1,7 +1,9 @@
 <!-- CardBuilder.svelte -->
 <script lang="ts">
     import Wavesurfer from "./components/Wavesurfer.svelte";
+    import { get } from "svelte/store";
 
+    import { fieldMappingsStore } from "$lib/stores/fieldMappingStore";
     import InputField from "./components/InputField.svelte";
     import RecorderAwarenessControls from "./components/RecorderAwarenessControls.svelte";
     import { AnkiWriter } from "./api/ankiWriter";
@@ -79,6 +81,7 @@
     });
 
     function sendFinishedCardToAnki() {
+        const mappings = get(fieldMappingsStore);
         const deliverable = {
             targetDeck: currentDeck,
             word: targetWordField,
@@ -88,7 +91,7 @@
             image: screenshotDataUrl
         };
         console.log("sending: ", removeDataUrls(deliverable));
-        writer.deliverCard(deliverable, fieldMappingsFromStorage).then((response) => {
+        writer.deliverCard(deliverable, mappings).then((response) => {
             console.log(response, "87ru");
             const cardIdResponse = Number.isFinite(response);
             if (cardIdResponse) {

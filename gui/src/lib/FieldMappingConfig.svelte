@@ -1,7 +1,9 @@
-<!-- FieldMappingConfig -->
+<!--     -->
 <script lang="ts">
     import { onMount } from "svelte";
     import FieldMappingItem from "./components/FieldMappingItem.svelte";
+
+    import { fieldMappingsStore, selectedDeckStore } from "$lib/stores/fieldMappingStore";
     import { AnkiClient } from "$lib/api/ankiClient";
     import {
         fieldMappingReducer,
@@ -164,6 +166,8 @@
             fieldName: fieldName as keyof FieldMappings,
             ankiField
         });
+        fieldMappingsStore.update((m) => ({ ...m, [fieldName]: ankiField }));
+        debouncedSave();
     }
 
     function resetToDefaults() {
