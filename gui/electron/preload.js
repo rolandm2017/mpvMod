@@ -2,8 +2,6 @@
 
 const { contextBridge, ipcRenderer } = require("electron");
 
-console.log("Preload script loaded!");
-
 contextBridge.exposeInMainWorld("electronAPI", {
     getHotkeys: () => ipcRenderer.invoke("get-hotkeys"),
     saveHotkeys: (hotkeys) => ipcRenderer.invoke("save-hotkeys", hotkeys),
@@ -44,6 +42,7 @@ contextBridge.exposeInMainWorld("electronAPI", {
     requestCurrentSubtitles: () => ipcRenderer.invoke("request-srt-content"),
 
     // initialize
+    getCurrentlySavedDeck: () => ipcRenderer.invoke("load-current-deck"),
     requestDefaultAudio: () => ipcRenderer.invoke("request-default-audio"),
 
     onDefaultAudio: (callback) => {
@@ -52,5 +51,3 @@ contextBridge.exposeInMainWorld("electronAPI", {
         });
     }
 });
-
-console.log("electronAPI exposed to window");

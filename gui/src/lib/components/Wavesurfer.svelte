@@ -33,7 +33,7 @@
     let regionDisplay: Region | null = null;
 
     // mp3 is a dataUrl formed in the Electron main.js
-    const { mp3, onPlayEvent = null, onPauseEvent = null } = $props();
+    const { mp3, heightSetting = null, onPlayEvent = null, onPauseEvent = null } = $props();
 
     let currentAudioFile: HTMLAudioElement | null = $state(null);
 
@@ -70,6 +70,7 @@
             waveColor: "#999",
             progressColor: "#555",
             height: 80, // 100 was too much real estate
+            // height: 60, // 100 was too much real estate
             plugins: [regionsPlugin]
         });
 

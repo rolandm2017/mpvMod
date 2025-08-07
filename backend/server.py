@@ -177,7 +177,7 @@ class MPVWebSocketServer:
         default_options = {
             'idle': True,
             'osc': True,
-            'mute': True,
+            'mute': False,
             'sub_auto': 'all',
             'input_default_bindings': True,
             'input_vo_keyboard': True,

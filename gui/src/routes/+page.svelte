@@ -118,6 +118,10 @@
         }
     }
 
+    function loadLastSavedDeckIntoState(): Promise<string> {
+        return window.electronAPI.getCurrentlySavedDeck();
+    }
+
     // TODO: On load app, Ask the backend, "Hey are you there? If so is any media loaded?"
     // so app can "just know" if the SRT is already up and running
 
@@ -129,18 +133,10 @@
         // TODO: Change from h ardocded subtitle file,
         // Change to "GEt subtitle from MPV, load actual patH"
 
-        // data.segments.forEach((s) => {
-        //     let newSub = new Subtitle(s.text, s.timecode, s.startTimeSeconds);
-        //     subtitles.push(newSub);
-        // });
+        // TODO: Make a, "why isn't the subtitle thing moving?" alert
+        // TODO: Make a, "why isn't subtitle loaded yet?" alert. "No subtitle found"
 
-        // db = new SubtitleDatabase(
-        //     subtitles,
-        //     data.subtitleTimingToTimecodesMap,
-        //     data.subtitleCuePointsInSec,
-        //     data.timecodes
-        // );
-        // mountingTracker = new SegmentMountingTracker(data.segments.length);
+        // TODO: You click a subtitle, it takes the MPV player back to just before that text plays.
 
         // Expose for testing
         if (typeof window !== "undefined") {
@@ -150,8 +146,13 @@
 
         loadHotkeysIntoRegister();
 
+        loadLastSavedDeckIntoState().then((deck) => {
+            console.log(`Received deck: "${deck}" from Storage`);
+            currentDeck = deck;
+        });
+
         if (window.electronAPI) {
-            console.log("electronAPI is available, setting up listeners...");
+            // console.log("electronAPI is available, setting up listeners...");
 
             window.electronAPI.onDefaultAudio((audioDataURL) => {
                 console.log("Default silence audio received:", audioDataURL?.substring(0, 50) + "...");
@@ -161,13 +162,12 @@
             // FIXME: Paage mounts like ten times, every time the page refrreshes
             // FIXME: Paage mounts like ten times, every time the page refrreshes
             // FIXME: Paage mounts like ten times, every time the page refrreshes
-            // FIXME: Paage mounts like ten times, every time the page refrreshes
-            // FIXME: Paage mounts like ten times, every time the page refrreshes
 
             setTimeout(async () => {
                 // console.log("Manually requesting default audio...");
                 try {
                     await window.electronAPI.requestDefaultAudio();
+
                     // console.log("Manual request completed");
                 } catch (error) {
                     console.error("Manual request failed:", error);
@@ -189,8 +189,8 @@
 
                 // Auto-scroll to current position (throttled)
                 const now = Date.now();
-                const enabledUpdates = failCount < 3;
-                if (now - lastScrollTime > 2000 && enabledUpdates) {
+                // const enabledUpdates = failCount < 3;
+                if (now - lastScrollTime > 2000) {
                     try {
                         // Throttle to every 500ms
                         highlightPlayerPositionSegment(playerPosition);
@@ -198,6 +198,8 @@
 
                         lastScrollTime = now;
                     } catch (e) {
+                        console.log("Fail in setting player position:");
+                        console.log(e, failCount);
                         failCount += 1;
                     }
                 }
@@ -208,6 +210,7 @@
             });
             // Handle screenshot data separately
             window.electronAPI.onScreenshotReady((dataURL: string) => {
+                // FIXME: Console logged eight times, implying some code ran eight times upstream
                 console.log("in the +page.svelte screenshot api:", dataURL.substring(0, 50) + "...");
                 screenshotDataUrl = dataURL; // Store the data URL
             });
@@ -455,6 +458,12 @@
         console.log(update, "field mappings update");
     }
 
+    let currentDeck = $state("");
+
+    function changeDeckInCardBuiler(newDeckName: string) {
+        currentDeck = newDeckName;
+    }
+
     export function playerPositionDevTool(playerPosition: PlayerPosition) {
         scrollToClosestSubtitle(playerPosition, db, scrollContainer);
     }
@@ -505,14 +514,15 @@
             </div>
         </div>
         <CardBuilder
-            {showOptions}
-            {toggleOptions}
-            exampleSentenceField={selectedSubtitleText}
+            {currentDeck}
             targetWordField={selectedTargetWordText}
+            exampleSentenceField={selectedSubtitleText}
             {screenshotDataUrl}
             mp3snippet={mp3DataUrl}
-            {registeredHotkeys}
             {currentlyRecording}
+            {registeredHotkeys}
+            {showOptions}
+            {toggleOptions}
         />
     </div>
 </div>
@@ -525,6 +535,7 @@
             {toggleOptions}
             {switchPageType}
             updateFieldMappings={pushFieldMappingsUpdate}
+            {changeDeckInCardBuiler}
         />
     {/if}
 </div>

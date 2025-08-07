@@ -250,6 +250,12 @@ ipcMain.handle("request-srt-content", async () => {
     });
 });
 
+ipcMain.handle("load-current-deck", () => {
+    const mappings = store.get("field-mappings", {});
+    const storedDeck = mappings.selectedDeck;
+    return storedDeck;
+});
+
 ipcMain.handle("request-default-audio", async () => {
     console.log("Manual request for default audio received");
     await loadDefaultSilenceAudio();

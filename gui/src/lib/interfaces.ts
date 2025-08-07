@@ -49,6 +49,7 @@ export interface ElectronAPI {
     requestCurrentSubtitles: (callback: (srtFileContent: string) => void) => void;
 
     // Init
+    getCurrentlySavedDeck: () => Promise<string>;
     onDefaultAudio: (callback: (nullishMp3File: string) => void) => void;
     requestDefaultAudio: () => void;
 }
@@ -102,3 +103,12 @@ export type CommandResponse =
     | StartAudioClipResponse
     | ConcludeAudioClipResponse
     | ConcludeAudioClipError;
+
+export interface BasicCardDeliverable {
+    targetDeck: string;
+    word: string;
+    exampleSentence: string;
+    nativeTranslation: string;
+    audio: string; // a dataUrl
+    image: string; // a dataUrl
+}

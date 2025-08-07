@@ -11,7 +11,7 @@
         type FieldMappings
     } from "./utils/reducer";
 
-    let { showOptions, toggleOptions, switchPageType, updateFieldMappings } = $props();
+    let { showOptions, toggleOptions, switchPageType, updateFieldMappings, changeDeckInCardBuiler } = $props();
 
     // Svelte state lives here
     let state = $state(createInitialState());
@@ -91,8 +91,10 @@
         try {
             // Load saved state first
             const savedState = await service.loadFromStorage();
+            console.log("Saved state: ", savedState);
             if (savedState) {
                 dispatch({ type: "LOAD_STATE", state: savedState });
+                changeDeckInCardBuiler(savedState.selectedDeck);
             }
 
             // Then fetch fresh Anki data
@@ -134,6 +136,7 @@
     function handleUpdateSelectedDeck(event: Event) {
         const target = event.target as HTMLSelectElement;
         dispatch({ type: "SET_SELECTED_DECK", deck: target.value });
+        changeDeckInCardBuiler(target.value);
     }
 
     async function handleNoteTypeChange(noteType: string) {

@@ -4,18 +4,31 @@
 
     import InputField from "./components/InputField.svelte";
     import RecorderAwarenessControls from "./components/RecorderAwarenessControls.svelte";
+    import { AnkiWriter } from "./api/ankiWriter";
+    import type { BasicCardDeliverable } from "./interfaces";
+    import { onMount } from "svelte";
 
     // Props - data passed in from parent
     let {
-        exampleSentenceField,
+        // current deck
+        currentDeck,
+        // text fields
         targetWordField,
-        screenshotDataUrl,
+        exampleSentenceField,
+
+        // audio, img
         mp3snippet,
+        screenshotDataUrl,
+        // options
         showOptions,
         toggleOptions,
         registeredHotkeys,
         currentlyRecording
     } = $props();
+
+    onMount(() => {
+        console.log(`F ffdfdf current deck: "${currentDeck}", debug`);
+    });
 
     // Watch for changes in screenshotDataUrl
     // $effect(() => {
@@ -24,6 +37,10 @@
 
     let recordingState: "idle" | "recording" | "finished" = $state("idle");
     let previousRecordingState = $state(false);
+
+    let nativeLangTranslation = $state("");
+
+    const writer = new AnkiWriter();
 
     // Function to update recording state based on currentlyRecording prop
     function updateRecordingState() {
@@ -52,9 +69,25 @@
         //
     }
 
-    function handleExportSubtitles() {
-        console.log("Exporting subtitles as:", exportFormat);
+    function sendFinishedCardToAnki() {
+        // FIXME: TargetDeck is ""
         // Add your export logic here
+        // TODO: Sends the card to Anki
+        const deliverable = {
+            targetDeck: currentDeck,
+            word: targetWordField,
+            exampleSentence: exampleSentenceField,
+            nativeTranslation: nativeLangTranslation,
+            audio: mp3snippet,
+            image: screenshotDataUrl
+        };
+        console.log("sending: ", removeDataUrls(deliverable));
+        writer.deliverCard(deliverable);
+    }
+
+    function removeDataUrls(card: BasicCardDeliverable) {
+        const { image, audio, ...newObj } = card;
+        return newObj;
     }
 
     function handleSearchSubtitles() {
@@ -69,8 +102,6 @@
             // Add your clear logic here
         }
     }
-
-    let nativeLangTranslation = $state("");
 
     // Function to handle backspace deletion
     function handleImageFieldKeydown(event: KeyboardEvent) {
@@ -194,10 +225,9 @@
         <!-- // TODO: Make the buttons about 25% shorter -->
 
         <div class="button-group">
-            <button class="success-btn" onclick={handleExportSubtitles}> Export Card </button>
+            <button class="success-btn" onclick={sendFinishedCardToAnki}> Export Card </button>
             <button class="danger-btn" onclick={handleClearSubtitles}> Clear All </button>
             <!-- TODO: Show confirmation dialogue for "Clear all?" since it's destructive -->
-            <button class="shutdown-btn" onclick={handleSearchSubtitles}> Shutdown </button>
         </div>
     </div>
 </div>
@@ -452,12 +482,6 @@
     .danger-btn:hover {
         background: #c82333;
         transform: translateY(-1px);
-    }
-
-    /* Hidden state */
-
-    .hidden {
-        display: none;
     }
 
     button:active {
