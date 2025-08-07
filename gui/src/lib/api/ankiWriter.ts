@@ -1,6 +1,6 @@
 // src/lib/ankiWriter.ts
 
-import type { BasicCardDeliverable } from "$lib/interfaces";
+import type { BasicCardDeliverable, FieldMappings } from "$lib/interfaces";
 import type { GetDecksResponse, GetFieldsResponse, GetNoteTypesResponse } from "$lib/responses.interface";
 
 const DECK_NAME = "customMPV"; // TEMP
@@ -89,8 +89,27 @@ export class AnkiWriter {
     // Helper to convert BasicCardDeliverable to AnkiConnect payload
     private createAnkiPayload(
         cardData: BasicCardDeliverable,
+        fieldMappings: FieldMappings,
         noteTypeName: string = "Refold Sentence Miner: Sentence Hidden"
     ): AnkiConnectRequest {
+        const fieldsPayload: Record<string, string> = {};
+
+        // Map each source field to its Anki field using the stored mappings
+        if (fieldMappings.targetWord && cardData.word) {
+            fieldsPayload[fieldMappings.targetWord] = cardData.word;
+        }
+        if (fieldMappings.exampleSentence && cardData.exampleSentence) {
+            fieldsPayload[fieldMappings.exampleSentence] = cardData.exampleSentence;
+        }
+        if (fieldMappings.nativeTranslation && cardData.nativeTranslation) {
+            fieldsPayload[fieldMappings.nativeTranslation] = cardData.nativeTranslation;
+        }
+        if (fieldMappings.sentenceAudio && cardData.audio) {
+            fieldsPayload[fieldMappings.sentenceAudio] = cardData.audio;
+        }
+        if (fieldMappings.screenshot && cardData.image) {
+            fieldsPayload[fieldMappings.screenshot] = cardData.image;
+        }
         const note: AnkiConnectNote = {
             deckName: DECK_NAME,
             modelName: noteTypeName,
@@ -140,9 +159,13 @@ export class AnkiWriter {
         };
     }
 
-    async deliverCard(cardData: BasicCardDeliverable, noteTypeName?: string): Promise<number | string> {
+    async deliverCard(
+        cardData: BasicCardDeliverable,
+        fieldMappings: FieldMappings,
+        noteTypeName?: string
+    ): Promise<number | string> {
         try {
-            const ankiPayload = this.createAnkiPayload(cardData, noteTypeName);
+            const ankiPayload = this.createAnkiPayload(cardData, fieldMappings, noteTypeName);
             const result = await this.apiCall<AnkiConnectResponse<number>>("/api/anki/deliver-card", ankiPayload);
             console.log(result, "Result result");
 

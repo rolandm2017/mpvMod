@@ -88,7 +88,7 @@
             image: screenshotDataUrl
         };
         console.log("sending: ", removeDataUrls(deliverable));
-        writer.deliverCard(deliverable).then((response) => {
+        writer.deliverCard(deliverable, fieldMappingsFromStorage).then((response) => {
             console.log(response, "87ru");
             const cardIdResponse = Number.isFinite(response);
             if (cardIdResponse) {
