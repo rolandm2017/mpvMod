@@ -23,7 +23,8 @@
         showOptions,
         toggleOptions,
         registeredHotkeys,
-        currentlyRecording
+        currentlyRecording,
+        clearMp3andScreenshot
     } = $props();
 
     onMount(() => {
@@ -73,15 +74,6 @@
         updateRecordingState();
     });
 
-    // Local state
-    let selectedLanguage = $state("en");
-    let exportFormat = $state("srt");
-
-    // Event handlers
-    function handleProcessVideo() {
-        //
-    }
-
     function sendFinishedCardToAnki() {
         // FIXME: TargetDeck is ""
         // Add your export logic here
@@ -97,6 +89,10 @@
         console.log("sending: ", removeDataUrls(deliverable));
         writer.deliverCard(deliverable).then((response) => {
             console.log(response, "87ru");
+            const cardIdResponse = Number.isFinite(response);
+            if (cardIdResponse) {
+                resetFields();
+            }
         });
     }
 
@@ -136,6 +132,14 @@
         console.log("Image field focused");
         console.log("Current content:", event.currentTarget.textContent);
         console.log("Current HTML:", event.currentTarget.innerHTML.slice(400));
+    }
+
+    function resetFields() {
+        //
+        targetWordField = "";
+        exampleSentenceField = "";
+        nativeLangTranslation = "";
+        clearMp3andScreenshot();
     }
 </script>
 

@@ -75,7 +75,7 @@ export function scrollToClosestSubtitle(
      */
     if (!scrollContainer) {
         // console.log(scrollContainer);
-        throw new Error("Scroll Container was null");
+        throw new Error(`Scroll Container was null with playerPosition: ${playerPosition}`);
     }
     // PLAYER POSITION -> ??? ->
     // ?? -> SubtitleTiming
