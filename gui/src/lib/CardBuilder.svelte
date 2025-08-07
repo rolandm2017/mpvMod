@@ -23,24 +23,25 @@
         showOptions,
         toggleOptions,
         registeredHotkeys,
-        currentlyRecording
+        currentlyRecording,
+        clearMp3andScreenshot
     } = $props();
 
     onMount(() => {
         console.log(`F ffdfdf current deck: "${currentDeck}", debug`);
-        fetch("/api/anki/check-all")
-            .then((response) => response.json())
-            .then((data) => {
-                console.log("Available fields in your note type:");
-                console.log(data.fields?.fields || "No fields found");
+        // fetch("/api/anki/check-all")
+        //     .then((response) => response.json())
+        //     .then((data) => {
+        //         console.log("Available fields in your note type:");
+        //         console.log(data.fields?.fields || "No fields found");
 
-                console.log("\nField mapping suggestion:");
-                console.log(data.fields?.fieldMapping || "No mapping available");
+        //         console.log("\nField mapping suggestion:");
+        //         console.log(data.fields?.fieldMapping || "No mapping available");
 
-                console.log("\nCopy-paste ready fields:");
-                console.log(data.fields?.copyPasteReady || "Not available");
-            })
-            .catch((error) => console.error("Error:", error));
+        //         console.log("\nCopy-paste ready fields:");
+        //         console.log(data.fields?.copyPasteReady || "Not available");
+        //     })
+        //     .catch((error) => console.error("Error:", error));
     });
 
     // Watch for changes in screenshotDataUrl
@@ -73,19 +74,7 @@
         updateRecordingState();
     });
 
-    // Local state
-    let selectedLanguage = $state("en");
-    let exportFormat = $state("srt");
-
-    // Event handlers
-    function handleProcessVideo() {
-        //
-    }
-
     function sendFinishedCardToAnki() {
-        // FIXME: TargetDeck is ""
-        // Add your export logic here
-        // TODO: Sends the card to Anki
         const deliverable = {
             targetDeck: currentDeck,
             word: targetWordField,
@@ -97,6 +86,10 @@
         console.log("sending: ", removeDataUrls(deliverable));
         writer.deliverCard(deliverable).then((response) => {
             console.log(response, "87ru");
+            const cardIdResponse = Number.isFinite(response);
+            if (cardIdResponse) {
+                resetFields();
+            }
         });
     }
 
@@ -136,6 +129,14 @@
         console.log("Image field focused");
         console.log("Current content:", event.currentTarget.textContent);
         console.log("Current HTML:", event.currentTarget.innerHTML.slice(400));
+    }
+
+    function resetFields() {
+        //
+        targetWordField = "";
+        exampleSentenceField = "";
+        nativeLangTranslation = "";
+        clearMp3andScreenshot();
     }
 </script>
 

@@ -13,6 +13,7 @@
     import type { CommandResponse, HotkeyRegister, MPVStateData, ParsedSegmentObj } from "$lib/interfaces.js";
     import FieldMappingConfig from "$lib/FieldMappingConfig.svelte";
     import { parseSrtFileIntoSegments, prebuildLookupArrays } from "$lib/utils/parsing.js";
+    import { fail } from "@sveltejs/kit";
 
     let { data } = $props();
 
@@ -65,13 +66,43 @@
         return { database, tracker, segments: currentSegments };
     });
 
+    function segmentsArrsAreTheSame(segmentArrOne: ParsedSegmentObj[], segmentArrTwo: ParsedSegmentObj[]) {
+        if (segmentArrOne.length !== segmentArrTwo.length) {
+            console.warn("Segment arrays had differing lengths:", segmentArrOne.length, segmentArrTwo.length);
+            return false;
+        }
+        for (let i = 0; i < segmentArrOne.length; i++) {
+            if (segmentArrOne[i].timecode != segmentArrTwo[i].timecode) {
+                return false;
+            }
+        }
+        return true;
+    }
+
+    $effect(() => {
+        console.log("scrollContainer changed:", scrollContainer);
+        if (scrollContainer) {
+            console.log("Container exists, id:", scrollContainer.id || "no-id");
+            // Add a marker to track if it's the same element
+            scrollContainer.dataset.instanceId = Date.now().toString();
+        } else {
+            console.log("Container is null!");
+        }
+    });
+
     // Then use these in your component:
     $effect(() => {
         const setup = dbSetup;
         if (setup) {
             db = setup.database;
             mountingTracker = setup.tracker;
-            segments = setup.segments; // This assignment won't cause recursion
+            if (segmentsArrsAreTheSame(segments, setup.segments)) {
+                // Avoid recursion from re-assigning the same array.
+                console.log("arrs are identical, do not reassign");
+
+                return;
+            }
+            segments = setup.segments;
             console.log(setup.segments.length, "done loading");
         }
     });
@@ -97,6 +128,7 @@
 
     let failCount = 0;
 
+    let defaultClipData = $state("");
     // TODO: User edits the example sentence in the input, the reactive variable changes to house it.
     let selectedSubtitleText = $state("");
     // TODO: User edits the target word in the input, the reactive variable changes to house it.
@@ -105,7 +137,6 @@
     // THEN, the word gets a "word audio" mp3 from a service.
     let screenshotDataUrl = $state("");
     let mp3DataUrl = $state("");
-    let audioClipPath = "";
     let isClipping = false;
 
     async function loadHotkeysIntoRegister() {
@@ -157,6 +188,7 @@
             window.electronAPI.onDefaultAudio((audioDataURL) => {
                 console.log("Default silence audio received:", audioDataURL?.substring(0, 50) + "...");
                 mp3DataUrl = audioDataURL;
+                defaultClipData = audioDataURL;
             });
 
             // FIXME: Paage mounts like ten times, every time the page refrreshes
@@ -182,7 +214,6 @@
                 // progress :  1
                 // time_pos :  13.555
                 // timestamp :  1753652691.9598007
-                // type :  "time_update"
                 content = mpvState.content;
                 playerPosition = mpvState.time_pos;
                 formattedTime = mpvState.formatted_time;
@@ -190,7 +221,8 @@
                 // Auto-scroll to current position (throttled)
                 const now = Date.now();
                 // const enabledUpdates = failCount < 3;
-                if (now - lastScrollTime > 2000) {
+                const autoscrollUpdateMinimumDelay = 500;
+                if (now - lastScrollTime > autoscrollUpdateMinimumDelay) {
                     try {
                         // Throttle to every 500ms
                         highlightPlayerPositionSegment(playerPosition);
@@ -198,8 +230,8 @@
 
                         lastScrollTime = now;
                     } catch (e) {
-                        console.log("Fail in setting player position:");
-                        console.log(e, failCount);
+                        console.log(`Fail in setting player position with failCount "${failCount}"`);
+                        console.log(e);
                         failCount += 1;
                     }
                 }
@@ -391,7 +423,7 @@
         switch (commandResponse.command) {
             case "take_screenshot":
                 if (commandResponse.success && commandResponse.file_path) {
-                    screenshotDataUrl = commandResponse.file_path;
+                    // screenshotDataUrl = commandResponse.file_path;
 
                     console.log("Screenshot saved!");
                 }
@@ -407,7 +439,7 @@
             case "end_audio_clip":
                 isClipping = false;
                 if (commandResponse.success && commandResponse.file_path) {
-                    audioClipPath = commandResponse.file_path;
+                    // audioClipPath = commandResponse.file_path;
                     console.log("Audio clip saved!");
                 }
                 break;
@@ -464,6 +496,13 @@
         currentDeck = newDeckName;
     }
 
+    function clearMp3andScreenshot() {
+        // used to reset when done a card
+        screenshotDataUrl = "";
+        // TODO: DO users prefer an empty clip? dead silence
+        mp3DataUrl = defaultClipData;
+    }
+
     export function playerPositionDevTool(playerPosition: PlayerPosition) {
         scrollToClosestSubtitle(playerPosition, db, scrollContainer);
     }
@@ -500,7 +539,11 @@
             <div class="subtitle-header">Subtitles</div>
             <div class="subtitle-content" data-testid="scroll-container" bind:this={scrollContainer}>
                 {#if segments.length > 0}
-                    {#each segments as segment}
+                    <!-- the "(segment.timecode)" acts like a React UUID key thing,
+                        if the state within the page changes, and a 
+                        bunch of other stuff changes, but svelte sees that 
+                        the segments arr is identical, those divs will stay put -->
+                    {#each segments as segment (segment.timecode)}
                         <SubtitleSegment
                             index={segment.index}
                             timecode={segment.timecode}
@@ -523,6 +566,7 @@
             {registeredHotkeys}
             {showOptions}
             {toggleOptions}
+            {clearMp3andScreenshot}
         />
     </div>
 </div>
