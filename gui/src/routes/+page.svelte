@@ -13,7 +13,6 @@
     import type { CommandResponse, HotkeyRegister, MPVStateData, ParsedSegmentObj } from "$lib/interfaces.js";
     import FieldMappingConfig from "$lib/FieldMappingConfig.svelte";
     import { parseSrtFileIntoSegments, prebuildLookupArrays } from "$lib/utils/parsing.js";
-    import { fail } from "@sveltejs/kit";
 
     let { data } = $props();
 
@@ -21,8 +20,13 @@
     //              -> Feature allows for user to be a little bit late pressing start.
     // Could also have a button, "move start a bit earlier," as a different way to solve this problem.
 
-    //FIXME: src/routes/+page.svelte:20:8 `scrollContainer` is updated, but is not declared with `$state(...)`. Changing its value will not correctly trigger updates
-    let scrollContainer: HTMLDivElement;
+    /*
+     * Using a ref:
+     * Zero DOM queries after initial bind
+     * Zero re-renders of your 1000+ subtitles
+     * Stable reference that survives all state changes
+     */
+    const scrollContainerRef = { element: null as HTMLDivElement | null };
 
     let showOptions = $state(false);
     let optionsPage: "hotkeyConfig" | "connectConfig" = $state("hotkeyConfig");
@@ -83,15 +87,52 @@
         return true;
     }
 
+    // Right after your state declarations, add:
+    let scrollContainerInstanceId = 0;
+
+    // Add this effect to monitor the scrollContainer
     $effect(() => {
-        console.log("scrollContainer changed:", scrollContainer);
-        if (scrollContainer) {
-            console.log("Container exists, id:", scrollContainer.id || "no-id");
-            // Add a marker to track if it's the same element
-            scrollContainer.dataset.instanceId = Date.now().toString();
+        if (scrollContainerRef.element) {
+            scrollContainerInstanceId++;
+            const id = scrollContainerInstanceId;
+            console.log(`✅ ScrollContainer CREATED (instance #${id})`, scrollContainerRef.element);
+
+            // Mark this instance
+            scrollContainerRef.element.dataset.instanceId = id.toString();
+
+            // Watch for removal
+            const observer = new MutationObserver(() => {
+                if (!document.body.contains(scrollContainerRef.element)) {
+                    console.error(`💀 ScrollContainer REMOVED from DOM (instance #${id})`);
+                    console.trace("Container removed at:");
+                }
+            });
+            observer.observe(document.body, { childList: true, subtree: true });
+
+            return () => {
+                console.warn(`🔄 ScrollContainer EFFECT CLEANUP (instance #${id})`);
+                observer.disconnect();
+            };
         } else {
-            console.log("Container is null!");
+            console.warn("⚠️ ScrollContainer is NULL in effect");
         }
+    });
+
+    // Also add debugging to track what triggers the null state
+    $effect(() => {
+        console.log("showOptions changed to:", showOptions);
+    });
+
+    $effect(() => {
+        console.log("segments array changed, length:", segments.length);
+    });
+
+    $effect(() => {
+        console.log("screenshotDataUrl changed:", screenshotDataUrl ? "has data" : "empty");
+    });
+
+    $effect(() => {
+        console.log("mp3DataUrl changed:", mp3DataUrl ? "has data" : "empty");
     });
 
     // Then use these in your component:
@@ -228,14 +269,27 @@
                 const autoscrollUpdateMinimumDelay = 500;
                 if (now - lastScrollTime > autoscrollUpdateMinimumDelay) {
                     try {
-                        // Throttle to every 500ms
-                        highlightPlayerPositionSegment(playerPosition);
-                        scrollToClosestSubtitle(playerPosition, db, scrollContainer);
+                        if (!scrollContainerRef.element) {
+                            console.error(`❌ No scrollContainer at playerPosition: ${playerPosition}`);
+                            // Try to recover
+                            const element = document.querySelector('[data-testid="scroll-container"]');
+                            if (element) {
+                                scrollContainerRef.element = element as HTMLDivElement;
+                            } else {
+                                console.log("Element not in DOM at all!");
+                            }
+                        }
 
-                        lastScrollTime = now;
+                        if (scrollContainerRef.element && db && db.subtitleCuePointsInSec) {
+                            highlightPlayerPositionSegment(playerPosition);
+                            scrollToClosestSubtitle(playerPosition, db, scrollContainerRef.element);
+                            lastScrollTime = now;
+                            failCount = 0;
+                        }
                     } catch (e) {
+                        const err = e as Error;
                         console.log(`Fail in setting player position with failCount "${failCount}"`);
-                        console.log(e);
+                        console.log(`Error: ${err.message} with playerPosition: ${playerPosition}`);
                         failCount += 1;
                     }
                 }
@@ -359,13 +413,13 @@
                     ? commonAncestor.parentElement
                     : (commonAncestor as HTMLElement);
 
-            isInSubtitleContent = scrollContainer?.contains(ancestorElement) || false;
+            isInSubtitleContent = scrollContainerRef.element?.contains(ancestorElement) || false;
         }
 
         // Fallback: check if the event target is within subtitle content
         if (!isInSubtitleContent) {
             const target = e.target as HTMLElement;
-            isInSubtitleContent = scrollContainer?.contains(target) || false;
+            isInSubtitleContent = scrollContainerRef.element?.contains(target) || false;
         }
 
         // Only proceed if we're in the subtitle content area
@@ -511,15 +565,33 @@
         screenshotDataUrl = "";
         // TODO: DO users prefer an empty clip? dead silence
         mp3DataUrl = defaultClipData;
+
+        // Check immediately after
+        setTimeout(() => {
+            console.log("scrollContainer after clear (timeout):", scrollContainerRef.element);
+            if (!scrollContainerRef.element) {
+                // Try to recover it
+                const recovered = document.querySelector('[data-testid="scroll-container"]');
+                console.log("Attempted recovery:", recovered);
+                if (recovered) {
+                    scrollContainerRef.element = recovered as HTMLDivElement;
+                    console.log("✅ Recovered scrollContainer reference");
+                }
+            }
+        }, 0);
     }
 
     export function playerPositionDevTool(playerPosition: PlayerPosition) {
-        scrollToClosestSubtitle(playerPosition, db, scrollContainer);
+        if (scrollContainerRef.element) {
+            scrollToClosestSubtitle(playerPosition, db, scrollContainerRef.element);
+        }
     }
     export function timecodeDevTool(timecode: TimecodeString) {
-        // tiumecode to player position
-        const height = db.getHeightFromTimecode(timecode);
-        scrollToLocation(height, scrollContainer);
+        if (scrollContainerRef.element) {
+            // tiumecode to player position
+            const height = db.getHeightFromTimecode(timecode);
+            scrollToLocation(height, scrollContainerRef.element);
+        }
     }
 
     export function restoreUpdates() {
@@ -547,7 +619,7 @@
     <div class="container">
         <div class="subtitle-panel">
             <div class="subtitle-header">Subtitles</div>
-            <div class="subtitle-content" data-testid="scroll-container" bind:this={scrollContainer}>
+            <div class="subtitle-content" data-testid="scroll-container" bind:this={scrollContainerRef.element}>
                 {#if segments.length > 0}
                     <!-- the "(segment.timecode)" acts like a React UUID key thing,
                         if the state within the page changes, and a 
