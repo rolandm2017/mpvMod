@@ -304,7 +304,7 @@ async function loadDefaultSilenceAudio() {
 
                 if (mainWindow && !mainWindow.isDestroyed()) {
                     mainWindow.webContents.send("default-audio-ready", audioDataURL);
-                    console.log("Default silence audio sent to renderer from alt path");
+                    printInfo("Default silence audio sent to renderer from alt path");
                 }
                 return;
             } catch (altAccessError) {

@@ -271,6 +271,7 @@
                 // const enabledUpdates = failCount < 3;
                 const autoscrollUpdateMinimumDelay = 500;
                 if (now - lastScrollTime > autoscrollUpdateMinimumDelay) {
+                    // FIXME: 3rd time's the charm
                     try {
                         if (!scrollContainerRef.element) {
                             console.error(`❌ No scrollContainer at playerPosition: ${playerPosition}`);
@@ -571,8 +572,8 @@
 
         // Check immediately after
         setTimeout(() => {
-            console.log("scrollContainer after clear (timeout):", scrollContainerRef.element);
             if (!scrollContainerRef.element) {
+                console.warn("scrollContainer after clear (timeout):", scrollContainerRef.element);
                 // Try to recover it
                 const recovered = document.querySelector('[data-testid="scroll-container"]');
                 console.log("Attempted recovery:", recovered);

@@ -92,6 +92,21 @@ export class AnkiWriter {
         fieldMappings: FieldMappings,
         noteTypeName: string = "Refold Sentence Miner: Sentence Hidden"
     ): AnkiConnectRequest {
+        const originalPayload = {
+            // Map your data to the actual Anki field names
+            Word: cardData.word,
+            "Definitions 1": cardData.nativeTranslation,
+            "Definitions 2": "", // Empty for now
+            "Example Sentence": cardData.exampleSentence,
+            "Sentence Translation": "", // Empty for now, or you could duplicate nativeTranslation
+            word_audio: "", // We'll handle this via audio array below
+            sentence_audio: "", // We'll handle this via audio array below
+            image: "" // We'll handle this via picture array below
+        };
+
+        const audioFilename = `sentence_audio_${Date.now()}.mp3`;
+        const imageFilename = `image_${Date.now()}.png`;
+
         const fieldsPayload: Record<string, string> = {};
 
         // Map each source field to its Anki field using the stored mappings
@@ -105,25 +120,19 @@ export class AnkiWriter {
             fieldsPayload[fieldMappings.nativeTranslation] = cardData.nativeTranslation;
         }
         if (fieldMappings.sentenceAudio && cardData.audio) {
-            fieldsPayload[fieldMappings.sentenceAudio] = cardData.audio;
+            // [sound:filename.mp3]
+            // for audio (Anki's sound syntax)
+            fieldsPayload[fieldMappings.sentenceAudio] = `[sound:${audioFilename}]`;
         }
         if (fieldMappings.screenshot && cardData.image) {
-            fieldsPayload[fieldMappings.screenshot] = cardData.image;
+            // <img src="filename.png">
+            // for images (HTML img tag)
+            fieldsPayload[fieldMappings.screenshot] = `<img src="${imageFilename}">`;
         }
         const note: AnkiConnectNote = {
             deckName: DECK_NAME,
             modelName: noteTypeName,
-            fields: {
-                // Map your data to the actual Anki field names
-                Word: cardData.word,
-                "Definitions 1": cardData.nativeTranslation,
-                "Definitions 2": "", // Empty for now
-                "Example Sentence": cardData.exampleSentence,
-                "Sentence Translation": "", // Empty for now, or you could duplicate nativeTranslation
-                word_audio: "", // We'll handle this via audio array below
-                sentence_audio: "", // We'll handle this via audio array below
-                image: "" // We'll handle this via picture array below
-            },
+            fields: fieldsPayload,
             tags: ["auto-generated"],
             options: {
                 allowDuplicate: false
@@ -134,7 +143,7 @@ export class AnkiWriter {
         if (cardData.audio) {
             note.audio = [
                 {
-                    filename: `sentence_audio_${Date.now()}.mp3`,
+                    filename: audioFilename,
                     url: cardData.audio,
                     fields: ["sentence_audio"] // Put audio in sentence_audio field
                 }
@@ -145,7 +154,7 @@ export class AnkiWriter {
         if (cardData.image) {
             note.picture = [
                 {
-                    filename: `image_${Date.now()}.png`,
+                    filename: imageFilename,
                     url: cardData.image,
                     fields: ["image"] // Put image in image field
                 }
