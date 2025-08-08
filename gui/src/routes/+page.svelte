@@ -175,8 +175,6 @@
 
     let continueLogging = $state(true);
 
-    let prevThing = null;
-
     let myGiantAwfulObject = {};
 
     $effect(() => {
@@ -272,7 +270,7 @@
                 const autoscrollUpdateMinimumDelay = 500;
 
                 if (now - lastScrollTime > autoscrollUpdateMinimumDelay) {
-                    if (stop) {
+                    if (stop || continueLogging == false) {
                         console.log("Logging stopped by 'stop'");
                         return;
                     }

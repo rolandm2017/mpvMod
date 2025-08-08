@@ -25,6 +25,9 @@ from urllib.parse import urlparse
 # When it's done, it's auto-sent to the client.
 # Until then, they get a progress bar.
 
+# TODO: User presses "Start record", actually snipe a time ~2,000ms before they hit it
+# TODO: And the setting should be togglable.
+
 def get_absolute_path(player) -> str | None:
     """Get absolute path of currently playing file."""
     path = player.path

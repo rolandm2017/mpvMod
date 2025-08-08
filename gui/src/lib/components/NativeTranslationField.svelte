@@ -1,12 +1,20 @@
-<!-- InputField.svelte -->
+<!-- NativeTranslationField.svelte -->
 <script lang="ts">
-    export let id: string;
-    export let label: string;
-    export let value: string = "";
-    export let placeholder: string = "";
+    let {
+        id,
+        label,
+        value = "",
+        placeholder = ""
+    } = $props<{
+        id: string;
+        label: string;
+        value?: string;
+        placeholder?: string;
+    }>();
 </script>
 
 <div class="field-group">
+    <!-- // TODO: "Translate with GPT | DeepL"  buttons -->
     <label for={id}>{label}</label>
     <input {id} type="text" bind:value {placeholder} />
 </div>

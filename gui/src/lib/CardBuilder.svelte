@@ -33,6 +33,9 @@
     // TODO: the text fields should come in from the parent, but, be reset by changing a card.
     // FIXME: It's actually a fixme
 
+    // TODO: The Image container with  a back,fwd nudge btn, to nudge the screenshot frame back, fwd
+    //      -> in case user "missed it" by a fraction of a frame.
+
     onMount(() => {
         console.log(`Current deck: "${currentDeck}", debug`);
         // fetch("/api/anki/check-all")
@@ -188,6 +191,7 @@
     <div class="control-section">
         <!-- <h3>Text fields</h3> -->
         <div class="input-group">
+            <!-- // TODO: Need "Word" field, but also: Word translation -->
             <InputField id="word-field" label="Word" bind:value={targetWordField} placeholder="Target word" />
 
             <InputField
@@ -197,6 +201,8 @@
                 placeholder="Subtitle snippet"
             />
 
+            <!-- // TODO: Put a config option, "Show native sentence translation input"
+                so people who don't care for it can turn it off. (Have it on by default) -->
             <InputField
                 id="NL-translation"
                 label="Native translation"
@@ -218,6 +224,8 @@
         </div>
         <div class="time-controls">
             <!-- TODO: Make MP3 Editor TOGGLEABLE! -->
+            <!-- // Could feature this as a toggled "autohide after 5 sec" option -->
+            <!-- // Editor reveals on mouseover? On mouseover + click? -->
             <!-- //TODO: Like it's MOSTLY hidden except play, pause, until you open the editor. -->
             <!-- //TODO: The waveform, play/pause btn, etc take WAY too much space -->
             <Wavesurfer mp3={mp3snippet} />

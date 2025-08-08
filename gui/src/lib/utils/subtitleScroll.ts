@@ -58,10 +58,6 @@ export class Finder {
     }
 }
 
-// Usage
-// const index = findTimestampIndex(n, data.timestamps);
-// const timecode = data.timecodes[index];
-
 export function scrollToClosestSubtitle(
     playerPosition: PlayerPosition,
     // subtitleCuePointsArr: SubtitleTiming[],
@@ -86,8 +82,6 @@ export function scrollToClosestSubtitle(
         db.subtitleCuePointsInSec
     );
     // const correspondingSubtitleIndex = Finder.findSubtitleIndexAtPlayerTime(playerPosition, db.subtitleCuePointsInSec);
-    // FIXME: HAVE: Lots of stuff
-    // FIXME: WANT: The height of the subtitle that is just like, "a few units" away.
     const heightForSub = db.getHeightFromPlayerPosition(corresponding) ?? 0;
 
     const heightForCenteringSubtitle = scrollContainer.clientHeight / 2;
