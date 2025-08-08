@@ -80,7 +80,6 @@ export class AnkiWriter {
         }
 
         const result = await response.json();
-        console.log(result, "Response.json, response.json");
 
         if (!result.success) {
             throw new Error(result.error || "Unknown API error");

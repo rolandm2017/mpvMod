@@ -18,6 +18,8 @@
 
     let { data } = $props();
 
+    // TODO: Feature: User clicks subtitle, they're taken to that timestamp in the video.
+    // Could be a specific btn to avoid misclicks, somewhat hidden or hard to misclick.
     // TODO: A feature where, user can tikc a box that says, "start snipping a half sec before you pressed the btn"
     //              -> Feature allows for user to be a little bit late pressing start.
     // Could also have a button, "move start a bit earlier," as a different way to solve this problem.
@@ -141,17 +143,19 @@
         }
     });
 
-    let currentHighlightedElement: HTMLDivElement | null = null;
+    // FIXME: Should be $state
+    // let currentHighlightedElement = $state(HtmlDivElement | null)
+    let currentHighlightedElement: HTMLDivElement | null = $state(null);
     let currentHighlightedTimecode = "";
 
-    let content = "";
-    let playerPosition = 0;
-    let formattedTime = "";
+    // let content = "";
+    let playerPosition = $state(0);
+    // let formattedTime = "";
 
-    let lastScrollTime = 0;
+    let lastScrollTime = $state(0);
 
     // scrollToLocation(heightForSub);
-    let allSegmentsMounted = false;
+    let allSegmentsMounted = $state(false); // Used for debug
 
     let registeredHotkeys: HotkeyRegister = $state({
         screenshot: "loading",
@@ -190,10 +194,36 @@
     // TODO: On load app, Ask the backend, "Hey are you there? If so is any media loaded?"
     // so app can "just know" if the SRT is already up and running
 
+    let continueLogging = $state(true);
+
+    let myGiantAwfulObject = {};
+
+    $effect(() => {
+        console.log(playerPosition, "200ru");
+        if (continueLogging) {
+            console.log(scrollContainerRef, "!!!!");
+            myGiantAwfulObject = {
+                continueLogging,
+                selectedSubtitleText,
+                selectedTargetWordText,
+                showOptions,
+                segmentsLength: segments.length,
+                screenshotDataUrl,
+                mp3DataUrl,
+                veryImportantVar: scrollContainerRef,
+                // ... all your vars
+                timestamp: Date.now()
+                // stack: new Error().stack
+            };
+            showRefState("$effect");
+        }
+    });
+
     onMount(() => {
         (window as any).playerPositionDevTool = playerPositionDevTool;
         (window as any).timecodeDevTool = timecodeDevTool;
         (window as any).resetHotkeys = resetAllHotkeys;
+        (window as any).showRefState = showRefState;
 
         // TODO: Change from h ardocded subtitle file,
         // Change to "GEt subtitle from MPV, load actual patH"
@@ -242,7 +272,6 @@
                 }
                 // 100 ms to ready all listeners
             }, 100);
-            console.log("Running onMPVstate");
             window.electronAPI.onMPVState((mpvState) => {
                 // content :  "⏱️  0:13.6 / 22:35.7 (1.0%)"
                 // formatted_duration :  "22:35.7"
@@ -250,29 +279,39 @@
                 // progress :  1
                 // time_pos :  13.555
                 // timestamp :  1753652691.9598007
-                content = mpvState.content;
+                // content = mpvState.content;
                 playerPosition = mpvState.time_pos;
-                formattedTime = mpvState.formatted_time;
+                // formattedTime = mpvState.formatted_time;
 
                 // Auto-scroll to current position (throttled)
                 const now = Date.now();
                 // const enabledUpdates = failCount < 3;
                 const autoscrollUpdateMinimumDelay = 500;
+                let stop = false;
                 if (now - lastScrollTime > autoscrollUpdateMinimumDelay) {
+                    if (stop) {
+                        return;
+                    }
                     // FIXME: 3rd time's the charm
                     try {
                         if (!scrollContainerRef.element) {
-                            console.error(`❌ No scrollContainer at playerPosition: ${playerPosition}`);
+                            // console.error(`❌ No scrollContainer at playerPosition: ${playerPosition}`);
+                            continueLogging = false;
+                            stop = true;
+                            throw new Error(`❌ No scrollContainer at playerPosition: ${playerPosition}`);
+
                             // Try to recover
-                            const element = document.querySelector('[data-testid="scroll-container"]');
-                            if (element) {
-                                scrollContainerRef.element = element as HTMLDivElement;
-                            } else {
-                                console.log("Element not in DOM at all!");
-                            }
+
+                            // throw new Error("Stopping to inspect");
+                            // const element = document.querySelector('[data-testid="scroll-container"]');
+                            // if (element) {
+                            //     scrollContainerRef.element = element as HTMLDivElement;
+                            // } else {
+                            //     console.log("Element not in DOM at all!");
+                            // }
                         }
 
-                        if (scrollContainerRef.element && db && db.subtitleCuePointsInSec) {
+                        if (scrollContainerRef.element && db && db.subtitleCuePointsInSec && continueLogging) {
                             highlightPlayerPositionSegment(playerPosition);
                             scrollToClosestSubtitle(playerPosition, db, scrollContainerRef.element);
                             lastScrollTime = now;
@@ -281,8 +320,15 @@
                     } catch (e) {
                         const err = e as Error;
                         console.log(`Fail in setting player position with failCount "${failCount}"`);
-                        console.log(`Error: ${err.message} with playerPosition: ${playerPosition}`);
+                        console.log(`Error 288: ${err.message} with playerPosition: ${playerPosition}`);
+                        console.log("=======");
+                        showRefState();
+                        console.log("=======");
+
                         failCount += 1;
+                        stop = true; // enable inspecting
+                        continueLogging = false;
+                        throw err;
                     }
                 }
 
@@ -502,13 +548,14 @@
         setTimeout(() => {
             if (!scrollContainerRef.element) {
                 console.warn("scrollContainer after clear (timeout):", scrollContainerRef.element);
+                continueLogging = false;
                 // Try to recover it
-                const recovered = document.querySelector('[data-testid="scroll-container"]');
-                console.log("Attempted recovery:", recovered);
-                if (recovered) {
-                    scrollContainerRef.element = recovered as HTMLDivElement;
-                    console.log("✅ Recovered scrollContainer reference");
-                }
+                // const recovered = document.querySelector('[data-testid="scroll-container"]');
+                // console.log("Attempted recovery:", recovered);
+                // if (recovered) {
+                //     scrollContainerRef.element = recovered as HTMLDivElement;
+                //     console.log("✅ Recovered scrollContainer reference");
+                // }
             }
         }, 0);
     }
@@ -523,6 +570,14 @@
             // tiumecode to player position
             const height = db.getHeightFromTimecode(timecode);
             scrollToLocation(height, scrollContainerRef.element);
+        }
+    }
+
+    export function showRefState(src?: string) {
+        if (src) {
+            console.log(myGiantAwfulObject, "from showRefState in " + src);
+        } else {
+            console.log(myGiantAwfulObject, "from showRefState in devtools");
         }
     }
 

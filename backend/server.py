@@ -17,6 +17,14 @@ import mpv
 import os
 from urllib.parse import urlparse
 
+# FIXME: Load a new file into MPV, subtitle track didn't change.
+# THink this is, "After the first initial load, it's broken"
+
+# TODO: When a Muxed embedded SRT is found in .mkv etc,
+# make FFmpeg start the process to extract it.
+# When it's done, it's auto-sent to the client.
+# Until then, they get a progress bar.
+
 def get_absolute_path(player) -> str | None:
     """Get absolute path of currently playing file."""
     path = player.path
