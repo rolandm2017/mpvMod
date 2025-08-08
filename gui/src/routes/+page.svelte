@@ -14,6 +14,7 @@
     import type { CommandResponse, HotkeyRegister, MPVStateData, ParsedSegmentObj } from "$lib/interfaces.js";
     import FieldMappingConfig from "$lib/FieldMappingConfig.svelte";
     import { parseSrtFileIntoSegments, prebuildLookupArrays } from "$lib/utils/parsing.js";
+    import { executeActionIfHotkey, segmentsArrsAreTheSame } from "$lib/utils/mainPageUtil.js";
 
     let { data } = $props();
 
@@ -74,19 +75,6 @@
 
         return { database, tracker, segments: currentSegments };
     });
-
-    function segmentsArrsAreTheSame(segmentArrOne: ParsedSegmentObj[], segmentArrTwo: ParsedSegmentObj[]) {
-        if (segmentArrOne.length !== segmentArrTwo.length) {
-            console.warn("Segment arrays had differing lengths:", segmentArrOne.length, segmentArrTwo.length);
-            return false;
-        }
-        for (let i = 0; i < segmentArrOne.length; i++) {
-            if (segmentArrOne[i].timecode != segmentArrTwo[i].timecode) {
-                return false;
-            }
-        }
-        return true;
-    }
 
     // Right after your state declarations, add:
     let scrollContainerInstanceId = 0;
@@ -379,12 +367,10 @@
     }
 
     function toggleOptions() {
-        //
         showOptions = !showOptions;
     }
 
     function switchPageType() {
-        // switches them
         if (optionsPage === "hotkeyConfig") {
             optionsPage = "connectConfig";
         } else {
@@ -400,58 +386,6 @@
             copyWord: config.copyWord || "loading"
         };
         registeredHotkeys = update;
-    }
-
-    function handleKeyDown(e: KeyboardEvent) {
-        // Check if there's an active text selection within the subtitle content area
-        const selection = window.getSelection();
-        let isInSubtitleContent = false;
-
-        if (selection && selection.rangeCount > 0) {
-            const range = selection.getRangeAt(0);
-            const commonAncestor = range.commonAncestorContainer;
-
-            // Check if the selection's common ancestor is within our subtitle container
-            const ancestorElement =
-                commonAncestor.nodeType === Node.TEXT_NODE
-                    ? commonAncestor.parentElement
-                    : (commonAncestor as HTMLElement);
-
-            isInSubtitleContent = scrollContainerRef.element?.contains(ancestorElement) || false;
-        }
-
-        // Fallback: check if the event target is within subtitle content
-        if (!isInSubtitleContent) {
-            const target = e.target as HTMLElement;
-            isInSubtitleContent = scrollContainerRef.element?.contains(target) || false;
-        }
-
-        // Only proceed if we're in the subtitle content area
-        if (!isInSubtitleContent) {
-            return;
-        }
-
-        // Build hotkey string
-        const parts: string[] = [];
-        if (e.ctrlKey) parts.push("Ctrl");
-        if (e.shiftKey) parts.push("Shift");
-        if (e.altKey) parts.push("Alt");
-        if (e.metaKey) parts.push("Cmd");
-
-        let key = e.key;
-        if (key === " ") key = "Space";
-        else if (key.length === 1) key = key.toUpperCase();
-
-        parts.push(key);
-
-        const hotkeyString = parts.join(" + ");
-
-        // Check if this matches a registered hotkey
-        const action = Object.entries(registeredHotkeys).find(([k, v]) => v === hotkeyString)?.[0];
-        if (action) {
-            e.preventDefault();
-            executeAction(action);
-        }
     }
 
     let currentlyRecording = $state(false);
@@ -504,8 +438,8 @@
     }
 
     function copySelectedSubtitle() {
-        /** MOSTLY this is just putting the subtitle text
-         * into the state var so i can push it to input field. */
+        /** Puts the subtitle text * into the state var so i can push it to input field.
+         * Makes it avaialable in clipboard, because user will expect it. */
         try {
             // Get the currently selected text from the window
             const selection = window.getSelection();
@@ -523,9 +457,8 @@
     }
 
     function copySelectedWord() {
-        /** MOSTLY this is just putting the subtitle word
-         * into the state var so i can push it to input field.
-         */
+        /** Puts the subtitle word into the state var so i can push it to input field.
+         * Copied into clipboard, because user will expect it. */
         try {
             // Get the currently selected text from the window
             const selection = window.getSelection();
@@ -538,11 +471,12 @@
             // where the \n or a whitespace really belogns. so it's: "if on separate subtitle, insert ' ' before join"
             navigator.clipboard.writeText(selectedText);
         } catch (error) {
-            console.error("Error in copySelectedSubtitle:", error);
+            console.error("Error in copySelectedWord:", error);
         }
     }
 
     function pushFieldMappingsUpdate(update: object) {
+        // TODO: Get rid of this, pretty sure it's not needed, CardBuilder <-> FieldMapper can talk
         console.log(update, "field mappings update");
     }
 
@@ -592,10 +526,6 @@
         }
     }
 
-    export function restoreUpdates() {
-        //
-    }
-
     async function resetAllHotkeys() {
         const hotkeysforreset = {
             screenshot: "Not set",
@@ -610,7 +540,9 @@
     }
 </script>
 
-<svelte:window on:keydown={handleKeyDown} />
+<svelte:window
+    on:keydown={(event) => executeActionIfHotkey(event, scrollContainerRef, registeredHotkeys, executeAction)}
+/>
 
 <!-- 424 components stay alive using :hidden -->
 <div class="main-content" class:hidden={showOptions}>

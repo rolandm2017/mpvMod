@@ -153,6 +153,7 @@ export class AnkiWriter {
             note.audio = [
                 {
                     filename: audioFilename,
+                    // https://www.perplexity.ai/search/helper-to-convert-basiccarddel-Sa6DvwnXRNGeLsppxaMVUw
                     data: cardData.audio.split(",")[1], // strip "data:...;base64,"
                     fields: ["sentence_audio"] // Put audio in sentence_audio field
                 }
@@ -164,6 +165,7 @@ export class AnkiWriter {
             note.picture = [
                 {
                     filename: imageFilename,
+                    // https://www.perplexity.ai/search/helper-to-convert-basiccarddel-Sa6DvwnXRNGeLsppxaMVUw
                     data: cardData.image.split(",")[1], // strip prefix
                     fields: ["image"] // Put image in image field
                 }

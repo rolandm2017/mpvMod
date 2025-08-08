@@ -1,4 +1,4 @@
-<!--     -->
+<!--  FieldMappingConfig.svelte   -->
 <script lang="ts">
     import { onMount } from "svelte";
     import FieldMappingItem from "./components/FieldMappingItem.svelte";
@@ -70,7 +70,7 @@
         }
 
         // Notify parent of changes
-        updateFieldMappings(service.getExportableState(newState));
+        // updateFieldMappings(service.getExportableState(newState));
     }
 
     // Debounced save to prevent excessive saves
