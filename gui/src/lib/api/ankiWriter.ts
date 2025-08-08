@@ -25,18 +25,21 @@ interface AnkiConnectNote {
         filename: string;
         skipHash?: string;
         fields: string[];
+        data?: string; // <-- add this
     }>;
     video?: Array<{
         url?: string;
         filename: string;
         skipHash?: string;
         fields: string[];
+        data?: string; // <-- add this
     }>;
     picture?: Array<{
         url?: string;
         filename: string;
         skipHash?: string;
         fields: string[];
+        data?: string; // <-- add this
     }>;
 }
 
@@ -92,6 +95,10 @@ export class AnkiWriter {
         fieldMappings: FieldMappings,
         noteTypeName: string = "Refold Sentence Miner: Sentence Hidden"
     ): AnkiConnectRequest {
+        function removeDataUrls(card: BasicCardDeliverable) {
+            const { image, audio, ...newObj } = card;
+            return newObj;
+        }
         const originalPayload = {
             // Map your data to the actual Anki field names
             Word: cardData.word,
@@ -122,13 +129,15 @@ export class AnkiWriter {
         if (fieldMappings.sentenceAudio && cardData.audio) {
             // [sound:filename.mp3]
             // for audio (Anki's sound syntax)
-            fieldsPayload[fieldMappings.sentenceAudio] = `[sound:${audioFilename}]`;
+            // fieldsPayload[fieldMappings.sentenceAudio] = `[sound:${audioFilename}]`;
         }
         if (fieldMappings.screenshot && cardData.image) {
             // <img src="filename.png">
             // for images (HTML img tag)
-            fieldsPayload[fieldMappings.screenshot] = `<img src="${imageFilename}">`;
+            // fieldsPayload[fieldMappings.screenshot] = `<img src="${imageFilename}">`;
         }
+        console.log(removeDataUrls(cardData), "cardData less dataUrls");
+        console.log(fieldsPayload, "fieldsPayload");
         const note: AnkiConnectNote = {
             deckName: DECK_NAME,
             modelName: noteTypeName,
@@ -144,7 +153,7 @@ export class AnkiWriter {
             note.audio = [
                 {
                     filename: audioFilename,
-                    url: cardData.audio,
+                    data: cardData.audio.split(",")[1], // strip "data:...;base64,"
                     fields: ["sentence_audio"] // Put audio in sentence_audio field
                 }
             ];
@@ -155,7 +164,7 @@ export class AnkiWriter {
             note.picture = [
                 {
                     filename: imageFilename,
-                    url: cardData.image,
+                    data: cardData.image.split(",")[1], // strip prefix
                     fields: ["image"] // Put image in image field
                 }
             ];
@@ -199,27 +208,11 @@ export class AnkiWriter {
             params: {
                 note: {
                     fields: fields,
-                    deckName: "FIXME",
-                    modelName: "FIXME"
+                    deckName: "TODO",
+                    modelName: "TODO"
                 }
             }
         };
         return await this.apiCall("/api/anki/update-card", payload);
     }
 }
-
-// Example usage:
-/*
-const ankiWriter = new AnkiWriter();
-
-const cardData: BasicCardDeliverable = {
-    targetDeck: "My Language Deck",
-    word: "perro",
-    exampleSentence: "El perro está corriendo en el parque",
-    nativeTranslation: "dog",
-    audio: "data:audio/mpeg;base64,//uQx...", // your audio dataURL
-    image: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA..." // your image dataURL
-};
-
-await ankiWriter.deliverCard(cardData, "My Custom Note Type");
-*/

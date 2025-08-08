@@ -34,7 +34,7 @@
     // FIXME: It's actually a fixme
 
     onMount(() => {
-        console.log(`F ffdfdf current deck: "${currentDeck}", debug`);
+        console.log(`Current deck: "${currentDeck}", debug`);
         // fetch("/api/anki/check-all")
         //     .then((response) => response.json())
         //     .then((data) => {
@@ -92,7 +92,7 @@
         };
         console.log("sending: ", removeDataUrls(deliverable));
         writer.deliverCard(deliverable, mappings).then((response) => {
-            console.log(response, "87ru");
+            console.log(response, "New card ID");
             const cardIdResponse = Number.isFinite(response);
             if (cardIdResponse) {
                 resetFields();
@@ -123,6 +123,7 @@
     function handleResetAllFieldsRequest() {
         if (confirm("Are you sure you want to clear all fields?")) {
             console.log("Clearing fields");
+            resetFields();
         }
     }
 

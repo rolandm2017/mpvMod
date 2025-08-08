@@ -481,23 +481,18 @@
 
     function handleCommandResponse(commandResponse: CommandResponse) {
         console.log("Command response:", commandResponse.command);
-
         switch (commandResponse.command) {
             case "take_screenshot":
                 if (commandResponse.success && commandResponse.file_path) {
-                    // screenshotDataUrl = commandResponse.file_path;
-
                     console.log("Screenshot saved!");
                 }
                 break;
-
             case "start_audio_clip":
                 if (commandResponse.success) {
                     isClipping = true;
                     console.log("Started audio clipping");
                 }
                 break;
-
             case "end_audio_clip":
                 isClipping = false;
                 if (commandResponse.success && commandResponse.file_path) {
@@ -510,8 +505,7 @@
 
     function copySelectedSubtitle() {
         /** MOSTLY this is just putting the subtitle text
-         * into the state var so i can push it to input field.
-         */
+         * into the state var so i can push it to input field. */
         try {
             // Get the currently selected text from the window
             const selection = window.getSelection();
