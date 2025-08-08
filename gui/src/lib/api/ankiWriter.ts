@@ -1,6 +1,6 @@
 // src/lib/ankiWriter.ts
 
-import type { BasicCardDeliverable } from "$lib/interfaces";
+import type { BasicCardDeliverable, FieldMappings } from "$lib/interfaces";
 import type { GetDecksResponse, GetFieldsResponse, GetNoteTypesResponse } from "$lib/responses.interface";
 
 const DECK_NAME = "customMPV"; // TEMP
@@ -25,18 +25,21 @@ interface AnkiConnectNote {
         filename: string;
         skipHash?: string;
         fields: string[];
+        data?: string; // <-- add this
     }>;
     video?: Array<{
         url?: string;
         filename: string;
         skipHash?: string;
         fields: string[];
+        data?: string; // <-- add this
     }>;
     picture?: Array<{
         url?: string;
         filename: string;
         skipHash?: string;
         fields: string[];
+        data?: string; // <-- add this
     }>;
 }
 
@@ -71,11 +74,12 @@ export class AnkiWriter {
         const response = await fetch(url, requestOptions);
 
         if (!response.ok) {
+            console.log("error caused by: ", body, params);
+            console.log(response);
             throw new Error(`API call failed: ${response.status} ${response.statusText}`);
         }
 
         const result = await response.json();
-        console.log(result, "Response.json, response.json");
 
         if (!result.success) {
             throw new Error(result.error || "Unknown API error");
@@ -87,22 +91,56 @@ export class AnkiWriter {
     // Helper to convert BasicCardDeliverable to AnkiConnect payload
     private createAnkiPayload(
         cardData: BasicCardDeliverable,
+        fieldMappings: FieldMappings,
         noteTypeName: string = "Refold Sentence Miner: Sentence Hidden"
     ): AnkiConnectRequest {
+        function removeDataUrls(card: BasicCardDeliverable) {
+            const { image, audio, ...newObj } = card;
+            return newObj;
+        }
+        const originalPayload = {
+            // Map your data to the actual Anki field names
+            Word: cardData.word,
+            "Definitions 1": cardData.nativeTranslation,
+            "Definitions 2": "", // Empty for now
+            "Example Sentence": cardData.exampleSentence,
+            "Sentence Translation": "", // Empty for now, or you could duplicate nativeTranslation
+            word_audio: "", // We'll handle this via audio array below
+            sentence_audio: "", // We'll handle this via audio array below
+            image: "" // We'll handle this via picture array below
+        };
+
+        const audioFilename = `sentence_audio_${Date.now()}.mp3`;
+        const imageFilename = `image_${Date.now()}.png`;
+
+        const fieldsPayload: Record<string, string> = {};
+
+        // Map each source field to its Anki field using the stored mappings
+        if (fieldMappings.targetWord && cardData.word) {
+            fieldsPayload[fieldMappings.targetWord] = cardData.word;
+        }
+        if (fieldMappings.exampleSentence && cardData.exampleSentence) {
+            fieldsPayload[fieldMappings.exampleSentence] = cardData.exampleSentence;
+        }
+        if (fieldMappings.nativeTranslation && cardData.nativeTranslation) {
+            fieldsPayload[fieldMappings.nativeTranslation] = cardData.nativeTranslation;
+        }
+        if (fieldMappings.sentenceAudio && cardData.audio) {
+            // [sound:filename.mp3]
+            // for audio (Anki's sound syntax)
+            // fieldsPayload[fieldMappings.sentenceAudio] = `[sound:${audioFilename}]`;
+        }
+        if (fieldMappings.screenshot && cardData.image) {
+            // <img src="filename.png">
+            // for images (HTML img tag)
+            // fieldsPayload[fieldMappings.screenshot] = `<img src="${imageFilename}">`;
+        }
+
+        console.log(fieldsPayload, "fieldsPayload");
         const note: AnkiConnectNote = {
             deckName: DECK_NAME,
             modelName: noteTypeName,
-            fields: {
-                // Map your data to the actual Anki field names
-                Word: cardData.word,
-                "Definitions 1": cardData.nativeTranslation,
-                "Definitions 2": "", // Empty for now
-                "Example Sentence": cardData.exampleSentence,
-                "Sentence Translation": "", // Empty for now, or you could duplicate nativeTranslation
-                word_audio: "", // We'll handle this via audio array below
-                sentence_audio: "", // We'll handle this via audio array below
-                image: "" // We'll handle this via picture array below
-            },
+            fields: fieldsPayload,
             tags: ["auto-generated"],
             options: {
                 allowDuplicate: false
@@ -113,8 +151,9 @@ export class AnkiWriter {
         if (cardData.audio) {
             note.audio = [
                 {
-                    filename: `sentence_audio_${Date.now()}.mp3`,
-                    url: cardData.audio,
+                    filename: audioFilename,
+                    // https://www.perplexity.ai/search/helper-to-convert-basiccarddel-Sa6DvwnXRNGeLsppxaMVUw
+                    data: cardData.audio.split(",")[1], // strip "data:...;base64,"
                     fields: ["sentence_audio"] // Put audio in sentence_audio field
                 }
             ];
@@ -124,8 +163,9 @@ export class AnkiWriter {
         if (cardData.image) {
             note.picture = [
                 {
-                    filename: `image_${Date.now()}.png`,
-                    url: cardData.image,
+                    filename: imageFilename,
+                    // https://www.perplexity.ai/search/helper-to-convert-basiccarddel-Sa6DvwnXRNGeLsppxaMVUw
+                    data: cardData.image.split(",")[1], // strip prefix
                     fields: ["image"] // Put image in image field
                 }
             ];
@@ -138,16 +178,27 @@ export class AnkiWriter {
         };
     }
 
-    async deliverCard(cardData: BasicCardDeliverable, noteTypeName?: string): Promise<number> {
-        const ankiPayload = this.createAnkiPayload(cardData, noteTypeName);
-        const result = await this.apiCall<AnkiConnectResponse<number>>("/api/anki/deliver-card", ankiPayload);
-        console.log(result, "Result result");
+    async deliverCard(
+        cardData: BasicCardDeliverable,
+        fieldMappings: FieldMappings,
+        noteTypeName?: string
+    ): Promise<number | string> {
+        try {
+            const ankiPayload = this.createAnkiPayload(cardData, fieldMappings, noteTypeName);
+            const result = await this.apiCall<AnkiConnectResponse<number>>("/api/anki/deliver-card", ankiPayload);
 
-        if (result.result === null) {
-            throw new Error(result.error || "Failed to create card");
+            if (result.result === null) {
+                throw new Error(result.error || "Failed to create card");
+            }
+
+            return result.result; // Returns the note ID
+        } catch (error) {
+            const err = error as Error;
+            if (err.message.startsWith("EMPTY_NOTE:")) {
+                return "EMPTY_NOTE_ERROR";
+            }
+            throw error;
         }
-
-        return result.result; // Returns the note ID
     }
 
     async updateCard(noteId: number, fields: Record<string, string>) {
@@ -157,27 +208,11 @@ export class AnkiWriter {
             params: {
                 note: {
                     fields: fields,
-                    deckName: "FIXME",
-                    modelName: "FIXME"
+                    deckName: "TODO",
+                    modelName: "TODO"
                 }
             }
         };
         return await this.apiCall("/api/anki/update-card", payload);
     }
 }
-
-// Example usage:
-/*
-const ankiWriter = new AnkiWriter();
-
-const cardData: BasicCardDeliverable = {
-    targetDeck: "My Language Deck",
-    word: "perro",
-    exampleSentence: "El perro está corriendo en el parque",
-    nativeTranslation: "dog",
-    audio: "data:audio/mpeg;base64,//uQx...", // your audio dataURL
-    image: "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAA..." // your image dataURL
-};
-
-await ankiWriter.deliverCard(cardData, "My Custom Note Type");
-*/

@@ -1,7 +1,9 @@
 <!-- CardBuilder.svelte -->
 <script lang="ts">
     import Wavesurfer from "./components/Wavesurfer.svelte";
+    import { get } from "svelte/store";
 
+    import { fieldMappingsStore } from "$lib/stores/fieldMappingStore";
     import InputField from "./components/InputField.svelte";
     import RecorderAwarenessControls from "./components/RecorderAwarenessControls.svelte";
     import { AnkiWriter } from "./api/ankiWriter";
@@ -24,24 +26,28 @@
         toggleOptions,
         registeredHotkeys,
         currentlyRecording,
+        clearTextFields,
         clearMp3andScreenshot
     } = $props();
 
+    // TODO: the text fields should come in from the parent, but, be reset by changing a card.
+    // FIXME: It's actually a fixme
+
     onMount(() => {
-        console.log(`F ffdfdf current deck: "${currentDeck}", debug`);
-        fetch("/api/anki/check-all")
-            .then((response) => response.json())
-            .then((data) => {
-                console.log("Available fields in your note type:");
-                console.log(data.fields?.fields || "No fields found");
+        console.log(`Current deck: "${currentDeck}", debug`);
+        // fetch("/api/anki/check-all")
+        //     .then((response) => response.json())
+        //     .then((data) => {
+        //         console.log("Available fields in your note type:");
+        //         console.log(data.fields?.fields || "No fields found");
 
-                console.log("\nField mapping suggestion:");
-                console.log(data.fields?.fieldMapping || "No mapping available");
+        //         console.log("\nField mapping suggestion:");
+        //         console.log(data.fields?.fieldMapping || "No mapping available");
 
-                console.log("\nCopy-paste ready fields:");
-                console.log(data.fields?.copyPasteReady || "Not available");
-            })
-            .catch((error) => console.error("Error:", error));
+        //         console.log("\nCopy-paste ready fields:");
+        //         console.log(data.fields?.copyPasteReady || "Not available");
+        //     })
+        //     .catch((error) => console.error("Error:", error));
     });
 
     // Watch for changes in screenshotDataUrl
@@ -75,9 +81,8 @@
     });
 
     function sendFinishedCardToAnki() {
-        // FIXME: TargetDeck is ""
-        // Add your export logic here
-        // TODO: Sends the card to Anki
+        // TODO: Make a "500 error: Is Anki Open?" error prompt
+        const mappings = get(fieldMappingsStore);
         const deliverable = {
             targetDeck: currentDeck,
             word: targetWordField,
@@ -87,13 +92,21 @@
             image: screenshotDataUrl
         };
         console.log("sending: ", removeDataUrls(deliverable));
-        writer.deliverCard(deliverable).then((response) => {
-            console.log(response, "87ru");
+        writer.deliverCard(deliverable, mappings).then((response) => {
+            console.log(response, "New card ID");
             const cardIdResponse = Number.isFinite(response);
             if (cardIdResponse) {
                 resetFields();
+            } else if (response === "EMPTY_NOTE_ERROR") {
+                // highlight empty fields
+                highlightMissingFields(deliverable);
             }
         });
+    }
+
+    function highlightMissingFields(deliverable: object) {
+        //
+        console.warn(deliverable, "needs highlighting");
     }
 
     function removeDataUrls(card: BasicCardDeliverable) {
@@ -102,15 +115,16 @@
     }
 
     function handleSearchSubtitles() {
-        // TODO: What on earth is this for?
+        // TODO: What on earth is this for? I like the idea of it anyway, "search subtitles"
+        // TODO: Maybe it's for when the user is lost
         // console.log('Searching for:', searchQuery);
         // Add your search logic here
     }
 
-    function handleClearSubtitles() {
-        if (confirm("Are you sure you want to clear all subtitles?")) {
-            console.log("Clearing subtitles");
-            // Add your clear logic here
+    function handleResetAllFieldsRequest() {
+        if (confirm("Are you sure you want to clear all fields?")) {
+            console.log("Clearing fields");
+            resetFields();
         }
     }
 
@@ -136,9 +150,10 @@
 
     function resetFields() {
         //
-        targetWordField = "";
-        exampleSentenceField = "";
-        nativeLangTranslation = "";
+        // targetWordField = "";
+        // exampleSentenceField = "";
+        nativeLangTranslation = ""; // is local to the page
+        clearTextFields();
         clearMp3andScreenshot();
     }
 </script>
@@ -245,7 +260,7 @@
 
         <div class="button-group">
             <button class="success-btn" onclick={sendFinishedCardToAnki}> Export Card </button>
-            <button class="danger-btn" onclick={handleClearSubtitles}> Clear All </button>
+            <button class="danger-btn" onclick={handleResetAllFieldsRequest}> Clear All </button>
             <!-- TODO: Show confirmation dialogue for "Clear all?" since it's destructive -->
         </div>
     </div>

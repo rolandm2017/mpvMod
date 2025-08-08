@@ -1,7 +1,9 @@
-<!-- FieldMappingConfig -->
+<!--  FieldMappingConfig.svelte   -->
 <script lang="ts">
     import { onMount } from "svelte";
     import FieldMappingItem from "./components/FieldMappingItem.svelte";
+
+    import { fieldMappingsStore, selectedDeckStore } from "$lib/stores/fieldMappingStore";
     import { AnkiClient } from "$lib/api/ankiClient";
     import {
         fieldMappingReducer,
@@ -21,6 +23,8 @@
 
     // Debounced save
     let saveTimeout: ReturnType<typeof setTimeout> | null = null;
+
+    // TODO: enable marking a field "required", or let Anki do it itself
 
     // Card Builder field definitions
     const cardBuilderFields: Array<{
@@ -66,7 +70,7 @@
         }
 
         // Notify parent of changes
-        updateFieldMappings(service.getExportableState(newState));
+        // updateFieldMappings(service.getExportableState(newState));
     }
 
     // Debounced save to prevent excessive saves
@@ -162,6 +166,8 @@
             fieldName: fieldName as keyof FieldMappings,
             ankiField
         });
+        fieldMappingsStore.update((m) => ({ ...m, [fieldName]: ankiField }));
+        debouncedSave();
     }
 
     function resetToDefaults() {

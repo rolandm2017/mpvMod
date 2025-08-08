@@ -2,6 +2,7 @@
 <script lang="ts">
     import { onMount, onDestroy, getContext } from "svelte";
 
+    import { initFieldMappings } from "$lib/stores/fieldMappingStore";
     import CardBuilder from "$lib/CardBuilder.svelte";
     import SubtitleSegment from "$lib/SubtitleSegment.svelte";
 
@@ -13,12 +14,23 @@
     import type { CommandResponse, HotkeyRegister, MPVStateData, ParsedSegmentObj } from "$lib/interfaces.js";
     import FieldMappingConfig from "$lib/FieldMappingConfig.svelte";
     import { parseSrtFileIntoSegments, prebuildLookupArrays } from "$lib/utils/parsing.js";
-    import { fail } from "@sveltejs/kit";
+    import { executeActionIfHotkey, segmentsArrsAreTheSame } from "$lib/utils/mainPageUtil.js";
 
     let { data } = $props();
 
-    //FIXME: src/routes/+page.svelte:20:8 `scrollContainer` is updated, but is not declared with `$state(...)`. Changing its value will not correctly trigger updates
-    let scrollContainer: HTMLDivElement;
+    // TODO: Feature: User clicks subtitle, they're taken to that timestamp in the video.
+    // Could be a specific btn to avoid misclicks, somewhat hidden or hard to misclick.
+    // TODO: A feature where, user can tikc a box that says, "start snipping a half sec before you pressed the btn"
+    //              -> Feature allows for user to be a little bit late pressing start.
+    // Could also have a button, "move start a bit earlier," as a different way to solve this problem.
+
+    /*
+     * Using a ref:
+     * Zero DOM queries after initial bind
+     * Zero re-renders of your 1000+ subtitles
+     * Stable reference that (allegedly) survives all state changes
+     */
+    let scrollContainer = $state<HTMLDivElement | null>(null);
 
     let showOptions = $state(false);
     let optionsPage: "hotkeyConfig" | "connectConfig" = $state("hotkeyConfig");
@@ -66,31 +78,34 @@
         return { database, tracker, segments: currentSegments };
     });
 
-    function segmentsArrsAreTheSame(segmentArrOne: ParsedSegmentObj[], segmentArrTwo: ParsedSegmentObj[]) {
-        if (segmentArrOne.length !== segmentArrTwo.length) {
-            console.warn("Segment arrays had differing lengths:", segmentArrOne.length, segmentArrTwo.length);
-            return false;
-        }
-        for (let i = 0; i < segmentArrOne.length; i++) {
-            if (segmentArrOne[i].timecode != segmentArrTwo[i].timecode) {
-                return false;
-            }
-        }
-        return true;
-    }
+    // Right after your state declarations, add:
+    let scrollContainerInstanceId = 0;
 
+    // Add this effect to monitor the scrollContainer
     $effect(() => {
-        console.log("scrollContainer changed:", scrollContainer);
         if (scrollContainer) {
-            console.log("Container exists, id:", scrollContainer.id || "no-id");
-            // Add a marker to track if it's the same element
-            scrollContainer.dataset.instanceId = Date.now().toString();
+            scrollContainerInstanceId++;
+            const id = scrollContainerInstanceId;
+            console.log(`✅ ScrollContainer - CREATED (instance #${id})`, scrollContainer);
+
+            // Watch for removal
+            const observer = new MutationObserver(() => {
+                if (!document.body.contains(scrollContainer)) {
+                    console.error(`💀 ScrollContainer REMOVED from DOM (instance #${id})`);
+                    console.trace("Container removed at:");
+                }
+            });
+            observer.observe(document.body, { childList: true, subtree: true });
+
+            return () => {
+                console.warn(`🔄 ScrollContainer EFFECT CLEANUP (instance #${id})`);
+                observer.disconnect();
+            };
         } else {
-            console.log("Container is null!");
+            console.warn("⚠️ ScrollContainer is NULL in effect");
         }
     });
 
-    // Then use these in your component:
     $effect(() => {
         const setup = dbSetup;
         if (setup) {
@@ -107,17 +122,19 @@
         }
     });
 
-    let currentHighlightedElement: HTMLDivElement | null = null;
+    // FIXME: Should be $state
+    // let currentHighlightedElement = $state(HtmlDivElement | null)
+    let currentHighlightedElement: HTMLDivElement | null = $state(null);
     let currentHighlightedTimecode = "";
 
-    let content = "";
-    let playerPosition = 0;
-    let formattedTime = "";
+    // let content = "";
+    let playerPosition = $state(0);
+    // let formattedTime = "";
 
-    let lastScrollTime = 0;
+    let lastScrollTime = $state(0);
 
     // scrollToLocation(heightForSub);
-    let allSegmentsMounted = false;
+    let allSegmentsMounted = $state(false); // Used for debug
 
     let registeredHotkeys: HotkeyRegister = $state({
         screenshot: "loading",
@@ -156,10 +173,40 @@
     // TODO: On load app, Ask the backend, "Hey are you there? If so is any media loaded?"
     // so app can "just know" if the SRT is already up and running
 
+    let continueLogging = $state(true);
+
+    let prevThing = null;
+
+    let myGiantAwfulObject = {};
+
+    $effect(() => {
+        console.log(playerPosition, "200ru");
+        if (continueLogging) {
+            // console.log(scrollContainerRef, "!!!!");
+            myGiantAwfulObject = {
+                continueLogging,
+                selectedSubtitleText,
+                selectedTargetWordText,
+                showOptions,
+                segmentsLength: segments.length,
+                screenshotDataUrl,
+                mp3DataUrl,
+                scrollContainer,
+                // ... all your vars
+                timestamp: Date.now()
+                // stack: new Error().stack
+            };
+            showRefState("$effect");
+        }
+    });
+
+    let stop = $state(false);
+
     onMount(() => {
         (window as any).playerPositionDevTool = playerPositionDevTool;
         (window as any).timecodeDevTool = timecodeDevTool;
         (window as any).resetHotkeys = resetAllHotkeys;
+        (window as any).showRefState = showRefState;
 
         // TODO: Change from h ardocded subtitle file,
         // Change to "GEt subtitle from MPV, load actual patH"
@@ -174,6 +221,8 @@
             window.allSegmentsMounted = false;
             window.testInteger = 99;
         }
+
+        initFieldMappings(); // not instant
 
         loadHotkeysIntoRegister();
 
@@ -206,7 +255,6 @@
                 }
                 // 100 ms to ready all listeners
             }, 100);
-            console.log("Running onMPVstate");
             window.electronAPI.onMPVState((mpvState) => {
                 // content :  "⏱️  0:13.6 / 22:35.7 (1.0%)"
                 // formatted_duration :  "22:35.7"
@@ -214,25 +262,32 @@
                 // progress :  1
                 // time_pos :  13.555
                 // timestamp :  1753652691.9598007
-                content = mpvState.content;
+                // content = mpvState.content;
                 playerPosition = mpvState.time_pos;
-                formattedTime = mpvState.formatted_time;
+                // formattedTime = mpvState.formatted_time;
 
                 // Auto-scroll to current position (throttled)
                 const now = Date.now();
                 // const enabledUpdates = failCount < 3;
                 const autoscrollUpdateMinimumDelay = 500;
+
                 if (now - lastScrollTime > autoscrollUpdateMinimumDelay) {
-                    try {
-                        // Throttle to every 500ms
+                    if (stop) {
+                        console.log("Logging stopped by 'stop'");
+                        return;
+                    }
+                    // FIXME: 3rd time's the charm
+                    if (!scrollContainer) {
+                        continueLogging = false;
+                        stop = true;
+                        pauseForDebugging();
+                    }
+
+                    if (scrollContainer && db && db.subtitleCuePointsInSec && continueLogging) {
                         highlightPlayerPositionSegment(playerPosition);
                         scrollToClosestSubtitle(playerPosition, db, scrollContainer);
-
                         lastScrollTime = now;
-                    } catch (e) {
-                        console.log(`Fail in setting player position with failCount "${failCount}"`);
-                        console.log(e);
-                        failCount += 1;
+                        failCount = 0;
                     }
                 }
 
@@ -317,12 +372,10 @@
     }
 
     function toggleOptions() {
-        //
         showOptions = !showOptions;
     }
 
     function switchPageType() {
-        // switches them
         if (optionsPage === "hotkeyConfig") {
             optionsPage = "connectConfig";
         } else {
@@ -338,58 +391,6 @@
             copyWord: config.copyWord || "loading"
         };
         registeredHotkeys = update;
-    }
-
-    function handleKeyDown(e: KeyboardEvent) {
-        // Check if there's an active text selection within the subtitle content area
-        const selection = window.getSelection();
-        let isInSubtitleContent = false;
-
-        if (selection && selection.rangeCount > 0) {
-            const range = selection.getRangeAt(0);
-            const commonAncestor = range.commonAncestorContainer;
-
-            // Check if the selection's common ancestor is within our subtitle container
-            const ancestorElement =
-                commonAncestor.nodeType === Node.TEXT_NODE
-                    ? commonAncestor.parentElement
-                    : (commonAncestor as HTMLElement);
-
-            isInSubtitleContent = scrollContainer?.contains(ancestorElement) || false;
-        }
-
-        // Fallback: check if the event target is within subtitle content
-        if (!isInSubtitleContent) {
-            const target = e.target as HTMLElement;
-            isInSubtitleContent = scrollContainer?.contains(target) || false;
-        }
-
-        // Only proceed if we're in the subtitle content area
-        if (!isInSubtitleContent) {
-            return;
-        }
-
-        // Build hotkey string
-        const parts: string[] = [];
-        if (e.ctrlKey) parts.push("Ctrl");
-        if (e.shiftKey) parts.push("Shift");
-        if (e.altKey) parts.push("Alt");
-        if (e.metaKey) parts.push("Cmd");
-
-        let key = e.key;
-        if (key === " ") key = "Space";
-        else if (key.length === 1) key = key.toUpperCase();
-
-        parts.push(key);
-
-        const hotkeyString = parts.join(" + ");
-
-        // Check if this matches a registered hotkey
-        const action = Object.entries(registeredHotkeys).find(([k, v]) => v === hotkeyString)?.[0];
-        if (action) {
-            e.preventDefault();
-            executeAction(action);
-        }
     }
 
     let currentlyRecording = $state(false);
@@ -419,23 +420,18 @@
 
     function handleCommandResponse(commandResponse: CommandResponse) {
         console.log("Command response:", commandResponse.command);
-
         switch (commandResponse.command) {
             case "take_screenshot":
                 if (commandResponse.success && commandResponse.file_path) {
-                    // screenshotDataUrl = commandResponse.file_path;
-
                     console.log("Screenshot saved!");
                 }
                 break;
-
             case "start_audio_clip":
                 if (commandResponse.success) {
                     isClipping = true;
                     console.log("Started audio clipping");
                 }
                 break;
-
             case "end_audio_clip":
                 isClipping = false;
                 if (commandResponse.success && commandResponse.file_path) {
@@ -447,9 +443,8 @@
     }
 
     function copySelectedSubtitle() {
-        /** MOSTLY this is just putting the subtitle text
-         * into the state var so i can push it to input field.
-         */
+        /** Puts the subtitle text * into the state var so i can push it to input field.
+         * Makes it avaialable in clipboard, because user will expect it. */
         try {
             // Get the currently selected text from the window
             const selection = window.getSelection();
@@ -467,9 +462,8 @@
     }
 
     function copySelectedWord() {
-        /** MOSTLY this is just putting the subtitle word
-         * into the state var so i can push it to input field.
-         */
+        /** Puts the subtitle word into the state var so i can push it to input field.
+         * Copied into clipboard, because user will expect it. */
         try {
             // Get the currently selected text from the window
             const selection = window.getSelection();
@@ -482,11 +476,12 @@
             // where the \n or a whitespace really belogns. so it's: "if on separate subtitle, insert ' ' before join"
             navigator.clipboard.writeText(selectedText);
         } catch (error) {
-            console.error("Error in copySelectedSubtitle:", error);
+            console.error("Error in copySelectedWord:", error);
         }
     }
 
     function pushFieldMappingsUpdate(update: object) {
+        // TODO: Get rid of this, pretty sure it's not needed, CardBuilder <-> FieldMapper can talk
         console.log(update, "field mappings update");
     }
 
@@ -496,24 +491,75 @@
         currentDeck = newDeckName;
     }
 
+    function resetGatheredText() {
+        // Remember that Native Translation is local to the page
+        selectedTargetWordText = "";
+        selectedSubtitleText = "";
+    }
+
     function clearMp3andScreenshot() {
         // used to reset when done a card
         screenshotDataUrl = "";
         // TODO: DO users prefer an empty clip? dead silence
         mp3DataUrl = defaultClipData;
+
+        // Check immediately after
+        setTimeout(() => {
+            if (!scrollContainer) {
+                console.warn("scrollContainer after clear (timeout):", scrollContainer);
+                continueLogging = false;
+                stop = true;
+                // Try to recover it
+                // const recovered = document.querySelector('[data-testid="scroll-container"]');
+                // console.log("Attempted recovery:", recovered);
+                // if (recovered) {
+                //     scrollContainerRef.element = recovered as HTMLDivElement;
+                //     console.log("✅ Recovered scrollContainer reference");
+                // }
+            }
+        }, 0);
     }
 
     export function playerPositionDevTool(playerPosition: PlayerPosition) {
-        scrollToClosestSubtitle(playerPosition, db, scrollContainer);
+        if (scrollContainer) {
+            scrollToClosestSubtitle(playerPosition, db, scrollContainer);
+        }
     }
     export function timecodeDevTool(timecode: TimecodeString) {
-        // tiumecode to player position
-        const height = db.getHeightFromTimecode(timecode);
-        scrollToLocation(height, scrollContainer);
+        if (scrollContainer) {
+            // tiumecode to player position
+            const height = db.getHeightFromTimecode(timecode);
+            scrollToLocation(height, scrollContainer);
+        }
     }
 
-    export function restoreUpdates() {
-        //
+    function pauseForDebugging() {
+        console.error(`❌ FIRST FAILURE - No scrollContainer at playerPosition: ${playerPosition}`);
+
+        // Log complete state before halting
+        console.log("\n\n=== COMPLETE STATE DUMP ===");
+        console.log("scrollContainerRef:", scrollContainer);
+        console.log("showOptions:", showOptions);
+        console.log("segments.length:", segments.length);
+        console.log("DOM element exists?", document.querySelector('[data-testid="scroll-container"]'));
+        console.log("myGiantAwfulObject:", myGiantAwfulObject);
+        console.log("+++ ++ + End state dump + ++ ++");
+
+        // Check if element was removed from DOM
+        const elementInDOM = document.querySelector('[data-testid="scroll-container"]');
+        if (elementInDOM) {
+            console.log("Element exists in DOM but ref is null - binding issue");
+        } else {
+            console.log("Element completely removed from DOM");
+        }
+    }
+
+    export function showRefState(src?: string) {
+        if (src) {
+            console.log(myGiantAwfulObject, "from showRefState in " + src);
+        } else {
+            console.log(myGiantAwfulObject, "from showRefState in devtools");
+        }
     }
 
     async function resetAllHotkeys() {
@@ -530,7 +576,9 @@
     }
 </script>
 
-<svelte:window on:keydown={handleKeyDown} />
+<svelte:window
+    on:keydown={(event) => executeActionIfHotkey(event, scrollContainer, registeredHotkeys, executeAction)}
+/>
 
 <!-- 424 components stay alive using :hidden -->
 <div class="main-content" class:hidden={showOptions}>
@@ -566,6 +614,7 @@
             {registeredHotkeys}
             {showOptions}
             {toggleOptions}
+            clearTextFields={resetGatheredText}
             {clearMp3andScreenshot}
         />
     </div>

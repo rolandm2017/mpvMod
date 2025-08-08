@@ -38,6 +38,14 @@ const store = new Store({
 console.log("PATH:");
 console.log(store.path);
 
+function printInfo(messageText) {
+    console.log(`\x1b[93mINFO:\x1b[0m ${messageText}`);
+}
+
+function printAction(messageText) {
+    console.log(`\x1b[92mACTION:\x1b[0m ${messageText}`);
+}
+
 function createWindow() {
     const primaryDisplay = screen.getPrimaryDisplay();
 
@@ -108,6 +116,7 @@ function connectMPV() {
 
                         // Convert immediately:
                         loadImageAsDataURL(fullScreenshotPath).then((dataURL) => {
+                            printAction("Sending screenshot 📸 data URL: " + dataURL.slice(0, 40));
                             mainWindow.webContents.send("screenshot-ready", dataURL);
                         });
                     }
@@ -118,6 +127,7 @@ function connectMPV() {
 
                         // Convert immediately:
                         loadAudioAsDataURL(fullMp3Path).then((dataURL) => {
+                            printAction("Sending audio 🎧 data URL: " + dataURL.slice(0, 40));
                             mainWindow.webContents.send("audio-ready", dataURL);
                         });
                     }
@@ -138,7 +148,7 @@ function connectMPV() {
                     const srtContent = readFileSync(srtFilePath, "utf8");
                     mainWindow.webContents.send("srt-content", srtContent);
                 } else {
-                    console.log("Uncaught type:", message.type, message.command);
+                    console.log("Uncaught type:", message);
                     // mainWindow.webContents.send("mpv-state", message);
                 }
             }
@@ -294,7 +304,7 @@ async function loadDefaultSilenceAudio() {
 
                 if (mainWindow && !mainWindow.isDestroyed()) {
                     mainWindow.webContents.send("default-audio-ready", audioDataURL);
-                    console.log("Default silence audio sent to renderer from alt path");
+                    printInfo("Default silence audio sent to renderer from alt path");
                 }
                 return;
             } catch (altAccessError) {
