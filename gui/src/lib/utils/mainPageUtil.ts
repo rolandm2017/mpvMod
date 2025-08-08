@@ -6,10 +6,13 @@ import type { HotkeyRegister, ParsedSegmentObj } from "$lib/interfaces";
  */
 export function executeActionIfHotkey(
     e: KeyboardEvent,
-    scrollContainerRef: { element: HTMLDivElement | null },
+    scrollContainerRef: HTMLDivElement | null,
     registeredHotkeys: HotkeyRegister,
     executeAction: Function
 ) {
+    if (!scrollContainerRef) {
+        throw new Error("Scroll container was null in executeAction");
+    }
     // Check if there's an active text selection within the subtitle content area
     const selection = window.getSelection();
     let isInSubtitleContent = false;
@@ -22,13 +25,13 @@ export function executeActionIfHotkey(
         const ancestorElement =
             commonAncestor.nodeType === Node.TEXT_NODE ? commonAncestor.parentElement : (commonAncestor as HTMLElement);
 
-        isInSubtitleContent = scrollContainerRef.element?.contains(ancestorElement) || false;
+        isInSubtitleContent = scrollContainerRef.contains(ancestorElement) || false;
     }
 
     // Fallback: check if the event target is within subtitle content
     if (!isInSubtitleContent) {
         const target = e.target as HTMLElement;
-        isInSubtitleContent = scrollContainerRef.element?.contains(target) || false;
+        isInSubtitleContent = scrollContainerRef.contains(target) || false;
     }
 
     // Only proceed if we're in the subtitle content area

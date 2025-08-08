@@ -28,9 +28,9 @@
      * Using a ref:
      * Zero DOM queries after initial bind
      * Zero re-renders of your 1000+ subtitles
-     * Stable reference that survives all state changes
+     * Stable reference that (allegedly) survives all state changes
      */
-    const scrollContainerRef = { element: null as HTMLDivElement | null };
+    let scrollContainer = $state<HTMLDivElement | null>(null);
 
     let showOptions = $state(false);
     let optionsPage: "hotkeyConfig" | "connectConfig" = $state("hotkeyConfig");
@@ -83,17 +83,14 @@
 
     // Add this effect to monitor the scrollContainer
     $effect(() => {
-        if (scrollContainerRef.element) {
+        if (scrollContainer) {
             scrollContainerInstanceId++;
             const id = scrollContainerInstanceId;
-            console.log(`✅ ScrollContainer CREATED (instance #${id})`, scrollContainerRef.element);
-
-            // Mark this instance
-            scrollContainerRef.element.dataset.instanceId = id.toString();
+            console.log(`✅ ScrollContainer - CREATED (instance #${id})`, scrollContainer);
 
             // Watch for removal
             const observer = new MutationObserver(() => {
-                if (!document.body.contains(scrollContainerRef.element)) {
+                if (!document.body.contains(scrollContainer)) {
                     console.error(`💀 ScrollContainer REMOVED from DOM (instance #${id})`);
                     console.trace("Container removed at:");
                 }
@@ -109,24 +106,6 @@
         }
     });
 
-    // Also add debugging to track what triggers the null state
-    $effect(() => {
-        console.log("showOptions changed to:", showOptions);
-    });
-
-    $effect(() => {
-        console.log("segments array changed, length:", segments.length);
-    });
-
-    $effect(() => {
-        console.log("screenshotDataUrl changed:", screenshotDataUrl ? "has data" : "empty");
-    });
-
-    $effect(() => {
-        console.log("mp3DataUrl changed:", mp3DataUrl ? "has data" : "empty");
-    });
-
-    // Then use these in your component:
     $effect(() => {
         const setup = dbSetup;
         if (setup) {
@@ -196,12 +175,14 @@
 
     let continueLogging = $state(true);
 
+    let prevThing = null;
+
     let myGiantAwfulObject = {};
 
     $effect(() => {
         console.log(playerPosition, "200ru");
         if (continueLogging) {
-            console.log(scrollContainerRef, "!!!!");
+            // console.log(scrollContainerRef, "!!!!");
             myGiantAwfulObject = {
                 continueLogging,
                 selectedSubtitleText,
@@ -210,7 +191,7 @@
                 segmentsLength: segments.length,
                 screenshotDataUrl,
                 mp3DataUrl,
-                veryImportantVar: scrollContainerRef,
+                scrollContainer,
                 // ... all your vars
                 timestamp: Date.now()
                 // stack: new Error().stack
@@ -218,6 +199,8 @@
             showRefState("$effect");
         }
     });
+
+    let stop = $state(false);
 
     onMount(() => {
         (window as any).playerPositionDevTool = playerPositionDevTool;
@@ -287,48 +270,24 @@
                 const now = Date.now();
                 // const enabledUpdates = failCount < 3;
                 const autoscrollUpdateMinimumDelay = 500;
-                let stop = false;
+
                 if (now - lastScrollTime > autoscrollUpdateMinimumDelay) {
                     if (stop) {
+                        console.log("Logging stopped by 'stop'");
                         return;
                     }
                     // FIXME: 3rd time's the charm
-                    try {
-                        if (!scrollContainerRef.element) {
-                            // console.error(`❌ No scrollContainer at playerPosition: ${playerPosition}`);
-                            continueLogging = false;
-                            stop = true;
-                            throw new Error(`❌ No scrollContainer at playerPosition: ${playerPosition}`);
-
-                            // Try to recover
-
-                            // throw new Error("Stopping to inspect");
-                            // const element = document.querySelector('[data-testid="scroll-container"]');
-                            // if (element) {
-                            //     scrollContainerRef.element = element as HTMLDivElement;
-                            // } else {
-                            //     console.log("Element not in DOM at all!");
-                            // }
-                        }
-
-                        if (scrollContainerRef.element && db && db.subtitleCuePointsInSec && continueLogging) {
-                            highlightPlayerPositionSegment(playerPosition);
-                            scrollToClosestSubtitle(playerPosition, db, scrollContainerRef.element);
-                            lastScrollTime = now;
-                            failCount = 0;
-                        }
-                    } catch (e) {
-                        const err = e as Error;
-                        console.log(`Fail in setting player position with failCount "${failCount}"`);
-                        console.log(`Error 288: ${err.message} with playerPosition: ${playerPosition}`);
-                        console.log("=======");
-                        showRefState();
-                        console.log("=======");
-
-                        failCount += 1;
-                        stop = true; // enable inspecting
+                    if (!scrollContainer) {
                         continueLogging = false;
-                        throw err;
+                        stop = true;
+                        pauseForDebugging();
+                    }
+
+                    if (scrollContainer && db && db.subtitleCuePointsInSec && continueLogging) {
+                        highlightPlayerPositionSegment(playerPosition);
+                        scrollToClosestSubtitle(playerPosition, db, scrollContainer);
+                        lastScrollTime = now;
+                        failCount = 0;
                     }
                 }
 
@@ -546,9 +505,10 @@
 
         // Check immediately after
         setTimeout(() => {
-            if (!scrollContainerRef.element) {
-                console.warn("scrollContainer after clear (timeout):", scrollContainerRef.element);
+            if (!scrollContainer) {
+                console.warn("scrollContainer after clear (timeout):", scrollContainer);
                 continueLogging = false;
+                stop = true;
                 // Try to recover it
                 // const recovered = document.querySelector('[data-testid="scroll-container"]');
                 // console.log("Attempted recovery:", recovered);
@@ -561,15 +521,36 @@
     }
 
     export function playerPositionDevTool(playerPosition: PlayerPosition) {
-        if (scrollContainerRef.element) {
-            scrollToClosestSubtitle(playerPosition, db, scrollContainerRef.element);
+        if (scrollContainer) {
+            scrollToClosestSubtitle(playerPosition, db, scrollContainer);
         }
     }
     export function timecodeDevTool(timecode: TimecodeString) {
-        if (scrollContainerRef.element) {
+        if (scrollContainer) {
             // tiumecode to player position
             const height = db.getHeightFromTimecode(timecode);
-            scrollToLocation(height, scrollContainerRef.element);
+            scrollToLocation(height, scrollContainer);
+        }
+    }
+
+    function pauseForDebugging() {
+        console.error(`❌ FIRST FAILURE - No scrollContainer at playerPosition: ${playerPosition}`);
+
+        // Log complete state before halting
+        console.log("\n\n=== COMPLETE STATE DUMP ===");
+        console.log("scrollContainerRef:", scrollContainer);
+        console.log("showOptions:", showOptions);
+        console.log("segments.length:", segments.length);
+        console.log("DOM element exists?", document.querySelector('[data-testid="scroll-container"]'));
+        console.log("myGiantAwfulObject:", myGiantAwfulObject);
+        console.log("+++ ++ + End state dump + ++ ++");
+
+        // Check if element was removed from DOM
+        const elementInDOM = document.querySelector('[data-testid="scroll-container"]');
+        if (elementInDOM) {
+            console.log("Element exists in DOM but ref is null - binding issue");
+        } else {
+            console.log("Element completely removed from DOM");
         }
     }
 
@@ -596,7 +577,7 @@
 </script>
 
 <svelte:window
-    on:keydown={(event) => executeActionIfHotkey(event, scrollContainerRef, registeredHotkeys, executeAction)}
+    on:keydown={(event) => executeActionIfHotkey(event, scrollContainer, registeredHotkeys, executeAction)}
 />
 
 <!-- 424 components stay alive using :hidden -->
@@ -604,7 +585,7 @@
     <div class="container">
         <div class="subtitle-panel">
             <div class="subtitle-header">Subtitles</div>
-            <div class="subtitle-content" data-testid="scroll-container" bind:this={scrollContainerRef.element}>
+            <div class="subtitle-content" data-testid="scroll-container" bind:this={scrollContainer}>
                 {#if segments.length > 0}
                     <!-- the "(segment.timecode)" acts like a React UUID key thing,
                         if the state within the page changes, and a 

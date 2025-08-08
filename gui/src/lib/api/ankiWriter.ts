@@ -135,7 +135,7 @@ export class AnkiWriter {
             // for images (HTML img tag)
             // fieldsPayload[fieldMappings.screenshot] = `<img src="${imageFilename}">`;
         }
-        console.log(removeDataUrls(cardData), "cardData less dataUrls");
+
         console.log(fieldsPayload, "fieldsPayload");
         const note: AnkiConnectNote = {
             deckName: DECK_NAME,
@@ -186,7 +186,6 @@ export class AnkiWriter {
         try {
             const ankiPayload = this.createAnkiPayload(cardData, fieldMappings, noteTypeName);
             const result = await this.apiCall<AnkiConnectResponse<number>>("/api/anki/deliver-card", ankiPayload);
-            console.log(result, "Result result");
 
             if (result.result === null) {
                 throw new Error(result.error || "Failed to create card");

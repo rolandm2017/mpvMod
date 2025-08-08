@@ -81,6 +81,7 @@
     });
 
     function sendFinishedCardToAnki() {
+        // TODO: Make a "500 error: Is Anki Open?" error prompt
         const mappings = get(fieldMappingsStore);
         const deliverable = {
             targetDeck: currentDeck,

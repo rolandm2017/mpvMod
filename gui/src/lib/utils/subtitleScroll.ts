@@ -74,8 +74,9 @@ export function scrollToClosestSubtitle(
      * @param subtitleCuePointsArr - an arr of all subtitle's start times
      */
     if (!scrollContainer) {
-        // console.log(scrollContainer);
-        throw new Error(`Scroll Container was null with playerPosition: ${playerPosition}`);
+        console.warn("Container is null, queuing scroll operation");
+        // Maybe queue this for when container is available
+        return;
     }
     // PLAYER POSITION -> ??? ->
     // ?? -> SubtitleTiming
