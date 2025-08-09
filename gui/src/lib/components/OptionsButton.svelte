@@ -1,16 +1,21 @@
 <script lang="ts">
-    let showOptions = $state<boolean>(false);
-
-    function toggleOptions(): void {
-        showOptions = !showOptions;
-    }
+    let { showOptions, toggleOptions } = $props();
 </script>
 
-<button id="options-btn" class="primary-btn mt-2.5 mr-1.5" onclick={toggleOptions}>
+<button id="options-btn" class="primary-btn" onclick={toggleOptions}>
     {showOptions ? "Back" : "Options"}
 </button>
 
 <style>
+    button {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
     /* .primary-btn {
         background: #0077cc;
         color: white;

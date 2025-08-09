@@ -9,6 +9,7 @@
     import { AnkiWriter } from "./api/ankiWriter";
     import type { BasicCardDeliverable } from "./interfaces";
     import { onMount } from "svelte";
+    import OptionsButton from "./components/OptionsButton.svelte";
 
     // Props - data passed in from parent
     let {
@@ -191,9 +192,10 @@
                     <span class="hotkey-hint">audio: {registeredHotkeys.audioClip}</span>
                 </div>
                 <div class="mt-2.5 mr-1.5">
-                    <button class="primary-btn" onclick={() => toggleOptions()}>
+                    <!-- <button class="primary-btn" onclick={() => toggleOptions()}>
                         {showOptions ? "Back" : "Options"}
-                    </button>
+                    </button> -->
+                    <OptionsButton {showOptions} toggleOptions={() => toggleOptions()} />
                 </div>
             </div>
         </div>

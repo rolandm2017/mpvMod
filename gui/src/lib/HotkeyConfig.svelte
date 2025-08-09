@@ -4,6 +4,7 @@
     import type { HotkeyRegister } from "./interfaces";
     import HotkeyItem from "./components/HotkeyItem.svelte";
     import FormattedHotkeys from "./components/FormattedHotkeys.svelte";
+    import OptionsButton from "./components/OptionsButton.svelte";
 
     let { showOptions, toggleOptions, updateMainPageHotkeys, switchPageType } = $props();
 
@@ -166,9 +167,10 @@
                     <button class="secondary-btn" onclick={switchPageType}> Field Mappings </button>
                 </div>
                 <div>
-                    <button class="primary-btn" onclick={toggleOptions}>
+                    <!-- <button class="primary-btn" onclick={toggleOptions}>
                         {showOptions ? "Back" : "Options"}
-                    </button>
+                    </button> -->
+                    <OptionsButton {showOptions} toggleOptions={() => toggleOptions()} />
                 </div>
             </div>
         </div>

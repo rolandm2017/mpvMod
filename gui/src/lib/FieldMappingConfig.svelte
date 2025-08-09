@@ -12,6 +12,7 @@
         type StateAction,
         type FieldMappings
     } from "./utils/reducer";
+    import OptionsButton from "./components/OptionsButton.svelte";
 
     let { showOptions, toggleOptions, switchPageType, updateFieldMappings, changeDeckInCardBuiler } = $props();
 
@@ -194,9 +195,10 @@
                 {state.isLoading ? "Loading..." : "Refresh"}
             </button>
             <button class="secondary-btn" onclick={switchPageType}>Hotkey Config</button>
-            <button class="primary-btn" onclick={toggleOptions}>
+            <!-- <button class="primary-btn" onclick={toggleOptions}>
                 {showOptions ? "Back" : "Options"}
-            </button>
+            </button> -->
+            <OptionsButton {showOptions} toggleOptions={() => toggleOptions()} />
         </div>
     </div>
 

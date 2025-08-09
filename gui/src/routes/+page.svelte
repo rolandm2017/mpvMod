@@ -24,6 +24,9 @@
     //              -> Feature allows for user to be a little bit late pressing start.
     // Could also have a button, "move start a bit earlier," as a different way to solve this problem.
 
+    // TODO: IMPORTANT: The program MUST overtly state to the user, "ANKI IS NOT RUNNING" if it isn't running.
+    // Anki is REQUIRED to be running for this progrram to work. AnkiConnect must be there.
+
     /*
      * Using a ref:
      * Zero DOM queries after initial bind
