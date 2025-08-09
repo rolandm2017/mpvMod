@@ -6,6 +6,7 @@
     import type { Region } from "wavesurfer.js/dist/plugins/regions.js";
 
     import { MP3PlayerState } from "$lib/utils/mp3PlayerState";
+    import TimeControl from "./TimeControl.svelte";
 
     /**
      * 1. Avoid re-initializing wavesurfer on every prop change
@@ -364,44 +365,46 @@
         <span>Length: {convertToTimeString(fullFileEndTime)}</span>
     </div>
 </div>
-<div class="time-row flex-row push-items-top sml-space-below">
-    <div class="time-group half-container-fill">
-        <div class="adjust-label-container center-container">
-            <h4 class="push-items-top">Start Time</h4>
+<div class="flex-row push-items-top sml-space-below">
+    <div class="flex-row push-items-top sml-space-below flex-half-container little-padding-top">
+        <div class="time-group half-container-fill">
+            <div class="time-display">
+                <span>Start:</span>
+                <button
+                    class="btn-compact btn-nudge"
+                    class:disabled-text={!canNudgeStartBackwards}
+                    onclick={() => nudgeStart(-0.5)}>←</button
+                >
+                <span class="time-value">{msTimeString(regionStart)}</span>
+                <button class="btn-compact btn-nudge" onclick={() => nudgeStart(0.5)}>→</button>
+            </div>
         </div>
-        <div class="time-display">
-            <button class="nudge-btn" class:disabled-text={!canNudgeStartBackwards} onclick={() => nudgeStart(-0.5)}
-                >←</button
-            >
-            <span class="time-value">{msTimeString(regionStart)}</span>
-            <!-- // TODO: disable if nudge fwd puts it ahead of end brace -->
-            <button class="nudge-btn" onclick={() => nudgeStart(0.5)}>→</button>
-        </div>
-    </div>
 
-    <div class="time-group half-container-fill">
-        <div class="adjust-label-container center-container">
-            <h4 class="push-items-top">End Time</h4>
-        </div>
-        <div class="time-display">
-            <button class="nudge-btn" onclick={() => nudgeEnd(-0.5)}>←</button>
-            <span class="time-value">{msTimeString(regionEnd)}</span>
-            <button class="nudge-btn" class:disabled-text={!canNudgeEndBraceForwards} onclick={() => nudgeEnd(0.5)}
-                >→</button
-            >
+        <div class="time-group half-container-fill">
+            <div class="time-display">
+                <span>End:</span>
+                <button class="btn-compact btn-nudge" onclick={() => nudgeEnd(-0.5)}>←</button>
+                <span class="time-value">{msTimeString(regionEnd)}</span>
+                <button
+                    class="btn-compact btn-nudge"
+                    class:disabled-text={!canNudgeEndBraceForwards}
+                    onclick={() => nudgeEnd(0.5)}>→</button
+                >
+            </div>
         </div>
     </div>
 </div>
 
-<!-- // TODO: separate these play btns , if region playing, only region changes, -->
-<!-- // if main plays, only main changes, Region deosn't change -->
 <div>
-    <button class="play-btn sml-space-below" onclick={togglePlayPause}>
-        {isPlaying ? "⏸️ Pause" : "▶️ Play Audio"}
-    </button>
-    <button class="play-btn sml-space-below" onclick={playPauseInRegion}>
-        {isRegionPlaying ? "⏸️ Pause" : "▶️ Play Region"}
-    </button>
+    <div class="btn-group">
+        <button class="btn-compact btn-primary">
+            <span class="icon">{isPlaying ? "⏸ Pause" : "▶ Play Clip"}</span>
+            <!-- {isPlaying ? "⏸️ Pause" : "▶️ Play Audio"} -->
+        </button>
+        <button class="btn-compact btn-secondary">
+            <span class="icon">{isRegionPlaying ? "⏸ Pause" : "▶ Play Region"}</span>
+        </button>
+    </div>
 </div>
 
 <style>
@@ -418,10 +421,19 @@
     }
     .half-container-fill {
         width: 50%;
+        /* flex: 1 0 0; */
     }
 
     .push-items-top {
         margin-top: 0;
+    }
+
+    .flex-half-container {
+        flex: 1 0 0;
+    }
+
+    .little-padding-top {
+        padding-top: 6px;
     }
 
     .push-items-right {
@@ -459,26 +471,116 @@
             0 2px 4px -1px rgba(0, 0, 0, 0.06);
     }
 
-    .play-btn {
-        background-color: #4caf50;
-        color: white;
-        border: none;
-        margin-right: 8px;
-        padding: 8px 20px;
-        border-radius: 4px;
-        cursor: pointer;
-        font-size: 16px;
-    }
-
-    .play-btn:hover {
-        background-color: #45a049;
-    }
-
     .flex-row {
         display: flex;
     }
 
     .disabled-text {
         color: #999;
+    }
+    /* h2 {
+        margin-top: 0;
+        color: #333;
+        font-size: 18px;
+    }
+
+    h3 {
+        color: #666;
+        font-size: 14px;
+        margin-top: 20px;
+    } */
+
+    /* Compact button base */
+    .btn-compact {
+        /* padding: 5px 12px;  was a bit too small*/
+        padding: 6px 14px;
+        font-size: 13px;
+        border-radius: 4px;
+        border: 1px solid;
+        cursor: pointer;
+        font-weight: 500;
+        transition: all 0.15s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        min-height: 28px;
+    }
+
+    /* Primary action - for Play/Pause */
+    .btn-primary {
+        background: #4caf50;
+        border-color: #4caf50;
+        color: white;
+    }
+
+    .btn-primary:hover {
+        background: #45a049;
+        border-color: #45a049;
+    }
+
+    /* Secondary action - for region play */
+    .btn-secondary {
+        background: white;
+        border-color: #999;
+        color: #333;
+    }
+
+    .btn-secondary:hover {
+        background: #f8f8f8;
+        border-color: #666;
+    }
+
+    @keyframes spin {
+        to {
+            transform: rotate(360deg);
+        }
+    }
+
+    /* Button group */
+    .btn-group {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        margin: 10px 0;
+    }
+
+    .divider {
+        width: 1px;
+        height: 20px;
+        background: #ddd;
+        margin: 0 4px;
+    }
+
+    /* Icon simulation */
+    .icon {
+        font-size: 12px;
+    }
+
+    .btn-nudge {
+        padding: 2px 8px;
+        font-size: 12px;
+        min-height: 24px;
+        background: white;
+        border-color: #ccc;
+        color: #666;
+    }
+
+    .btn-nudge:hover:not(:disabled) {
+        background: #f0f0f0;
+        border-color: #999;
+    }
+
+    .btn-nudge:disabled {
+        opacity: 0.3;
+        cursor: not-allowed;
+    }
+
+    .time-value {
+        font-family: "Courier New", monospace;
+        background: #efefef;
+        padding: 2px 6px;
+        border-radius: 3px;
+        min-width: 45px;
+        text-align: center;
     }
 </style>
