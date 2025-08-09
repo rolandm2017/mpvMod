@@ -191,7 +191,7 @@
                     <span class="hotkey-hint">audio: {registeredHotkeys.audioClip}</span>
                 </div>
                 <div class="mt-2.5 mr-1.5">
-                    <button id="options-btn" class="primary-btn" onclick={() => toggleOptions()}>
+                    <button class="primary-btn" onclick={() => toggleOptions()}>
                         {showOptions ? "Back" : "Options"}
                     </button>
                 </div>
@@ -299,9 +299,13 @@
 </div>
 
 <style>
-    /* Your styles here */
-
     button {
+        /* was just affecting the options btn, blue, top right */
+        /* was moved to .primary-btn */
+        /* min-width: 120px; */
+    }
+
+    .primary-btn {
         padding: 10px 20px;
         border: none;
         border-radius: 6px;
@@ -326,10 +330,6 @@
         font-size: 1em;
         font-weight: 600;
     }
-
-    /* #options-btn {
-        background-color: #c0ddff;
-    } */
 
     #header-buttons {
         display: flex;

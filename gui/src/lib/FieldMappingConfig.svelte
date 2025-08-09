@@ -277,6 +277,25 @@
 </div>
 
 <style>
+    /* Button styles */
+    button {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s ease;
+    }
+
+    button:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    button:active:not(:disabled) {
+        transform: translateY(0);
+    }
     .field-mapping-config {
         background: #2a2a2a;
         color: #e0e0e0;
@@ -429,26 +448,6 @@
     .status-indicator.connected {
         background: #28a745;
         box-shadow: 0 0 6px rgba(40, 167, 69, 0.6);
-    }
-
-    /* Button styles */
-    button {
-        padding: 10px 20px;
-        border: none;
-        border-radius: 6px;
-        font-size: 14px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: all 0.2s ease;
-    }
-
-    button:disabled {
-        opacity: 0.6;
-        cursor: not-allowed;
-    }
-
-    button:active:not(:disabled) {
-        transform: translateY(0);
     }
 
     /* Responsive design */

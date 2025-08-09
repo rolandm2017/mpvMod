@@ -412,13 +412,7 @@
         font-weight: 400;
         margin: 16px 0px 4px 0px;
     }
-    .adjust-label-container {
-        height: 30px;
-    }
-    .center-container {
-        display: flex;
-        align-items: center;
-    }
+
     .half-container-fill {
         width: 50%;
         /* flex: 1 0 0; */

@@ -188,8 +188,6 @@
         {/each}
     </div>
 
-    // TODO: Claude
-
     <!-- Recommended Hotkeys Section -->
     <FormattedHotkeys />
 
