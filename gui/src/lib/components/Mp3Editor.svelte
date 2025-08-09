@@ -373,22 +373,22 @@
                 <button
                     class="btn-compact btn-nudge"
                     class:disabled-text={!canNudgeStartBackwards}
-                    onclick={() => nudgeStart(-0.5)}>←</button
+                    onclick={() => nudgeStart(-0.5)}>&lt;</button
                 >
                 <span class="time-value">{msTimeString(regionStart)}</span>
-                <button class="btn-compact btn-nudge" onclick={() => nudgeStart(0.5)}>→</button>
+                <button class="btn-compact btn-nudge" onclick={() => nudgeStart(0.5)}>&gt;</button>
             </div>
         </div>
 
         <div class="time-group half-container-fill">
             <div class="time-display">
                 <span>End:</span>
-                <button class="btn-compact btn-nudge" onclick={() => nudgeEnd(-0.5)}>←</button>
+                <button class="btn-compact btn-nudge" onclick={() => nudgeEnd(-0.5)}>&lt;</button>
                 <span class="time-value">{msTimeString(regionEnd)}</span>
                 <button
                     class="btn-compact btn-nudge"
                     class:disabled-text={!canNudgeEndBraceForwards}
-                    onclick={() => nudgeEnd(0.5)}>→</button
+                    onclick={() => nudgeEnd(0.5)}>&gt;</button
                 >
             </div>
         </div>

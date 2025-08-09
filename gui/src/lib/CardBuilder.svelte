@@ -288,9 +288,11 @@
             </div>
         </div>
         <div class="mt-2">
-            <button class="btn-compact btn-nudge" onclick={() => nudgeFrame(-100)}>←</button>
+            <button class="btn-compact btn-nudge" onclick={() => nudgeFrame(-240)}>&lt;&lt;</button>
+            <button class="btn-compact btn-nudge" onclick={() => nudgeFrame(-80)}>&lt;</button>
             <span class="time-value">Frame</span>
-            <button class="btn-compact btn-nudge" onclick={() => nudgeFrame(100)}>→</button>
+            <button class="btn-compact btn-nudge" onclick={() => nudgeFrame(80)}>&gt;</button>
+            <button class="btn-compact btn-nudge" onclick={() => nudgeFrame(240)}>&gt;&gt;</button>
         </div>
     </div>
 
