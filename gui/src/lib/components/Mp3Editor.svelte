@@ -329,9 +329,6 @@
             end: regionEnd,
             sourceFile: "latest" // can only possibly be the latest one
         });
-
-        // You might want to show some UI feedback here
-        console.log("Snippet ready!");
     }
 
     function updateRegion(newStart: number, newEnd: number) {

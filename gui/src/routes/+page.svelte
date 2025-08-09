@@ -298,14 +298,15 @@
             // Handle screenshot data separately
             window.electronAPI.onScreenshotReady((dataUrl: string) => {
                 // FIXME: Console logged eight times, implying some code ran eight times upstream
-                console.log("in the +page.svelte screenshot api:", dataUrl.substring(0, 50) + "...");
+                console.log("[page] screenshot api:", dataUrl.substring(0, 50) + "...");
                 screenshotDataUrl = dataUrl; // Store the data URL
             });
             window.electronAPI.onAudioReady((dataUrl: string) => {
-                console.log("in the +page.svelte screenshot api:", dataUrl.substring(0, 50) + "...");
+                console.log("[page] audio api:", dataUrl.substring(0, 50) + "...");
                 mp3DataUrl = dataUrl; // Store the data URL
             });
             window.electronAPI.onSnippetReady((dataUrl: string) => {
+                console.log("[page] snippet api: ", dataUrl.substring(0, 50) + "...");
                 snippetDataUrl = dataUrl;
             });
             window.electronAPI.forwardSubtitleInfo((rawSrtContent: string) => {

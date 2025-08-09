@@ -42,6 +42,15 @@ class ScreenshotStateError(Exception):
    """
    pass
 
+class SnippetStateError(Exception):
+    """
+    Raised when the user asks for mp3 -> snippet creation, but the program alleges that
+    the start or end time of the clip do not exist.
+    
+    This error indicates that a functionality depended on a prior function properly
+    occurring, which apparently had a fault.
+    """
+
 def get_absolute_path(player) -> str | None:
     """Get absolute path of currently playing file."""
     path = player.path
@@ -669,6 +678,14 @@ class MPVWebSocketServer:
         
         clip_end_time = self.get_player_time_pos()
         
+        print("IS NONE?", clip_end_time)
+        print("IS NONE?", clip_end_time)
+        print("IS NONE?", clip_end_time)
+        print("IS NONE?", clip_end_time)
+        print("IS NONE?", clip_end_time)
+        print("IS NONE?", clip_end_time)
+        print("IS NONE?", clip_end_time)
+        
         self.clip_end_time = clip_end_time  # Store so snipping can use it later
         
         # Type check and validate both times are numeric
@@ -753,8 +770,6 @@ class MPVWebSocketServer:
             
             threading.Thread(target=run_ffmpeg, daemon=True).start()
             
-            # Reset clip start time
-            self.clip_start_time = None
             return str(clip_path)
             
         except Exception as e:
@@ -786,6 +801,9 @@ class MPVWebSocketServer:
                 "start": self.clip_start_time,
                 "end": self.clip_end_time
             }
+            
+            if self.clip_start_time is None or self.clip_end_time is None:
+                raise SnippetStateError("Asking for a snippet from a clip; hence, the clip's start & end must exist")
             
             # ### Use definition to determine snippet start, end.
             # This will be like, (14.3 + 3.3, 14.3 + 6.1)
@@ -854,6 +872,8 @@ class MPVWebSocketServer:
             return str(snippet_path)
         
         except Exception as e:
+            print(e)
+            print(definition)
             self.broadcast_message("error", f"❌ Grabbing snippet failed: {e}")
             return None
     
