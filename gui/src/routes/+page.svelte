@@ -580,7 +580,7 @@
 
 <!-- 424 components stay alive using :hidden -->
 <div class="main-content" class:hidden={showOptions}>
-    <div class="container">
+    <div class="scroll-container">
         <div class="subtitle-panel">
             <div class="subtitle-header">Subtitles</div>
             <div class="subtitle-content" data-testid="scroll-container" bind:this={scrollContainer}>
@@ -633,7 +633,7 @@
 </div>
 
 <style>
-    .container {
+    .scroll-container {
         display: flex;
         height: 100vh;
         font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
