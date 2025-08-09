@@ -234,7 +234,15 @@ ipcMain.handle("end-audio-clip", () => {
 ipcMain.handle("create-or-update-snippet", (event, definition) => {
     sendMPVCommand({
         command: "create_or_update_snippet",
-        reason: "User updated the boundaries",
+        reason: "Nudge frame",
+        definition
+    });
+});
+
+ipcMain.handle("nudge-screenshot", (event, definition) => {
+    sendMPVCommand({
+        command: "nudge_screenshot",
+        reason: "User's timing wasn't perfect",
         definition
     });
 });

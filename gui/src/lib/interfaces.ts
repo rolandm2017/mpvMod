@@ -36,6 +36,7 @@ export interface ElectronAPI {
     concludeAudioClip: () => Promise<boolean>;
     // cut out a subsection of the mp3
     requestSnippet: (boundaries: SnippetRequest) => void;
+    nudgeScreenshot: (timeChange: ScreenshotNudgeRequest) => void;
     getMPVStatus: () => Promise<boolean>;
     sendMPVCommand: (command: object) => Promise<boolean>;
 
@@ -61,6 +62,10 @@ export interface SnippetRequest {
     start: number;
     end: number;
     sourceFile: "latest";
+}
+
+export interface ScreenshotNudgeRequest {
+    changeInMilliseconds: number;
 }
 
 export interface HotkeyRegister {

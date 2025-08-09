@@ -181,7 +181,7 @@
     let myGiantAwfulObject = {};
 
     $effect(() => {
-        console.log(playerPosition, "200ru");
+        console.log(playerPosition, continueLogging, "200ru");
         if (continueLogging) {
             // console.log(scrollContainerRef, "!!!!");
             myGiantAwfulObject = {
@@ -208,6 +208,7 @@
         (window as any).timecodeDevTool = timecodeDevTool;
         (window as any).resetHotkeys = resetAllHotkeys;
         (window as any).showRefState = showRefState;
+        (window as any).playSnippet = playSnippet;
 
         // TODO: Change from h ardocded subtitle file,
         // Change to "GEt subtitle from MPV, load actual patH"
@@ -222,6 +223,8 @@
             window.allSegmentsMounted = false;
             window.testInteger = 99;
         }
+
+        // Expose to window for dev tools
 
         initFieldMappings(); // not instant
 
@@ -269,16 +272,16 @@
                 const autoscrollUpdateMinimumDelay = 500;
 
                 if (now - lastScrollTime > autoscrollUpdateMinimumDelay) {
-                    if (stop || continueLogging == false) {
-                        console.log("Logging stopped by 'stop'");
-                        return;
-                    }
-                    // FIXME: 3rd time's the charm
-                    if (!scrollContainer) {
-                        continueLogging = false;
-                        stop = true;
-                        pauseForDebugging();
-                    }
+                    // if (stop || continueLogging == false) {
+                    //     console.log("Logging stopped by 'stop'");
+                    //     return;
+                    // }
+                    // // FIXME: 3rd time's the charm
+                    // if (!scrollContainer) {
+                    //     continueLogging = false;
+                    //     stop = true;
+                    //     pauseForDebugging();
+                    // }
 
                     if (scrollContainer && db && db.subtitleCuePointsInSec && continueLogging) {
                         highlightPlayerPositionSegment(playerPosition);
@@ -531,6 +534,15 @@
             // tiumecode to player position
             const height = db.getHeightFromTimecode(timecode);
             scrollToLocation(height, scrollContainer);
+        }
+    }
+
+    function playSnippet() {
+        if (snippetDataUrl) {
+            const audio = new Audio(snippetDataUrl);
+            audio.play().catch((e) => console.error("Audio play failed:", e));
+        } else {
+            console.log("No snippet data available");
         }
     }
 

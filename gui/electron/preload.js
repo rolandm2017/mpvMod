@@ -26,7 +26,8 @@ contextBridge.exposeInMainWorld("electronAPI", {
     takeScreenshot: () => ipcRenderer.invoke("take-screenshot"),
     startAudioClip: () => ipcRenderer.invoke("start-audio-clip"),
     concludeAudioClip: () => ipcRenderer.invoke("end-audio-clip"),
-    requestSnippet: () => ipcRenderer.invoke("create-or-update-snippet"),
+    requestSnippet: (boundaries) => ipcRenderer.invoke("create-or-update-snippet", boundaries),
+    nudgeScreenshot: (definition) => ipcRenderer.invoke("nudge-screenshot", definition),
     //
     getMPVStatus: () => ipcRenderer.invoke("get-mpv-status"),
 

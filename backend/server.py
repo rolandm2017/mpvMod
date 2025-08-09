@@ -33,6 +33,15 @@ from urllib.parse import urlparse
 # TODO: User presses "Start record", actually snipe a time ~2,000ms before they hit it
 # TODO: And the setting should be togglable.
 
+class ScreenshotStateError(Exception):
+   """
+   Raised when screenshot-related state is in an unexpected or invalid condition.
+   
+   This typically indicates a programming error where screenshot functionality
+   is being used before proper initialization or in an incorrect sequence.
+   """
+   pass
+
 def get_absolute_path(player) -> str | None:
     """Get absolute path of currently playing file."""
     path = player.path
@@ -322,7 +331,7 @@ class MPVWebSocketServer:
             
         @self.player.event_callback('seek')
         def on_seek(event):
-            time_pos = self.get_time_pos()
+            time_pos = self.get_player_time_pos()
             if time_pos is not None:
                 message = f"⏩ Seeked to {self.format_time(time_pos)}"
                 # TODO: Broadcast timestamp update immediately
@@ -363,7 +372,7 @@ class MPVWebSocketServer:
             self.player_active = False
             self.stop_monitoring()
     
-    def get_time_pos(self) -> Optional[float]:
+    def get_player_time_pos(self) -> Optional[float]:
         """Get current time position"""
         try:
             if not self.player_active:
@@ -415,6 +424,9 @@ class MPVWebSocketServer:
         minutes = int(seconds // 60)
         secs = seconds % 60
         return f"{minutes}:{secs:04.1f}"
+    
+    def format_millisec_to_seconds(self, millisec):
+        return millisec / 1000
     
     def get_SRT_file(self):
         """Get SRT file path or detect embedded subtitles - returns absolute path or status"""
@@ -517,8 +529,10 @@ class MPVWebSocketServer:
             
             # Generate filename with timestamp
             timestamp = int(time.time())
-            current_time = self.get_time_pos()
+            current_time = self.get_player_time_pos()
             time_str = self.format_time(current_time).replace(":", "-") if current_time else "unknown"
+            
+            self.latest_screenshot_time = current_time
             
             screenshot_path = screenshots_dir / f"screenshot_{timestamp}_{time_str}.png"
             
@@ -531,6 +545,101 @@ class MPVWebSocketServer:
             self.broadcast_message("error", f"❌ Screenshot failed: {e}")
             return None
         
+    def update_time_for_next_nudge(self, new_latest_time):
+        self.latest_screenshot_time = new_latest_time
+        
+        
+    def use_ffmpeg_to_screenshot_at_timestamp(self, time_change_in_ms):
+        """Take screenshot at specific timestamp using FFmpeg (no seeking in MPV)"""
+        try:
+            if not self.current_file_path:
+                self.broadcast_message("error", "❌ No file loaded")
+                return None
+            
+            if not self.latest_screenshot_time:
+                raise ScreenshotStateError("User can't be updating the screenshot if it hasn't been set yet")
+            
+            screenshots_dir = Path("screenshots")
+            screenshots_dir.mkdir(exist_ok=True)
+            
+            # ### Get the time the latest screenshot was taken at, make file name
+            
+            file_timestamp = self.latest_screenshot_time
+            time_change_in_sec = self.format_millisec_to_seconds(time_change_in_ms)
+            time_str = self.format_time(time_change_in_sec).replace(":", "-")
+            screenshot_path = screenshots_dir / f"nudged_{file_timestamp}_{time_str}.png"                       
+            
+            # ### Calculate the new time
+            updated_screenshot_timestamp_in_sec = self.latest_screenshot_time + time_change_in_sec
+            self.update_time_for_next_nudge(updated_screenshot_timestamp_in_sec)
+                    
+            # ### Get the new screenshot            
+            # FFmpeg command for fast screenshot
+            print(f"From '{self.latest_screenshot_time}' to '{updated_screenshot_timestamp_in_sec}', times changed")
+            cmd = [
+                'ffmpeg',
+                # -ss: Seek to timestamp (in seconds) before opening the file - makes it faster
+                '-ss', str(updated_screenshot_timestamp_in_sec),
+                # -i: Input file path
+                '-i', str(self.original_file_path),
+                # Extract exactly 1 video frame (not continuous capture)
+                '-frames:v', '1',
+                # Video quality: 2 = high quality (scale 1-31, lower = better)
+                '-q:v', '2',
+                '-y',
+                str(screenshot_path)
+            ]
+            
+            result = subprocess.run(cmd, capture_output=True, text=True)
+            
+            if result.returncode == 0:
+                return str(screenshot_path)
+            else:
+                self.broadcast_message("error", f"❌ FFmpeg error: {result.stderr}")
+                return None
+                
+        except Exception as e:
+            print(e)
+            self.broadcast_message("error", f"❌ Screenshot failed: {e}")
+            return None
+        
+    # def update_screenshot(self, time_change_in_ms):
+    #     """Take a screenshot of current frame"""
+    #     try:
+    #         if not self.player_active or not self.current_file_path:
+    #             self.broadcast_message("error", "❌ No file loaded for screenshot")
+    #             return None
+            
+    #         # Create screenshots directory if it doesn't exist
+    #         screenshots_dir = Path("screenshots")
+    #         screenshots_dir.mkdir(exist_ok=True)
+            
+    #         latest_file = None
+    #         files = list(screenshots_dir.glob("*"))
+    #         if files:
+    #             latest_file = sorted(files, key=lambda f: f.stat().st_mtime)[-1]
+                
+    #         if not latest_file:
+    #             raise FileNotFoundError("Asking for a snippet from an mp3 that should exist, but doesn't")
+            
+ 
+            
+             
+    #         # Generate filename with timestamp
+    #         timestamp = int(time.time())
+    #         current_time = self.get_player_time_pos()
+    #         time_str = self.format_time(current_time).replace(":", "-") if current_time else "unknown"
+            
+    #         screenshot_path = screenshots_dir / f"screenshot_{timestamp}_{time_str}.png"
+            
+    #         # Use MPV's screenshot command
+    #         self.player.screenshot_to_file(str(screenshot_path), "video")
+            
+    #         return str(screenshot_path)
+            
+    #     except Exception as e:
+    #         self.broadcast_message("error", f"❌ Screenshot failed: {e}")
+    #         return None
  
     
     def start_audio_clip(self):
@@ -542,7 +651,7 @@ class MPVWebSocketServer:
             self.broadcast_message("error", "❌ No file loaded for audio clipping")
             return False
         
-        self.clip_start_time = self.get_time_pos()
+        self.clip_start_time = self.get_player_time_pos()
         if self.clip_start_time is not None:
             self.broadcast_message("info", f"🎵 Audio clip start marked at {self.format_time(self.clip_start_time)}")
             return True
@@ -558,7 +667,7 @@ class MPVWebSocketServer:
                 self.broadcast_message("error", "❌ No clip start time marked")
             return None
         
-        clip_end_time = self.get_time_pos()
+        clip_end_time = self.get_player_time_pos()
         
         self.clip_end_time = clip_end_time  # Store so snipping can use it later
         
@@ -782,6 +891,19 @@ class MPVWebSocketServer:
             elif command == "create_or_update_snippet":
                 snippet_boundaries = command_data.get("definition")
                 self.create_snippet(snippet_boundaries)
+                
+            elif command == "nudge_screenshot":
+                time_change_in_ms = command_data.get("definition")["changeInMilliseconds"]
+                updated_screenshot_path = self.use_ffmpeg_to_screenshot_at_timestamp(time_change_in_ms)
+                response = {
+                    "command": "take_screenshot",
+                    "success": updated_screenshot_path is not None,
+                    "file_path": updated_screenshot_path
+                }
+                self.broadcast_message("command_response", 
+                    f"📸 Screenshot updated: {Path(updated_screenshot_path).name}" if updated_screenshot_path else "❌ Screenshot upddate failed",
+                    response
+                )
             
             elif command == "register_hotkeys":
                 hotkeys = command_data.get("hotkeys")
@@ -802,7 +924,7 @@ class MPVWebSocketServer:
                     "command": "get_status",
                     "player_active": self.player_active,
                     "filename": self.get_filename(),
-                    "time_pos": self.get_time_pos(),
+                    "time_pos": self.get_player_time_pos(),
                     "duration": self.get_duration(),
                     "paused": self.is_paused(),
                     "clip_start_time": self.clip_start_time,
@@ -819,6 +941,8 @@ class MPVWebSocketServer:
                 })
                 
         except Exception as e:
+            print("Error caused by order: ", command_data)
+            print(e)
             self.broadcast_message("error", f"❌ Command error: {e}")
     
     def broadcast_message(self, msg_type, content, extra_data=None):
@@ -872,7 +996,7 @@ class MPVWebSocketServer:
                     time.sleep(self.poll_interval)
                     continue
                 
-                time_pos = self.get_time_pos()
+                time_pos = self.get_player_time_pos()
                 
                 if time_pos is not None:
                     duration = self.get_duration()

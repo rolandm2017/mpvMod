@@ -87,6 +87,9 @@
 
     function nudgeFrame(valueInMilliseconds: number) {
         console.log(`Requesting the frame from ${valueInMilliseconds} millisec back`);
+        window.electronAPI.nudgeScreenshot({
+            changeInMilliseconds: valueInMilliseconds
+        });
     }
 
     function sendFinishedCardToAnki() {
