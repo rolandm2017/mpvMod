@@ -397,22 +397,17 @@
 
 <div>
     <div class="btn-group">
-        <button class="btn-compact btn-primary">
+        <button class="btn-compact btn-primary" onclick={togglePlayPause}>
             <span class="icon">{isPlaying ? "⏸ Pause" : "▶ Play Clip"}</span>
             <!-- {isPlaying ? "⏸️ Pause" : "▶️ Play Audio"} -->
         </button>
-        <button class="btn-compact btn-secondary">
+        <button class="btn-compact btn-secondary" onclick={playPauseInRegion}>
             <span class="icon">{isRegionPlaying ? "⏸ Pause" : "▶ Play Region"}</span>
         </button>
     </div>
 </div>
 
 <style>
-    h4 {
-        font-weight: 400;
-        margin: 16px 0px 4px 0px;
-    }
-
     .half-container-fill {
         width: 50%;
         /* flex: 1 0 0; */
