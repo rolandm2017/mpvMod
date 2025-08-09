@@ -1,13 +1,14 @@
 import { sveltekit } from "@sveltejs/kit/vite";
 import { defineConfig } from "vite";
 import { svelte } from "@sveltejs/vite-plugin-svelte";
+import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 
 // vite.config.js
 
 //FIXME: Should integration project use sveltekit? just "plugins: [sveltekit()]"
 export default defineConfig({
-    plugins: [sveltekit()],
+    plugins: [sveltekit(), tailwindcss()],
     server: {
         port: 8766 // AnkiConnect is 8765, so chose 8766 for theme.
     },

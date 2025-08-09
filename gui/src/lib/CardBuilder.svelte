@@ -300,6 +300,12 @@
             <!-- TODO: Show confirmation dialogue for "Clear all?" since it's destructive -->
         </div>
     </div>
+
+    <div class="flex justify-between items-center p-8 bg-gray-50 rounded-lg">
+        <div class="w-20 h-20 bg-rose-200 rounded-lg"></div>
+        <div class="w-20 h-20 bg-emerald-200 rounded-lg"></div>
+        <div class="w-20 h-20 bg-sky-200 rounded-lg"></div>
+    </div>
 </div>
 
 <style>
