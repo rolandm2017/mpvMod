@@ -57,12 +57,7 @@
     .h-3 {
         height: 12px;
     }
-    .w-4 {
-        width: 14px;
-    }
-    .h-4 {
-        height: 14px;
-    }
+
     .min-h-\[24px\] {
         min-height: 24px;
     }

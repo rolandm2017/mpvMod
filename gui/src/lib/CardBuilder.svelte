@@ -283,7 +283,7 @@
                     <!-- // FIXME: LIKE what do they need a large hitbox for? It's put in by the hotkey. -->
                     <img class="take-full-container" src={screenshotDataUrl} alt="MPV screenshot for Anki flashcard" />
                 {:else}
-                    <div class="image-placeholder"><h4>Image</h4></div>
+                    <div class="image-placeholder"><h4>Waiting for image</h4></div>
                 {/if}
             </div>
         </div>
@@ -399,7 +399,7 @@
 
     .image-target-container {
         height: 170px;
-        width: 400px;
+        width: 340px;
         border: 4px solid grey;
         border-radius: 8px;
         display: block;
@@ -536,16 +536,6 @@
         display: flex;
         gap: 10px;
         flex-wrap: wrap;
-    }
-
-    .shutdown-btn {
-        background: #6c757d;
-        color: white;
-    }
-
-    .shutdown-btn:hover {
-        background: #545b62;
-        transform: translateY(-1px);
     }
 
     .success-btn {
