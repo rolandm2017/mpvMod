@@ -159,6 +159,8 @@
         clearTextFields();
         clearMp3andScreenshot();
     }
+
+    let wordDefinition = $state("");
 </script>
 
 <div class="control-panel">
@@ -192,7 +194,19 @@
         <!-- <h3>Text fields</h3> -->
         <div class="input-group">
             <!-- // TODO: Need "Word" field, but also: Word translation -->
-            <InputField id="word-field" label="Word" bind:value={targetWordField} placeholder="Target word" />
+            <div class="flex-row">
+                <div class="even-spacing-flex padding-right">
+                    <InputField id="word-field" label="Word" bind:value={targetWordField} placeholder="Target word" />
+                </div>
+                <div class="even-spacing-flex">
+                    <InputField
+                        id="definition-one"
+                        label="Definition One"
+                        bind:value={wordDefinition}
+                        placeholder="Definition One"
+                    />
+                </div>
+            </div>
 
             <InputField
                 id="example-sentence"
@@ -353,6 +367,14 @@
     .flex-row {
         display: flex;
         justify-content: space-between;
+    }
+
+    .even-spacing-flex {
+        flex: 1 0 0;
+    }
+
+    .padding-right {
+        padding-right: 20px;
     }
 
     .image-target-container {
