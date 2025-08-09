@@ -182,7 +182,7 @@
         <div><h2 class="header-text">Card Builder</h2></div>
         <div>
             <div id="header-buttons">
-                <div class="hotkey-hints">
+                <div class="hotkey-hints flex flex-wrap gap-3 items-center">
                     <span class="hotkey-hint">img: {registeredHotkeys.screenshot}</span>
                     <span class="hotkey-hint">audio: {registeredHotkeys.audioClip}</span>
                 </div>
@@ -338,11 +338,12 @@
         align-items: center;
         margin-right: 8px;
         margin-top: 10px;
+        margin-left: 12px;
     }
 
     .hotkey-hint {
         font-size: 14px;
-        color: #666;
+        color: #444;
         background-color: #f0f0f0;
         padding: 2px 6px;
         border-radius: 3px;
