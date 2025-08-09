@@ -17,6 +17,11 @@ import mpv
 import os
 from urllib.parse import urlparse
 
+# NOTE: IMPORTANT: You absolutely MUST use Python-MPV to start hte MPV instance.
+# There is NO OTHER WAY to get it done. https://claude.ai/chat/7d4d05e6-068e-4a7b-9c82-549491ac4878
+# You cannot "take over" an existing MPV instance, hook into it, anything.
+# The MPV instance MUST be spawned by the Python server.
+
 # FIXME: Load a new file into MPV, subtitle track didn't change.
 # THink this is, "After the first initial load, it's broken"
 
@@ -470,6 +475,10 @@ class MPVWebSocketServer:
     
  
     def take_screenshot_from_mpv(self, *args):
+        """
+        Generate screenshot "from MPV," meaning, "the screenshot behavior is 
+        activated from within MPV. Not, "yeah it's a screenshot of MPV, nothin' special"
+        """
         # FIXME: MPV Hotkey fires Take Screenshot 2x, 2 sccreenshots are observed in Main
         print(" 🌙 screenshot from MPV hotkey")
         print(args)
@@ -682,7 +691,7 @@ class MPVWebSocketServer:
             # Use ffmpeg to extract audio clip
             duration = product_bounds["end"] - product_bounds["start"]
             
-    
+            # TODO: Make a function of this (occurs twice)
             command = [
                 "ffmpeg",
                 "-i", self.original_file_path, 

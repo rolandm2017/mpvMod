@@ -30,6 +30,8 @@ const BACKEND_DIR = path.join(__dirname, "../../backend"); // Adjust path as nee
 let mpvWS;
 let mainWindow;
 
+let latestAudioFile;
+
 const store = new Store({
     projectName: "customMpv-nodejs",
     name: "config" // This ensures it creates config.json specifically

@@ -84,6 +84,10 @@
         updateRecordingState();
     });
 
+    function nudgeFrame(valueInMilliseconds: number) {
+        console.log(`Requesting the frame from ${valueInMilliseconds} millisec back`);
+    }
+
     function sendFinishedCardToAnki() {
         // TODO: Make a "500 error: Is Anki Open?" error prompt
         const mappings = get(fieldMappingsStore);
@@ -179,24 +183,15 @@
 
 <div class="control-panel">
     <div class="panel-header flex-row">
-        <div><h2 class="header-text">Card Builder</h2></div>
+        <div><h2 id="header-text">Card Builder</h2></div>
         <div>
             <div id="header-buttons">
                 <div class="hotkey-hints flex flex-wrap gap-3 items-center">
                     <span class="hotkey-hint">img: {registeredHotkeys.screenshot}</span>
                     <span class="hotkey-hint">audio: {registeredHotkeys.audioClip}</span>
                 </div>
-                <!-- <div> -->
-                <!-- // TODO: make a reminder of the set hotkeys top right, right here. -->
-                <!-- <button class="hotkey-reminder-btn header-btns">img: F7</button> -->
-                <!-- </div> -->
-                <!-- // todo: make it responsive -->
-                <!-- <div> -->
-                <!-- // TODO: make a reminder of the set hotkeys top right, right here. -->
-                <!-- <button class="hotkey-reminder-btn header-btns">audio: F8</button> -->
-                <!-- </div> -->
-                <div>
-                    <button id="options-btn" class="primary-btn header-btns" onclick={() => toggleOptions()}>
+                <div class="mt-2.5 mr-1.5">
+                    <button id="options-btn" class="primary-btn" onclick={() => toggleOptions()}>
                         {showOptions ? "Back" : "Options"}
                     </button>
                 </div>
@@ -287,25 +282,20 @@
                 {/if}
             </div>
         </div>
+        <div class="mt-2">
+            <button class="btn-compact btn-nudge" onclick={() => nudgeFrame(-100)}>←</button>
+            <span class="time-value">Frame</span>
+            <button class="btn-compact btn-nudge" onclick={() => nudgeFrame(100)}>→</button>
+        </div>
     </div>
 
     <div class="control-section">
-        <!-- <h3>Finalize</h3> -->
-        <!-- //TODO: do i need to say it's the finalize section? They know -->
-        <!-- // TODO: Make the buttons about 25% shorter -->
-
         <div class="button-group">
             <button class="success-btn" onclick={sendFinishedCardToAnki}> Export Card </button>
             <button class="danger-btn" onclick={handleResetAllFieldsRequest}> Clear All </button>
             <!-- TODO: Show confirmation dialogue for "Clear all?" since it's destructive -->
         </div>
     </div>
-
-    <!-- <div class="flex justify-between items-center p-8 bg-gray-50 rounded-lg">
-        <div class="w-20 h-20 bg-rose-200 rounded-lg"></div>
-        <div class="w-20 h-20 bg-emerald-200 rounded-lg"></div>
-        <div class="w-20 h-20 bg-sky-200 rounded-lg"></div>
-    </div> -->
 </div>
 
 <style>
@@ -319,7 +309,22 @@
         font-weight: 500;
         cursor: pointer;
         transition: all 0.15s ease-in-out;
-        /* min-width: 120px; */
+    }
+
+    .control-section {
+        padding: 16px 20px 4px 20px;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .control-section:last-child {
+        border-bottom: none;
+    }
+
+    .control-section h3 {
+        margin: 0 0 15px 0;
+        color: #495057;
+        font-size: 1em;
+        font-weight: 600;
     }
 
     /* #options-btn {
@@ -379,11 +384,6 @@
         min-width: 50px;
         background-color: #d0edaf;
     } */
-
-    .header-btns {
-        margin-top: 10px;
-        margin-right: 6px;
-    }
 
     .flex-row {
         display: flex;
@@ -500,27 +500,11 @@
         font-size: 1.1em;
     }
 
-    .header-text {
+    #header-text {
         margin: 10px 0px 4px 0px;
         padding: 6px 12px;
         background-color: #eee5ed;
         font-size: 22px;
-    }
-
-    .control-section {
-        padding: 16px 20px 4px 20px;
-        border-bottom: 1px solid #dee2e6;
-    }
-
-    .control-section:last-child {
-        border-bottom: none;
-    }
-
-    .control-section h3 {
-        margin: 0 0 15px 0;
-        color: #495057;
-        font-size: 1em;
-        font-weight: 600;
     }
 
     /* Optional: Add hover effect for better UX */

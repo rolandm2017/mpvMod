@@ -490,22 +490,6 @@
         margin-top: 20px;
     } */
 
-    /* Compact button base */
-    .btn-compact {
-        /* padding: 5px 12px;  was a bit too small*/
-        padding: 6px 14px;
-        font-size: 13px;
-        border-radius: 4px;
-        border: 1px solid;
-        cursor: pointer;
-        font-weight: 500;
-        transition: all 0.15s ease;
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        min-height: 28px;
-    }
-
     /* Primary action - for Play/Pause */
     .btn-primary {
         background: #4caf50;
@@ -520,7 +504,7 @@
 
     /* Secondary action - for region play */
     .btn-secondary {
-        background: white;
+        background: #fefefe;
         border-color: #999;
         color: #333;
     }
@@ -544,35 +528,9 @@
         margin: 10px 0;
     }
 
-    .divider {
-        width: 1px;
-        height: 20px;
-        background: #ddd;
-        margin: 0 4px;
-    }
-
     /* Icon simulation */
     .icon {
         font-size: 12px;
-    }
-
-    .btn-nudge {
-        padding: 2px 8px;
-        font-size: 12px;
-        min-height: 24px;
-        background: white;
-        border-color: #ccc;
-        color: #666;
-    }
-
-    .btn-nudge:hover:not(:disabled) {
-        background: #f0f0f0;
-        border-color: #999;
-    }
-
-    .btn-nudge:disabled {
-        opacity: 0.3;
-        cursor: not-allowed;
     }
 
     .time-value {
