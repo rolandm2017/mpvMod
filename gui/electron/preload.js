@@ -26,13 +26,19 @@ contextBridge.exposeInMainWorld("electronAPI", {
     takeScreenshot: () => ipcRenderer.invoke("take-screenshot"),
     startAudioClip: () => ipcRenderer.invoke("start-audio-clip"),
     concludeAudioClip: () => ipcRenderer.invoke("end-audio-clip"),
+    requestSnippet: () => ipcRenderer.invoke("create-or-update-snippet"),
+    //
     getMPVStatus: () => ipcRenderer.invoke("get-mpv-status"),
 
+    // media goes out
     onScreenshotReady: (callback) => {
         ipcRenderer.on("screenshot-ready", (event, dataURL) => callback(dataURL));
     },
     onAudioReady: (callback) => {
         ipcRenderer.on("audio-ready", (event, dataURL) => callback(dataURL));
+    },
+    onSnippetReady: (callback) => {
+        ipcRenderer.on("snippet-ready", (event, dataURL) => callback(dataURL));
     },
 
     // file loaded, SRT ready, etc

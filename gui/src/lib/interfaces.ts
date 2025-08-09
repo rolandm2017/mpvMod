@@ -34,15 +34,18 @@ export interface ElectronAPI {
     takeScreenshot: () => Promise<boolean>;
     startAudioClip: () => Promise<boolean>;
     concludeAudioClip: () => Promise<boolean>;
+    // cut out a subsection of the mp3
+    requestSnippet: (boundaries: SnippetRequest) => void;
     getMPVStatus: () => Promise<boolean>;
     sendMPVCommand: (command: object) => Promise<boolean>;
 
-    // Add clipboard support
+    // Clipboard support
     copyToClipboard?: (text: string) => Promise<void>;
 
-    // Add screenshot listener
+    // Screenshot listener
     onScreenshotReady: (callback: (dataURL: string) => void) => void;
     onAudioReady: (callback: (dataURL: string) => void) => void;
+    onSnippetReady: (callback: (dataURL: string) => void) => void;
 
     // Load file, get SRT path, etc
     forwardSubtitleInfo: (callback: (srtFileContent: string) => void) => void;
@@ -52,6 +55,12 @@ export interface ElectronAPI {
     getCurrentlySavedDeck: () => Promise<string>;
     onDefaultAudio: (callback: (nullishMp3File: string) => void) => void;
     requestDefaultAudio: () => void;
+}
+
+export interface SnippetRequest {
+    start: number;
+    end: number;
+    sourceFile: "latest";
 }
 
 export interface HotkeyRegister {

@@ -124,11 +124,22 @@ function connectMPV() {
                     if (message.success && message.file_path) {
                         // Now you have the file_path from your Python server
                         const fullMp3Path = path.join(BACKEND_DIR, message.file_path);
+                        // Store it so, like, it can be accessed later for snippet creation.
+                        latestAudioFile = fullMp3Path;
 
                         // Convert immediately:
                         loadAudioAsDataURL(fullMp3Path).then((dataURL) => {
                             printAction("Sending audio 🎧 data URL: " + dataURL.slice(0, 40));
                             mainWindow.webContents.send("audio-ready", dataURL);
+                        });
+                    }
+                } else if (message.type === "command_response" && message.command === "new_snippet") {
+                    if (message.success && message.file_path) {
+                        const fullSnippetPath = path.join(BACKEND_DIR, message.file_path);
+                        // Convert immediately:
+                        loadAudioAsDataURL(fullSnippetPath).then((dataURL) => {
+                            printAction("Sending snippet 🔊 data URL: " + dataURL.slice(0, 40));
+                            mainWindow.webContents.send("snippet-ready", dataURL);
                         });
                     }
                 } else if (message.type === "request_hotkeys") {
@@ -216,6 +227,14 @@ ipcMain.handle("start-audio-clip", () => {
 
 ipcMain.handle("end-audio-clip", () => {
     return sendMPVCommand({ command: "end_audio_clip" });
+});
+
+ipcMain.handle("create-or-update-snippet", (event, definition) => {
+    sendMPVCommand({
+        command: "create_or_update_snippet",
+        reason: "User updated the boundaries",
+        definition
+    });
 });
 
 ipcMain.handle("get-mpv-status", () => {

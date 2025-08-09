@@ -122,7 +122,6 @@
         }
     });
 
-    // FIXME: Should be $state
     // let currentHighlightedElement = $state(HtmlDivElement | null)
     let currentHighlightedElement: HTMLDivElement | null = $state(null);
     let currentHighlightedTimecode = "";
@@ -154,6 +153,7 @@
     // THEN, the word gets a "word audio" mp3 from a service.
     let screenshotDataUrl = $state("");
     let mp3DataUrl = $state("");
+    let snippetDataUrl = $state("");
     let isClipping = false;
 
     async function loadHotkeysIntoRegister() {
@@ -238,10 +238,6 @@
                 defaultClipData = audioDataURL;
             });
 
-            // FIXME: Paage mounts like ten times, every time the page refrreshes
-            // FIXME: Paage mounts like ten times, every time the page refrreshes
-            // FIXME: Paage mounts like ten times, every time the page refrreshes
-
             setTimeout(async () => {
                 // console.log("Manually requesting default audio...");
                 try {
@@ -294,14 +290,17 @@
                 }
             });
             // Handle screenshot data separately
-            window.electronAPI.onScreenshotReady((dataURL: string) => {
+            window.electronAPI.onScreenshotReady((dataUrl: string) => {
                 // FIXME: Console logged eight times, implying some code ran eight times upstream
-                console.log("in the +page.svelte screenshot api:", dataURL.substring(0, 50) + "...");
-                screenshotDataUrl = dataURL; // Store the data URL
+                console.log("in the +page.svelte screenshot api:", dataUrl.substring(0, 50) + "...");
+                screenshotDataUrl = dataUrl; // Store the data URL
             });
-            window.electronAPI.onAudioReady((dataURL: string) => {
-                console.log("in the +page.svelte screenshot api:", dataURL.substring(0, 50) + "...");
-                mp3DataUrl = dataURL; // Store the data URL
+            window.electronAPI.onAudioReady((dataUrl: string) => {
+                console.log("in the +page.svelte screenshot api:", dataUrl.substring(0, 50) + "...");
+                mp3DataUrl = dataUrl; // Store the data URL
+            });
+            window.electronAPI.onSnippetReady((dataUrl: string) => {
+                snippetDataUrl = dataUrl;
             });
             window.electronAPI.forwardSubtitleInfo((rawSrtContent: string) => {
                 console.log("In the +page.svelte SRT file loader:", rawSrtContent.length);
@@ -495,11 +494,12 @@
         selectedSubtitleText = "";
     }
 
-    function clearMp3andScreenshot() {
+    function clearMedia() {
         // used to reset when done a card
         screenshotDataUrl = "";
         // TODO: DO users prefer an empty clip? dead silence
         mp3DataUrl = defaultClipData;
+        snippetDataUrl = "";
 
         // Check immediately after
         setTimeout(() => {
@@ -553,11 +553,11 @@
     }
 
     export function showRefState(src?: string) {
-        if (src) {
-            console.log(myGiantAwfulObject, "from showRefState in " + src);
-        } else {
-            console.log(myGiantAwfulObject, "from showRefState in devtools");
-        }
+        // if (src) {
+        //     console.log(myGiantAwfulObject, "from showRefState in " + src);
+        // } else {
+        //     console.log(myGiantAwfulObject, "from showRefState in devtools");
+        // }
     }
 
     async function resetAllHotkeys() {
@@ -607,13 +607,14 @@
             targetWordField={selectedTargetWordText}
             exampleSentenceField={selectedSubtitleText}
             {screenshotDataUrl}
-            mp3snippet={mp3DataUrl}
+            mp3Clip={mp3DataUrl}
+            snippet={snippetDataUrl}
             {currentlyRecording}
             {registeredHotkeys}
             {showOptions}
             {toggleOptions}
             clearTextFields={resetGatheredText}
-            {clearMp3andScreenshot}
+            {clearMedia}
         />
     </div>
 </div>

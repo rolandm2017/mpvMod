@@ -1,6 +1,6 @@
 <!-- CardBuilder.svelte -->
 <script lang="ts">
-    import Wavesurfer from "./components/Wavesurfer.svelte";
+    import Mp3Editor from "./components/Mp3Editor.svelte";
     import { get } from "svelte/store";
 
     import { fieldMappingsStore } from "$lib/stores/fieldMappingStore";
@@ -19,15 +19,16 @@
         exampleSentenceField,
 
         // audio, img
-        mp3snippet,
+        mp3Clip,
         screenshotDataUrl,
+        snippet,
         // options
         showOptions,
         toggleOptions,
         registeredHotkeys,
         currentlyRecording,
         clearTextFields,
-        clearMp3andScreenshot
+        clearMedia
     } = $props();
 
     // TODO: the text fields should come in from the parent, but, be reset by changing a card.
@@ -86,12 +87,25 @@
     function sendFinishedCardToAnki() {
         // TODO: Make a "500 error: Is Anki Open?" error prompt
         const mappings = get(fieldMappingsStore);
+        // TODO: Confirmation dialogue, "No snippet made. Send the whole clip?"
+        let audioPayload;
+        const noSnippetMade = snippet === "";
+        if (noSnippetMade) {
+            //
+            const affirmed = confirm("No snippet found. Send the whole clip?");
+            if (affirmed) {
+                audioPayload = mp3Clip;
+            } else {
+                console.log("Canceled payload delivery. Waiting on snippet");
+                return;
+            }
+        }
         const deliverable = {
             targetDeck: currentDeck,
             word: targetWordField,
             exampleSentence: exampleSentenceField,
             nativeTranslation: nativeLangTranslation,
-            audio: mp3snippet,
+            audio: snippet,
             image: screenshotDataUrl
         };
         console.log("sending: ", removeDataUrls(deliverable));
@@ -157,7 +171,7 @@
         // exampleSentenceField = "";
         nativeLangTranslation = ""; // is local to the page
         clearTextFields();
-        clearMp3andScreenshot();
+        clearMedia();
     }
 
     let wordDefinition = $state("");
@@ -242,7 +256,7 @@
             <!-- // Editor reveals on mouseover? On mouseover + click? -->
             <!-- //TODO: Like it's MOSTLY hidden except play, pause, until you open the editor. -->
             <!-- //TODO: The waveform, play/pause btn, etc take WAY too much space -->
-            <Wavesurfer mp3={mp3snippet} />
+            <Mp3Editor mp3={mp3Clip} />
         </div>
     </div>
     <div class="control-section">

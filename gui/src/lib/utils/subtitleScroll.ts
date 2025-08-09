@@ -121,7 +121,7 @@ export function scrollContainerTopToClosestSubtitle(
 
     // WANT: viewport at position of related subtitle
     scrollToLocation(heightForSub, scrollContainer);
-    return heightForSub; // TODO: Try "corresponding", try storing parseTimecodeToSeconds(timecode)
+    return heightForSub;
 }
 
 export function scrollToLocation(location: number, scrollContainer: HTMLDivElement) {

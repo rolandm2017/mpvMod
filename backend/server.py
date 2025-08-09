@@ -170,6 +170,7 @@ class MPVWebSocketServer:
         
         # For audio clipping
         self.clip_start_time = None
+        self.clip_end_time = None  # Must store so snipping tool can use it later
         self.current_file_path = None 
         self.original_file_path = None  
         self.current_srt = None
@@ -538,6 +539,7 @@ class MPVWebSocketServer:
             return True
         return False
     
+    
     def end_audio_clip(self):
         """End audio clipping and create MP3"""
         if not self.player_active or not self.current_file_path or self.clip_start_time is None:
@@ -548,6 +550,8 @@ class MPVWebSocketServer:
             return None
         
         clip_end_time = self.get_time_pos()
+        
+        self.clip_end_time = clip_end_time  # Store so snipping can use it later
         
         # Type check and validate both times are numeric
         no_end_time = clip_end_time is None
@@ -638,6 +642,102 @@ class MPVWebSocketServer:
         except Exception as e:
             self.broadcast_message("error", f"❌ Audio clip failed: {e}")
             return None
+        
+    
+    # TODO: A method that handles, "user requested this subsection of the clip"
+    def create_snippet(self, definition):
+        try:
+            # Create clips directory if it doesn't exist
+            clips_dir = Path("clips")
+            clips_dir.mkdir(exist_ok=True)
+            
+            # ### Find the original file
+            if definition["sourceFile"] != "latest":
+                raise NotImplementedError("Expecting only 'latest' clip requests")
+            latest_file = None
+            files = list(clips_dir.glob("*"))
+            if files:
+                latest_file = sorted(files, key=lambda f: f.stat().st_mtime)[-1]
+                
+            if not latest_file:
+                raise FileNotFoundError("Asking for a snippet from an mp3 that should exist, but doesn't")
+            
+            
+            # ### Get the original start, end time of the mp3
+            product_bounds = {
+                "start": self.clip_start_time,
+                "end": self.clip_end_time
+            }
+            
+            # ### Use definition to determine snippet start, end.
+            # This will be like, (14.3 + 3.3, 14.3 + 6.1)
+            # as the regionStart, regionEnd are measured in "absolute progress thru the whole mp3"
+            product_bounds["start"] = product_bounds["start"] + definition["start"]
+            product_bounds["end"] = product_bounds["start"] + definition["end"]
+            
+            # Generate filename
+            snippet_filename = latest_file.name + "-derived-snippet"
+            snippet_path = clips_dir / f"{snippet_filename}.mp3"
+            
+            # Use ffmpeg to extract audio clip
+            duration = product_bounds["end"] - product_bounds["start"]
+            
+    
+            command = [
+                "ffmpeg",
+                "-i", self.original_file_path, 
+                "-ss", str(product_bounds["start"]),
+                "-t", str(duration),
+                "-vn",  # No video
+                "-acodec", "mp3",
+                "-ab", "192k",  # Audio bitrate
+                "-y",  # Overwrite output file
+                str(snippet_path)
+            ]
+            # Run ffmpeg in a separate thread to avoid blocking
+            def run_ffmpeg():
+                try:
+                    
+                    result = subprocess.run(command, capture_output=True, text=True, timeout=30)
+                    if result.returncode == 0:
+                        self.broadcast_message("command_response", f"✂️✅ Snippet created", {
+                            "command": "new_snippet",
+                            "success": True,
+                            "file_path": str(snippet_path)
+                        })
+                    else:
+                        self.broadcast_message("command_response", f"❌ FFmpeg error: {result.stderr}", {
+                            "command": "new_snippet",
+                            "success": False,
+                            "error": result.stderr
+                        })
+                except subprocess.TimeoutExpired:
+                    self.broadcast_message("command_response", "❌ FFmpeg timeout", {
+                        "command": "new_snippet",
+                        "success": False,
+                        "error": "Timeout"
+                    })
+                except Exception as e:
+                    self.broadcast_message("command_response", f"❌ FFmpeg failed: {e}", {
+                        "command": "new_snippet",
+                        "success": False,
+                        "error": str(e)
+                    })
+                    
+            if not isinstance(self.original_file_path, str):
+                self.original_file_path = str(self.original_file_path)
+                    
+            print(f"Input file exists: {Path(self.original_file_path).exists()}")
+            print(f"Input file path: {self.original_file_path}")
+            print(f"Command: {' '.join(command)}")
+            
+            threading.Thread(target=run_ffmpeg, daemon=True).start()
+            
+            return str(snippet_path)
+        
+        except Exception as e:
+            self.broadcast_message("error", f"❌ Grabbing snippet failed: {e}")
+            return None
     
     async def handle_command(self, command_data):
         """Handle incoming commands from WebSocket clients"""
@@ -669,6 +769,10 @@ class MPVWebSocketServer:
             elif command == "end_audio_clip":
                 # The end_audio_clip method handles its own response via the ffmpeg thread
                 self.end_audio_clip()
+                
+            elif command == "create_or_update_snippet":
+                snippet_boundaries = command_data.get("definition")
+                self.create_snippet(snippet_boundaries)
             
             elif command == "register_hotkeys":
                 hotkeys = command_data.get("hotkeys")

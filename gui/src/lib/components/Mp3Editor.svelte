@@ -1,3 +1,4 @@
+<!-- Mp3Editor.svelte -->
 <script lang="ts">
     import { onMount, onDestroy } from "svelte"; //
     import WaveSurfer from "wavesurfer.js";
@@ -56,6 +57,8 @@
 
     let regionStart = $state(5);
     let regionEnd = $state(8);
+
+    let debounceTimer: ReturnType<typeof setTimeout> | null = $state(null);
 
     // Case: Region is playing, usre clicks "play main". Result: REgion is paused, ticker goes to start
     // Case: Region is paused, user clicks "play main". result: region still paused, ticket goes tos tart
@@ -148,15 +151,15 @@
         };
     });
 
-    function resetRegionForNewClip(endTime: number) {
+    function resetRegionForNewClip(endTimeOfFullMp3: number) {
         // reset the cursor to 0:00
         cursorPosition = 0;
 
         // set the region start to 1/3
-        const startPosition = endTime * 0.3333;
+        const startPosition = endTimeOfFullMp3 * 0.3333;
         regionStart = startPosition;
         // set the region end to 1/3
-        const endPosition = endTime * 0.6666;
+        const endPosition = endTimeOfFullMp3 * 0.6666;
         regionEnd = endPosition;
 
         updateRegion(startPosition, endPosition);
@@ -266,12 +269,13 @@
             updateRegion(resultOfUpdate, regionEnd);
             canNudgeStartBackwards = true;
 
-            const yieldsNegativeDuration = regionEnd < resultOfUpdate;
+            const yieldsNegativeDuration = regionEnd < regionStart;
             if (yieldsNegativeDuration) {
                 regionEnd = resultOfUpdate + 0.3;
             }
         }
-        stateTracker?.setRegion(regionStart, regionEnd); // ADD THIS
+        stateTracker?.setRegion(regionStart, regionEnd);
+        debouncedReadySnippet();
     }
 
     function nudgeEnd(direction: number) {
@@ -294,6 +298,39 @@
             updateRegion(regionStart, regionEnd);
             canNudgeEndBraceForwards = true;
         }
+        stateTracker?.setRegion(regionStart, regionEnd);
+        debouncedReadySnippet();
+    }
+
+    function debouncedReadySnippet() {
+        // Clear any existing timer
+        if (debounceTimer !== null) {
+            clearTimeout(debounceTimer);
+        }
+
+        // Set a new timer for 1 second
+        debounceTimer = setTimeout(() => {
+            readyNewSnippet();
+            debounceTimer = null; // Reset the timer reference
+        }, 1000);
+    }
+
+    // Update the readySnippet function with actual implementation
+    function readyNewSnippet() {
+        console.log(`Preparing snippet from ${regionStart}s to ${regionEnd}s`);
+        // Debounced. After 1.0 sec of inactivity in the bracket controls, the
+        // program will grab the final product behind the scenes.
+        // If the user again moves the region boundaries, the process is redone.
+        // Doing so is very low cost. A few wasted ffmpeg cmds, oh no.
+
+        window.electronAPI.requestSnippet({
+            start: regionStart,
+            end: regionEnd,
+            sourceFile: "latest" // can only possibly be the latest one
+        });
+
+        // You might want to show some UI feedback here
+        console.log("Snippet ready!");
     }
 
     function updateRegion(newStart: number, newEnd: number) {
@@ -307,6 +344,13 @@
             });
         }
     }
+
+    onDestroy(() => {
+        if (debounceTimer !== null) {
+            clearTimeout(debounceTimer);
+        }
+        wavesurfer?.destroy();
+    });
 </script>
 
 <div bind:this={container} class="w-full"></div>
